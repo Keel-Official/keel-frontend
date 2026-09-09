@@ -1,5 +1,6 @@
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
+import { LandingMotion } from '../components/marketing/landing-motion';
 import { SiteHeader, BrandMark } from '../components/marketing/site-header';
 import { HeroProductPreview } from '../components/marketing/hero-product-preview';
 import { PriceLiquidityComparison } from '../components/marketing/price-liquidity-comparison';
@@ -14,6 +15,7 @@ import { ProvenanceSection } from '../components/marketing/provenance-section';
 export default function Home() {
   return (
     <>
+      <LandingMotion />
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>

@@ -1,5 +1,11 @@
 # Product
 
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+web
+
 ## Users
 
 Ambassador and SCF reviewers, Stellar ecosystem builders, and prospective technical users. They arrive with varying levels of Web3 familiarity and need to understand why a quoted price can exist without enough executable liquidity behind it, then inspect the product output, evidence, methodology, API, and historical case study.
