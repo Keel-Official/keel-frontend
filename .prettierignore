@@ -1,0 +1,10 @@
+node_modules
+.next
+public/evidence
+lib/api/fixtures.ts
+lib/api/schema.d.ts
+lib/api/february-evidence.json
+pnpm-lock.yaml
+AGENTS.md
+docs
+.agents

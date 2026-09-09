@@ -21,6 +21,12 @@ Do not turn it into:
 
 Read the docs relevant to the task.
 
+## Session-start context
+
+At the start of every session, read `docs/current-state.md` before taking task-specific action. Use it as the handover snapshot for current focus, verified state, open risks, and next checks, then verify any claim that matters against the worktree and the source-of-truth docs.
+
+When the user invokes `/handover`, asks to refresh project context, or explicitly prepares a new-session handoff, use the handover skill. Rewrite and consolidate the snapshot from evidence rather than appending a diary; classify claims as verified, inferred, unknown, or blocked; preserve unrelated changes; do not modify application code or the database; and do not commit automatically.
+
 - `docs/00-README.md` — source-of-truth hierarchy and revised product/design direction.
 - `docs/01-tech-stack.md` — stack, dependency restraint, repository shape.
 - `docs/02-information-architecture.md` — routes, product surfaces, page responsibilities.

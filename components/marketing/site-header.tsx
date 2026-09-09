@@ -1,65 +1,91 @@
-import Link from "next/link";
+'use client';
 
-function BrandMark() {
+import { ArrowUpRight, Menu, X } from 'lucide-react';
+import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
+
+export function BrandMark() {
   return (
-    <svg
-      aria-hidden="true"
-      className="brand-mark"
-      viewBox="0 0 30 30"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect x="1" y="1" width="28" height="28" rx="7" fill="var(--keel-brand-deep)" />
-      <path d="M8 20.5L14.4 8H17.2L10.8 20.5H8Z" fill="var(--keel-accent)" />
-      <path d="M14.2 20.5L20.6 8H23.4L17 20.5H14.2Z" fill="var(--keel-white)" />
-    </svg>
+    <span className="brand">
+      <svg aria-hidden="true" viewBox="0 0 32 32" fill="none">
+        <path d="M6 6h7v9L23 6h9L18 19l12 7H17L6 19V6Z" fill="currentColor" />
+        <path d="M6 23v7h7v-3l-7-4Z" fill="var(--accent)" />
+      </svg>
+      <span>keel</span>
+    </span>
   );
 }
 
-const navItems = [
-  { href: "#product", label: "Product" },
-  { href: "/assets", label: "Assets" },
-  { href: "/case-study/ustry", label: "Case study" },
-  { href: "/methodology", label: "Methodology" },
+const links = [
+  { href: '#markets', label: 'Markets' },
+  { href: '#metrics', label: 'Product' },
+  { href: '#case-study', label: 'Case study' },
+  { href: '#api', label: 'Developers' },
 ];
 
 export function SiteHeader() {
+  const [open, setOpen] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        button.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, []);
   return (
-    <header className="site-header" aria-label="Site header">
-      <div className="header-inner">
-        <Link className="brand-lockup" href="/" aria-label="Keel home">
+    <header className="site-header">
+      <div className="container header-inner">
+        <Link
+          href="/"
+          className="brand-link"
+          aria-label="Keel home"
+          aria-current="page"
+        >
           <BrandMark />
-          <span>Keel</span>
         </Link>
-
         <nav className="desktop-nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href}>
-              {item.label}
-            </Link>
+          {links.map((link) => (
+            <a href={link.href} key={link.href}>
+              {link.label}
+            </a>
           ))}
-          <Link className="button button-primary header-cta" href="/assets">
-            Explore assets <span aria-hidden="true">↗</span>
-          </Link>
         </nav>
-
-        <details className="mobile-nav">
-          <summary className="mobile-nav-summary">
-            <span className="sr-only">Open navigation</span>
-            <span className="menu-glyph" aria-hidden="true" />
-          </summary>
-          <nav className="mobile-nav-panel" aria-label="Mobile navigation">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                {item.label}
-              </Link>
-            ))}
-            <Link className="button button-primary" href="/assets">
-              Explore assets <span aria-hidden="true">↗</span>
-            </Link>
-          </nav>
-        </details>
+        <a className="button button-small header-action" href="#markets">
+          Explore assets <ArrowUpRight size={16} />
+        </a>
+        <button
+          ref={button}
+          type="button"
+          className="menu-toggle"
+          aria-expanded={open}
+          aria-controls="mobile-navigation"
+          aria-label={open ? 'Close navigation' : 'Open navigation'}
+          onClick={() => setOpen(!open)}
+        >
+          {open ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
+      <nav
+        id="mobile-navigation"
+        className="mobile-navigation"
+        aria-label="Mobile navigation"
+        hidden={!open}
+      >
+        {links.map((link) => (
+          <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
+            {link.label}
+            <ArrowUpRight size={16} />
+          </a>
+        ))}
+        <a href="#methodology" onClick={() => setOpen(false)}>
+          Methodology
+          <ArrowUpRight size={16} />
+        </a>
+      </nav>
     </header>
   );
 }
