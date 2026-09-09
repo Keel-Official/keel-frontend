@@ -2,13 +2,34 @@
 
 This file is not a replacement for `keel-backend/docs/api/keel-openapi.yaml`. It is a frontend checklist for consuming that contract without changing its meaning.
 
+The revised visual direction adds more product-shaped data to the landing page, so these rules apply to **marketing previews too**, not only the dashboard.
+
 ## 1. Generate types; do not duplicate them
 
 Generate frontend types from the backend OpenAPI contract with `openapi-typescript`.
 
 Do not maintain a second manual `AssetRisk`, `HistoryResponse`, `Flag`, or `Band` model unless it is a UI-only derived type.
 
-## 2. Decimal strings are exact data
+For landing-page fixtures, prefer backend-generated mocks or fixture objects that satisfy generated contract types.
+
+## 2. Product previews must remain semantically honest
+
+A landing-page preview may be static, but it must not invent impossible or misleading combinations merely to look good.
+
+Good:
+- use an existing healthy/mock asset response;
+- trim a full response into a compact view model while preserving semantics;
+- label a clearly illustrative comparison as illustrative.
+
+Bad:
+- invent `LOW` while showing critical flags;
+- show `full` confidence when required inputs are absent;
+- display a safe-collateral value that does not exist in the fixture;
+- mix values from unrelated assets and imply they are one backend result.
+
+Marketing UI is still product UI.
+
+## 3. Decimal strings are exact data
 
 Most financial/market numeric fields are JSON strings by contract.
 
@@ -26,15 +47,14 @@ API decimal string → Decimal → formatting / comparison / exact derivation
 
 Chart geometry may use a derived JS number, but exact labels/tooltips must retain the source decimal value.
 
-## 3. `null` is never silently converted to zero
+## 4. `null` is never silently converted to zero
 
-`null` means unknown/not available/not applicable according to the field.
-
-UI rule:
 - measured `0` → show `0`;
 - `null` → show `—` or `Not available`, with context where the distinction matters.
 
-## 4. No executable price is a successful API result
+This applies to compact landing cards as well as detailed app screens.
+
+## 5. No executable price is a successful API result
 
 A monitored asset may return:
 
@@ -45,53 +65,51 @@ midPrice = null
 band = CRITICAL
 ```
 
-This is not an application error. It is one of the most important findings Keel can display.
+This is a product finding, not an application error.
 
-## 5. Broken orderbook needs a distinct presentation
+It can be an excellent landing-page example for explaining why absence of liquidity is meaningful, as long as it is clearly labeled.
+
+## 6. Broken orderbook needs a distinct presentation
 
 When `SPREAD_EXTREME` is triggered, a populated `midPrice` can be misleading.
 
 UI behavior:
 - visibly mark the reference price as unreliable;
 - show the spread warning;
-- do not visually promote the 2/5/10 depth ladder as if it were an ordinary healthy calculation;
+- do not promote the depth ladder as an ordinary healthy market result;
 - surface stronger/relevant manipulation evidence.
 
-## 6. Triggered, clear, and unevaluated are three different states
+## 7. Triggered, clear, and unevaluated are different states
 
 Backend semantics:
-
-- `flags` → triggered.
-- `unevaluatedFlags` → not assessed because required data was unavailable.
+- `flags` → triggered;
+- `unevaluatedFlags` → not assessed because required data was unavailable;
 - a flag in neither collection → evaluated and clear.
 
-The frontend must not infer “clear” from absence alone without also checking `unevaluatedFlags`.
+The frontend must never infer “clear” solely from absence in `flags`.
 
-## 7. `band` and `bandConfidence` stay together
+## 8. `band` and `bandConfidence` stay together
 
 Examples:
+- `LOW + full` is materially stronger than `LOW + partial`.
+- `CRITICAL + partial` means enough evidence already exists for CRITICAL while some checks remain unavailable.
 
-- `LOW + full` is a materially stronger statement than `LOW + partial`.
-- `CRITICAL + partial` means enough evidence already exists for CRITICAL, while some checks remain unavailable.
+Every compact risk component, including hero/marketing previews, needs a defined way to show confidence.
 
-Every compact risk component should have a defined way to surface partial confidence.
+## 9. `cost` and `reachable` stay together
 
-## 8. `cost` and `reachable` stay together
-
-For `manipulationCostOrderbookOnly`, do not render a cost as meaningful without its `reachable` state.
-
-Interpretation:
+For `manipulationCostOrderbookOnly`, never render cost without reachability context.
 
 | Cost | Reachable | Meaning |
 |---:|---|---|
-| 0 | true | target is reachable at zero third-party cost — dangerous |
+| 0 | true | target reachable at zero third-party cost — dangerous |
 | 0 | false | target cannot be reached because liquidity is absent |
-| >0 | true | target has a measurable cost |
-| >0 | false | book is exhausted before target; the shown cost is not “the price of reaching it” |
+| >0 | true | target has measurable cost |
+| >0 | false | book is exhausted before the target; shown cost is not the price of reaching it |
 
-For `manipulationCostCombined`, an active AMM pool makes every finite target mathematically reachable; do not reuse the orderbook-only interpretation blindly.
+For `manipulationCostCombined`, do not blindly reuse orderbook-only semantics.
 
-## 9. Data source changes the claim
+## 10. Data source changes the claim
 
 Display source near historical/reconstructed metrics.
 
@@ -105,9 +123,9 @@ offers-implied
 trades-implied
 ```
 
-`trades-implied` is a lower bound from liquidity that was consumed, not a full measurement of liquidity that was available.
+`trades-implied` is a lower bound from consumed liquidity, not a complete observation of available liquidity.
 
-## 10. Never hardcode methodology configuration
+## 11. Never hardcode methodology configuration
 
 Do not hardcode:
 - methodology version;
@@ -116,11 +134,9 @@ Do not hardcode:
 - critical delta;
 - assumptions exposed by `/methodology` or response fields.
 
-The backend contract changed its oracle-window example from 300 to 900 seconds during the sprint specifically because consumers are expected to read configuration rather than memorize it.
+Landing mocks may contain a methodology version because the fixture contains it, but UI copy must not present that version as a permanent constant.
 
-## 11. Preserve quote units
-
-Keel values are expressed in the pair's quote asset.
+## 12. Preserve quote units
 
 Always display the quote code next to key values:
 
@@ -129,33 +145,73 @@ Always display the quote code next to key values:
 104.88 USDC
 ```
 
-Do not silently convert all values to USD. If an indicative USD conversion is added later, it must be visually labeled as external/indicative and never substituted for the native Keel result.
+Do not silently convert all values to USD.
 
-## 12. Historical gaps are data
+## 13. Source breakdowns must come from real fields
 
-A history response can contain gaps. A chart must not visually connect missing intervals in a way that implies continuous observed data.
+The revised hero/product bento may show SDEX and AMM contribution.
+
+Only show a percentage breakdown when it can be derived correctly from backend-provided source contributions.
+
+Do not invent decorative `72% / 28%` values just because the mockup used those numbers as an example.
+
+If the contract exposes absolute source contributions but not percentages, derive percentages with exact decimal arithmetic and handle zero totals explicitly.
+
+## 14. Market Snapshot rows must be contract-compatible
+
+The landing-page market snapshot should ideally reuse the asset-list endpoint shape or generated mocks.
+
+If several fixture states are combined into a demonstration table:
+- keep each row internally consistent;
+- do not imply the table is live unless it is live;
+- label it as preview/demo data where necessary.
+
+## 15. Historical gaps are data
+
+A history response can contain gaps. A chart must not connect missing intervals in a way that implies observed continuity.
 
 Recommended:
 - break the line;
-- shade/annotate gap interval;
-- explain the reason where supplied.
+- annotate gap interval;
+- explain supplied reason;
+- distinguish reconstructed series.
 
-## 13. Surface provenance
+## 16. Event markers do not create causal claims
 
-Asset detail should expose:
+The Blend case-study preview may mark the incident date on a historical chart.
+
+The marker means “this event happened here in time.” It does not by itself prove that a metric predicted, caused, or would have prevented the incident.
+
+Copy around the chart must preserve that distinction.
+
+## 17. Surface provenance
+
+Asset detail and substantial landing product previews should expose some combination of:
 - `ledgerSeq`;
 - `ledgerClosedAt` when present;
 - `computedAt`;
 - `methodologyVersion`;
 - `dataSource`;
-- API staleness header for live results;
-- warnings.
+- live staleness;
+- warnings;
+- confidence.
 
-These are not debugging details; they are part of Keel's reproducibility promise.
+The landing page may use a compact provenance strip; full detail belongs on asset detail.
 
-## 14. API errors vs risk findings
+## 18. API preview must match the contract
 
-Keep separate UI families:
+Do not hand-write a pretty JSON response containing fields that do not exist or use different casing/types.
+
+Preferred approaches:
+1. render a trimmed real backend mock;
+2. construct a typed subset from generated schema;
+3. show ellipses for omitted fields rather than fabricating them.
+
+The request path and parameters shown on the landing/API page must match current OpenAPI.
+
+## 19. API errors vs risk findings
+
+Keep separate UI families.
 
 **Risk/data findings:**
 - no executable price;
@@ -171,5 +227,12 @@ Keep separate UI families:
 - historical service unavailable;
 - asset/ledger not found.
 
-A risk finding should never fall through to a generic “Something went wrong” screen.
+A risk finding must never fall through to a generic error state.
 
+## 20. Product integrity rule
+
+The revised design deliberately makes the landing page look more like the product.
+
+That increases the obligation to keep every visible number and state semantically plausible.
+
+A beautiful preview with incorrect risk semantics is worse than a plain but accurate one.
