@@ -2,166 +2,231 @@
 
 ## Product surfaces
 
-Keel has two jobs on the frontend:
+Keel has two frontend jobs:
 
-1. **Explain the idea.** A reviewer or first-time visitor should understand why quoted price is not enough.
-2. **Expose evidence.** A technical user should be able to inspect assets, depth, risk flags, data source, methodology, and historical evidence.
+1. **Create immediate product understanding.** A visitor should grasp that quoted price and executable liquidity are different.
+2. **Expose inspectable evidence.** A user should be able to move from a risk conclusion into depth, flags, source, methodology, and historical evidence.
 
-Those jobs should not be mixed into one overloaded dashboard.
+The revised direction changes the balance between those jobs on the landing page:
 
-## Proposed sitemap
+> The landing page should demonstrate the product first, then explain it.
+
+Do not make the homepage feel like a long research article that happens to contain a few UI examples.
+
+## Sitemap
 
 ```text
 /
 ├─ /assets
 │  └─ /assets/[assetId]
 ├─ /case-study/ustry
-└─ /methodology
+├─ /methodology
+└─ /api                optional dedicated API landing/docs entry
 ```
 
-Future, only if needed:
+No login, wallet, portfolio, transaction, or settings area is needed for the current scope.
+
+## Global product hierarchy
+
+Keel should expose information in this order:
 
 ```text
-/api          API documentation redirect/landing
-/about        Team/project context
+Finding
+  ↓
+Primary metrics
+  ↓
+Why the finding exists
+  ↓
+Evidence and uncertainty
+  ↓
+Methodology / provenance
 ```
 
-No login, account, wallet, portfolio, transaction, or settings area is needed for the current scope.
+This is more product-like than beginning with methodology and asking the user to derive the conclusion themselves.
 
-## Page responsibilities
+## `/` — Landing page
 
-### `/` — Landing page
+Primary question:
 
-Primary question answered:
+> What does Keel actually do, and can I see it doing that?
 
-> Why does Keel exist, and why should I care?
+The page should answer that visually before asking the visitor to read detailed methodology.
 
-Audience:
-- Ambassador/SCF reviewer;
-- Stellar ecosystem builder;
-- protocol/vault/RWA technical evaluator.
+### Required landing surfaces
 
-Primary actions:
+The homepage should expose recognizable Keel product objects:
+- a compact asset-risk result in the hero;
+- market snapshot / monitored-asset preview;
+- depth and collateral product metrics;
+- explainable risk output with triggered and unevaluated states;
+- infrastructure flow from Stellar market data to Keel outputs;
+- read-only API preview;
+- historical Blend/USTRY evidence preview;
+- provenance strip.
+
+### Primary actions
+
 - **Explore assets**
-- **View the Blend case study**
-- secondary: Read methodology / API contract
+- **Read methodology**
+- **Open Blend case study**
+- **View API**
 
-The page should work even if the Keel API is temporarily unavailable.
+Do not link prominently to routes that do not exist yet. If a route is not implemented, either implement it before deployment or temporarily remove/downgrade the CTA.
 
-### `/assets` — Risk overview
+The landing page must still render meaningfully when the live API is unavailable. Use backend-shaped fixtures for product previews when necessary.
 
-Primary question answered:
+## `/assets` — Risk overview
 
-> Which monitored assets deserve attention?
+Primary question:
+
+> Which monitored Stellar assets deserve attention, and why?
 
 Core content:
-- monitored asset table;
-- risk band;
-- band confidence;
-- triggered flags;
-- 5% depth summary;
-- safe-collateral summary;
-- quote asset;
-- search/filter when implemented.
+- asset / quote pair;
+- risk band + confidence;
+- 5% executable depth;
+- safe collateral summary;
+- key triggered flags;
+- visible incomplete-data state;
+- search/filter when useful.
 
-Do not make price the primary column. Keel is not a price tracker.
+Do not make current price the dominant column. Keel is not a price tracker.
 
-### `/assets/[assetId]` — Asset detail
+The page should feel like a serious risk product, not a crypto token screener.
 
-Primary question answered:
+## `/assets/[assetId]` — Asset detail
 
-> Why is this asset classified this way?
+Primary question:
 
-Suggested content order:
+> Why is this asset classified this way, and what market evidence supports that result?
 
-1. Identity + quote pair.
+Preferred sequence:
+
+1. Asset identity + quote pair.
 2. Risk band + confidence.
-3. Key finding/explanation.
-4. Effective depth at 2/5/10% (buy and sell separately).
+3. Human-readable key finding.
+4. Effective depth at ±2/5/10%, buy and sell separately.
 5. Maximum safe collateral.
-6. Manipulation resistance/cost.
-7. Price-source health (book/pool/divergence/spread).
+6. Manipulation cost + reachability.
+7. SDEX / AMM contribution and price-source health.
 8. Supporting metrics.
-9. Triggered vs unevaluated flags.
+9. Triggered / clear / unevaluated interpretation.
 10. Warnings.
-11. Provenance: ledger, source, methodology version, computed time.
+11. Provenance.
 12. Historical trend when available.
 
-### `/case-study/ustry` — Blend case study
+A user should never need to visit the methodology page merely to understand what the asset-detail page is claiming.
 
-Primary question answered:
+## `/case-study/ustry` — Blend case study
 
-> Would Keel's liquidity view have exposed the structural risk around the known incident?
+Primary question:
 
-This should be a narrative page, not just another dashboard screen.
+> What did liquidity evidence show around the known USTRY/Blend incident?
 
-Suggested sequence:
-- incident context;
-- what a price feed saw;
-- what market depth showed;
-- timeline of risk metrics;
-- exploit marker (22 February 2026 per the corrected backend record);
-- interpretation and methodology limitations;
-- links to raw/reproducible evidence.
+This page is a narrative evidence product, not a generic blog post.
 
-### `/methodology` — Explain the model
+Preferred sequence:
+- concise incident context;
+- price view versus liquidity view;
+- historical chart with event marker;
+- depth / manipulation / risk changes over time;
+- explicit reconstruction quality and gaps;
+- interpretation;
+- limitations;
+- raw evidence / methodology links.
 
-Primary question answered:
+The visual center of this page should be historical evidence, not a text-only timeline.
 
-> What exactly do these numbers and risk labels mean?
+## `/methodology` — Explain the model
 
-This page should translate backend methodology into human language, while linking to the full technical methodology rather than duplicating it.
+Primary question:
+
+> What exactly do Keel's measurements and risk labels mean?
+
+This page should translate the backend methodology without duplicating it as a second source of truth.
 
 Include:
-- what effective depth means;
+- effective depth;
 - buy vs sell side;
-- manipulation cost;
-- max safe collateral;
-- risk bands and flags;
+- SDEX + AMM combination;
+- manipulation cost and reachability;
+- safe collateral;
+- flags and bands;
 - full vs partial confidence;
 - data-source hierarchy;
-- disclaimer that thresholds are chosen, not empirically calibrated;
-- active methodology version read from the API.
+- chosen-vs-calibrated threshold disclaimer;
+- current methodology version.
+
+Use diagrams and worked product examples where they clarify the model. Avoid turning the page into a wall of prose.
+
+## `/api` — Developer surface
+
+If implemented, this should not be a generic docs placeholder.
+
+Primary question:
+
+> How can a technical consumer retrieve Keel risk evidence?
+
+Show:
+- one representative GET request;
+- one representative response;
+- rate-limit / read-only note;
+- OpenAPI link;
+- fields that demonstrate provenance;
+- no-registration expectation where supported by the backend.
 
 ## Global navigation
 
-Desktop:
+Preferred desktop direction:
 
 ```text
-[Keel]     Product  Assets  Case Study  Methodology          [Explore Assets]
+[Keel]        Product   Assets   Case Study   Methodology   API      [Explore Assets]
 ```
 
-For the first implementation, `Product` may simply scroll to the explanation section on the landing page rather than becoming a separate page.
+`Product` may scroll to a tangible product-preview section on `/`.
 
 Mobile:
-- logo;
-- menu button;
-- single primary CTA.
+- brand;
+- menu;
+- one primary CTA;
+- no overcrowded navbar.
 
 ## Global footer
 
 Include:
-- short Keel description;
-- Stellar ecosystem context;
+- Keel description;
+- Assets;
+- Blend case study;
 - Methodology;
 - API/OpenAPI;
 - GitHub;
-- “Proof of concept — no production SLA”;
-- “Keel is read-only; it never signs or submits transactions.”
+- proof-of-concept / no-SLA note;
+- read-only note.
 
-## Content hierarchy rule
+## Page-composition rule
 
-For every risk/data page, use this hierarchy:
+Do not repeat the same marketing composition every section.
+
+Avoid this rhythm:
 
 ```text
-Conclusion
-   ↓
-Reason
-   ↓
-Evidence
-   ↓
-Methodology/provenance
+kicker → large heading → paragraph → generic cards
+kicker → large heading → paragraph → generic cards
+kicker → large heading → paragraph → generic cards
 ```
 
-A non-technical reviewer should get value from the first two levels. A technical reviewer should be able to keep drilling down without changing products.
+Prefer varied product rhythm:
 
+```text
+positioning
+→ product object
+→ concise explanation
+→ dense market preview
+→ architecture
+→ risk UI
+→ developer UI
+→ historical evidence
+→ provenance
+```
+
+Coherence should come from typography, color, spacing, and component semantics — not from making every section structurally identical.
