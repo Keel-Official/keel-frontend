@@ -1,152 +1,278 @@
-# Keel Frontend — Initial Design System
+# Keel Frontend — Design System
 
 ## 1. Visual direction
 
-**Working direction:** institutional risk research + modern data terminal.
+**Working direction:** modern financial infrastructure + inspectable risk product.
 
 Keel should feel:
 - credible;
-- calm;
-- analytical;
-- transparent;
-- technical without being hostile to non-technical readers.
+- contemporary;
+- technically serious;
+- product-like rather than editorial;
+- information-rich without becoming a trading terminal;
+- transparent about uncertainty and provenance.
 
 Keel should not feel:
-- casino-like;
-- meme-coin-like;
+- like a research PDF converted to HTML;
+- like a pitch deck with large headings and repeated text sections;
+- like a generic SaaS template;
+- casino-like, meme-coin-like, or speculative;
 - neon/cyberpunk by default;
-- overloaded with glowing gradients;
-- like a trading terminal optimized for minute-by-minute speculation.
+- like a minute-by-minute price-trading interface.
 
-A good reference mood is “research report meets modern fintech product.”
+Reference mood:
+
+> **serious fintech infrastructure with visible product output**
+
+Useful reference roles:
+- Paycrest for infrastructure storytelling;
+- Mural Pay and Partna for developer/API product presentation;
+- BlindPay for compact technical fintech composition;
+- SpherePay for verification and product-surface framing;
+- Meld for decision-output patterns;
+- Swapped for dashboard/product previews;
+- Conduit for system diagrams.
+
+Do not clone any reference visually.
 
 ## 2. Core design principles
 
-### Clarity over density
+### Show Keel, not only the idea of Keel
 
-A reviewer should understand a risk state without reading methodology first.
+Major marketing sections should contain product-native objects where possible:
+- risk result;
+- depth ladder;
+- safe collateral;
+- source breakdown;
+- market snapshot;
+- API response;
+- historical evidence;
+- provenance.
 
-### Uncertainty must be visible
+Educational diagrams are secondary. They should not replace the product in the hero.
 
-`partial`, `unevaluated`, `null`, reconstructed sources, and warnings are product information, not visual noise.
+### Demonstration before explanation
 
-### Color is secondary to language
+A visitor should first see a believable Keel result and then learn what it means.
 
-Never communicate LOW/HIGH/CRITICAL solely by color. Every state includes a label and, where useful, an icon.
+### Clarity without excessive emptiness
 
-### Exact unit next to every important number
+Whitespace should create focus, not make the page feel unfinished. Dense product UI is welcome when it is the point of the section.
 
-Keel values are denominated in the quote asset. Show `419,502 XLM`, not an unlabeled `419,502`.
+### Visual rhythm must vary
 
-### Provenance is first-class
+Do not repeat the same kicker + oversized heading + paragraph + cards formula across the whole page.
 
-Ledger sequence, data source, and methodology version should be reachable from every metric detail page.
+Alternate deliberately between:
+- spacious positioning;
+- compact product UI;
+- market table/preview;
+- system flow;
+- dark technical section;
+- chart/evidence section;
+- concise provenance strip.
 
-## 3. Color tokens
+### Uncertainty is visible
 
-Initial light-first palette. These are starting tokens, not permanent branding.
+`partial`, `unevaluated`, `null`, reconstructed sources, gaps, and warnings are product information.
 
-### Neutral / brand
+### Exact units remain visible
 
-| Token | Value | Use |
-|---|---:|---|
-| `--bg` | `#F7F9FB` | application background |
-| `--surface` | `#FFFFFF` | cards, table surfaces |
-| `--surface-subtle` | `#F0F4F7` | quiet sections |
-| `--ink` | `#0B1726` | primary text |
-| `--ink-muted` | `#5E6B78` | secondary text |
-| `--border` | `#DDE4EA` | standard borders |
-| `--brand` | `#0B2A3D` | header/nav/primary brand |
-| `--accent` | `#0F8F83` | links, active controls, selected state |
-| `--accent-soft` | `#E6F5F2` | accent background |
+Show `419,502 XLM`, not `419,502`.
+
+### Provenance is part of the interface
+
+Ledger sequence, methodology version, data source, computed time, and confidence should feel intentional — not like debug metadata.
+
+## 3. Brand palette
+
+Keep the current light-first direction, but use it with stronger hierarchy and fewer unrelated section colors.
+
+### Base palette
+
+| Token | Suggested role |
+|---|---|
+| `--bg` | pale cool page background |
+| `--surface` | primary card/product surface |
+| `--surface-subtle` | quiet section background |
+| `--ink` | body text |
+| `--ink-strong` | headings / key product values |
+| `--ink-muted` | secondary information |
+| `--border` | low-contrast structural border |
+| `--border-strong` | data/product boundaries |
+| `--brand` | deep navy / primary brand surface |
+| `--brand-deep` | darkest technical section/footer surface |
+| `--accent` | restrained teal/green action/data accent |
+| `--accent-soft` | selected or highlighted background |
+
+Do not introduce a large unrelated purple CTA block unless purple becomes a deliberate brand color used consistently across the entire product.
 
 ### Risk semantics
 
-| Token | Value | Meaning |
-|---|---:|---|
-| `--risk-low` | `#16794B` | no risk flag triggered |
-| `--risk-medium` | `#9A6700` | medium-tier flag present |
-| `--risk-high` | `#C45100` | high-tier flag present |
-| `--risk-critical` | `#B42318` | critical-tier flag present |
-| `--risk-unknown` | `#667085` | unavailable / unevaluated |
+Maintain semantic risk colors:
+- LOW → green;
+- MEDIUM → amber;
+- HIGH → orange;
+- CRITICAL → red;
+- unknown/unevaluated → neutral gray.
 
-Use separate pale background tokens derived from these for badges/cards. Risk colors must not replace textual labels.
+Risk colors are not decorative brand colors. Use them only where the underlying state warrants them.
+
+### Color proportion
+
+Aim approximately for:
+
+```text
+85–90% neutral / pale surfaces
+7–10% deep brand surfaces
+2–5% accent and semantic risk color
+```
 
 ## 4. Typography
 
-Recommended:
+Preferred direction:
+- product/marketing UI: **Manrope**;
+- technical/numeric UI: **JetBrains Mono**.
 
-- UI/body: **Inter**.
-- Technical/numeric identifiers: **IBM Plex Mono** or a system monospace fallback.
+Load actual fonts using `next/font`. Do not create misleading CSS token names that fall back to unrelated system fonts.
 
-Typography hierarchy:
+### Hierarchy
 
-| Style | Suggested use |
+| Style | Use |
 |---|---|
-| Display 1 | landing hero only |
+| Display | hero only; use sparingly |
 | H1 | page title |
-| H2 | major page section |
-| H3 | card/section heading |
-| Body | default explanation |
-| Small | metadata/help text |
-| Mono Small | ledger, issuer, methodology version, raw identifiers |
+| H2 | major section |
+| H3 | product module / section heading |
+| Body large | positioning and major explanation |
+| Body | default product/explanatory copy |
+| Small | metadata/help |
+| Mono | API paths, ledger, issuer, exact compact metrics |
 
-Rules:
-- use tabular numerals for metric columns;
-- keep issuer addresses monospace and truncate visually, never mutate/cut the actual copy value;
-- avoid all-caps paragraphs; all-caps is acceptable for compact status labels only.
+### Revised scale rule
 
-## 5. Spacing & layout
+Do not let headings visually overpower all evidence beneath them.
+
+Previous implementation leaned too hard into poster-sized headings with tiny supporting copy. The new system should slightly reduce display/H2 scale and increase body/product text legibility.
+
+Guideline:
+- hero display can still be bold and large;
+- section H2 should normally remain below the visual dominance of a major product object placed beside it;
+- body text should remain readable in full-page screenshots, not collapse into visual texture.
+
+Use tabular numerals for metric columns.
+
+## 5. Layout & spacing
 
 Base spacing unit: **4px**.
 
-Common spacing:
-- 4 — icon/text micro-gap;
-- 8 — compact controls;
-- 12 — badge/card internals;
-- 16 — standard component padding;
-- 24 — card/section internal groups;
-- 32 — page blocks;
-- 48/64/96 — landing-page section rhythm.
+Typical spacing:
+- 4–8: micro spacing;
+- 12–16: compact component internals;
+- 20–24: product card grouping;
+- 32–48: major product grouping;
+- 64–96: common section separation;
+- 96–120: only for intentionally spacious hero/CTA moments.
 
-Content widths:
-- marketing text: ~720px reading width;
-- landing container: 1200–1280px;
-- dashboard container: 1280–1440px;
-- asset detail: 1200–1280px with full-width charts where useful.
+Avoid defaulting every section to 100–140px vertical padding.
 
-## 6. Shape & elevation
+### Container widths
 
-- Radius small: 8px.
-- Radius standard card: 12px.
-- Radius large marketing panel: 16px.
-- Avoid pill shapes for every component; reserve pills for tags/statuses.
-- Use borders more often than strong shadows.
-- Default shadow should be subtle; risk should come from information hierarchy, not dramatic elevation.
+- landing: 1200–1320px;
+- dense market/product section: up to 1360px;
+- asset/dashboard: 1280–1440px;
+- long-form methodology reading column: 700–780px.
 
-## 7. Risk badges
+### Composition
 
-Minimum contents:
+A section may be:
+- 50/50 copy + product;
+- 35/65 copy + product;
+- full-width product preview;
+- asymmetric bento;
+- full-width dark technical block;
+- narrow copy above a dense table;
+- chart-led case-study block.
+
+Do not force every section into the same two-column template.
+
+## 6. Product surfaces
+
+### Product objects must look usable
+
+A marketing product preview should resemble a real Keel interface, not a decorative mockup.
+
+Good preview contents:
+- actual asset/quote names or clearly labeled demo fixtures;
+- LOW/MEDIUM/HIGH/CRITICAL;
+- band confidence;
+- depth ±2/5/10%;
+- buy/sell or source breakdown;
+- safe collateral;
+- triggered flags;
+- ledger/methodology/source.
+
+Avoid meaningless placeholder patterns like `Asset A` / `Asset B` in major hero/product previews unless the section explicitly teaches an abstract comparison.
+
+### Hero product object
+
+The hero should normally show a compact Keel result or product interface.
+
+Do not use a generic educational chart as the primary hero visual.
+
+### Marketing previews should reuse domain semantics
+
+Where possible, marketing previews should be built from the same underlying concepts/components used by the app:
+- `RiskBadge`;
+- `DepthLadder`;
+- `MetricValue`;
+- `FlagList`;
+- `ProvenanceStrip`.
+
+## 7. Shape & elevation
+
+Direction:
+- radius small: 8px;
+- standard product card: 12px;
+- large product/marketing panel: 16–20px;
+- status chips may use pill radius;
+- use thin borders heavily;
+- use subtle diffuse shadow only when it helps separate a product object.
+
+Avoid the previous hard offset-shadow treatment (`10px 10px` / `12px 12px`) as a default visual motif. It pushes the design toward editorial poster aesthetics.
+
+Flat bordered surfaces remain appropriate for dense product tables and technical panels.
+
+## 8. Risk badges & confidence
+
+Minimum:
 
 ```text
-[icon] CRITICAL
+CRITICAL
 ```
 
-For confidence:
+Confidence must remain adjacent or immediately discoverable:
 
 ```text
-CRITICAL · PARTIAL DATA
+CRITICAL   PARTIAL CONFIDENCE
 ```
 
-or render a separate `Partial data` badge immediately beside it.
+Never render LOW/full and LOW/partial identically.
 
-Important distinction:
-- `LOW + full` = all high/critical checks evaluated and no flag triggered.
-- `LOW + partial` = currently no triggered flag, but the final risk could be worse.
+Do not communicate risk only through color.
 
-Never render both identically.
+## 9. Triggered / clear / unevaluated
 
-## 8. Data-source badges
+Three states must remain visually distinct.
+
+Suggested hierarchy:
+- triggered: strong semantic mark + readable explanation;
+- clear: low-emphasis positive/neutral state where needed;
+- unevaluated: neutral status with explicit “Not evaluated” language.
+
+`unevaluated` must never look like success.
+
+## 10. Data source & provenance
 
 Data source communicates evidence quality:
 
@@ -157,77 +283,137 @@ Data source communicates evidence quality:
 | `offers-implied` | Reconstructed from posted offers |
 | `trades-implied` | Lower-bound reconstruction from executed trades |
 
-`trades-implied` must always show a visible lower-bound/reconstruction notice near the metric/chart. Do not hide it in a tooltip only.
+For reconstructed/lower-bound series, show the limitation near the metric/chart, not only in a tooltip.
 
-## 9. Null / zero / unevaluated
+### Provenance strip pattern
 
-These are different states.
+Prefer a compact product-native strip such as:
 
-- `0` → measured zero; often a strong risk signal.
-- `null` → unknown/not applicable depending on field semantics; show `—` plus explanation when important.
-- `unevaluatedFlags` → condition could not be assessed; show as `Not evaluated`, never as `Clear`.
-- missing API/network result → actual application error state.
+```text
+LEDGER        METHOD       SOURCE       CONFIDENCE
+57938192      v1.x.x       Horizon      Full
+```
 
-## 10. Tables
+This is more tangible than three generic marketing cards that merely say “Traceable / Reproducible / Read-only”.
 
-Asset table should prioritize:
+## 11. Null / zero / unevaluated
 
+- `0` → measured zero.
+- `null` → unavailable / not applicable according to field semantics.
+- unevaluated flag → required data missing.
+- network/API failure → application error.
+
+These states must never collapse into one visual `—` without explanation when the distinction matters.
+
+## 12. Tables
+
+Asset table priority:
 1. Asset / quote.
 2. Risk band + confidence.
 3. 5% depth.
 4. Max safe collateral.
 5. Key triggered flags.
-6. Data/provenance details as secondary information.
+6. Provenance secondary details.
 
-Responsive behavior:
-- desktop: table;
-- mobile: stacked asset cards rather than forcing a horizontally unreadable table.
+Desktop: table.  
+Mobile: stacked asset cards.
 
-## 11. Charts
+A compact form of this table should be reusable on the landing page as **Market Snapshot**.
 
-Charts are evidence, not decoration.
+## 13. Charts
+
+Charts are evidence, but the landing page may use charts as product demonstration when the data meaning is explicit.
 
 Rules:
-- always label units;
-- preserve exact values in tooltip text;
-- mark gaps in history explicitly;
-- mark reconstructed/lower-bound series;
-- use exploit/event markers as annotations, not color-only indicators;
-- do not interpolate across a known data gap as if data existed;
-- depth chart should keep buy/sell direction understandable.
+- label units;
+- preserve exact values in tooltips/text;
+- mark gaps;
+- mark reconstruction/lower-bound series;
+- use event markers;
+- do not interpolate across missing data;
+- keep buy/sell direction legible;
+- avoid generic decorative line charts with no product context.
 
-## 12. Motion
+### Landing chart rule
 
-Use motion sparingly:
-- 120–200ms interaction transitions;
-- no animated counters for risk values;
-- no continuous background animation behind data;
+The most important chart on the landing page should be historical/case-study evidence, not a generic hero illustration.
+
+## 14. Architecture diagrams
+
+Use simple boxes, connectors, labels, and small product-native outputs.
+
+Good:
+
+```text
+SDEX ─┐
+AMM  ─┼─→ Keel Engine → Depth / Manipulation / Collateral / Flags
+Data ─┘                       ↓
+                         Dashboard / API / Backtest
+```
+
+Avoid blockchain-themed decorative illustrations, 3D chains, coins, globes, or network particles.
+
+## 15. Motion
+
+Motion should support product understanding:
+- 120–220ms interaction transitions;
+- subtle hover/focus movement;
+- optional lightweight reveal transitions;
+- no continuously animated risk numbers;
+- no background particle systems;
 - respect `prefers-reduced-motion`.
 
-## 13. Accessibility baseline
+Do not use “restrained motion” as an excuse for a completely static, lifeless page. Small purposeful interaction is welcome.
 
-- Target WCAG 2.2 AA.
-- Visible keyboard focus for every interactive element.
-- Minimum 44×44px touch targets where practical.
-- Risk state includes text, not color only.
-- Charts require nearby text/table equivalents for critical information.
-- Tooltips cannot be the only place a critical explanation exists.
-- Do not use placeholder text as a field label.
+## 16. Accessibility
 
-## 14. Voice & copy
+Target WCAG 2.2 AA.
 
-Tone: concise, precise, calm.
+- visible keyboard focus;
+- 44×44px touch targets where practical;
+- risk includes text;
+- chart critical information has textual/table equivalent;
+- tooltips are supplementary, not exclusive;
+- readable body size;
+- reduced motion supported;
+- semantic headings remain logical even when visual composition varies.
 
-Prefer:
-- “No executable price was found.”
-- “6 high/critical checks were not evaluated.”
+## 17. Voice & copy
+
+Tone:
+- concise;
+- precise;
+- technically confident;
+- direct;
+- never alarmist.
+
+Prefer concrete product language:
+- “Executable depth at ±5%: 194,820 XLM.”
+- “Holder concentration was not evaluated.”
 - “This result is reconstructed from posted offers.”
+- “The target is reachable at low cost.”
 
-Avoid:
-- “Danger!!!”
+Avoid empty fintech language:
+- “unlock powerful insights”;
+- “next-generation risk intelligence”;
+- “revolutionary market safety”.
+
+Avoid absolute claims:
 - “Safe asset.”
 - “Guaranteed.”
 - “Keel prevented the exploit.”
 
-Keel is a proof-of-concept risk instrument. Copy should distinguish observed evidence from inference.
+## 18. Visual QA questions
 
+Before accepting a major page, ask:
+
+1. Does the page show a real-looking Keel product object above the fold?
+2. Could this design belong to any generic fintech startup if the logo were replaced?
+3. Are there enough Keel-specific objects: depth, flags, collateral, source, provenance, API, historical evidence?
+4. Does every section use the same composition? If yes, redesign the rhythm.
+5. Is body/product text readable, or are headings consuming all visual attention?
+6. Does whitespace create focus or simply make the page empty?
+7. Does the case study show evidence, not only narrative text?
+8. Is uncertainty visible without making the UI look broken?
+
+The page is successful when its strongest visual elements could only plausibly belong to Keel.
