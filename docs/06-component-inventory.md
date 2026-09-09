@@ -1,10 +1,10 @@
-# Keel Frontend — Initial Component Inventory
+# Keel Frontend — Component Inventory
 
-Build only what the first pages require. Reuse should emerge from real screens, not from trying to invent a complete design system before implementation.
+Build abstractions from real screens. The revised landing page should reuse Keel domain semantics instead of inventing a separate marketing-only visual language.
 
 ## 1. UI primitives
 
-Likely from shadcn/Radix or small custom components:
+Likely small custom components or Radix/shadcn primitives as needed:
 
 - `Button`
 - `LinkButton`
@@ -17,9 +17,12 @@ Likely from shadcn/Radix or small custom components:
 - `Skeleton`
 - `Separator`
 - `Alert`
-- `Dialog` only if needed for explanations/copyable raw details
+- `CodeBlock`
+- `Dialog` only if a real explanation/raw-data interaction requires it
 
-## 2. Layout / marketing
+Do not bulk-install a UI kit.
+
+## 2. Layout / site components
 
 - `SiteHeader`
 - `MobileNav`
@@ -27,19 +30,18 @@ Likely from shadcn/Radix or small custom components:
 - `Section`
 - `SectionEyebrow`
 - `SiteFooter`
-- `Hero`
-- `MetricExplainerCard`
-- `HowItWorksFlow`
-- `CaseStudyTeaser`
-- `ProofPoint`
+- `DarkTechnicalSection`
+- `ResponsiveProductFrame`
 
-## 3. Keel domain components
+The purpose of layout components is consistency, not forcing every section into the same structure.
+
+## 3. Core Keel domain components
 
 ### `AssetIdentity`
 
 Displays:
-- code;
-- issuer (truncated visually);
+- asset code;
+- issuer;
 - quote pair;
 - copy affordance for full ID.
 
@@ -50,37 +52,33 @@ Input:
 - `bandConfidence`.
 
 Must support:
-- LOW/MEDIUM/HIGH/CRITICAL;
-- full/partial;
-- text + semantic icon, not color-only.
+- LOW / MEDIUM / HIGH / CRITICAL;
+- full / partial;
+- text + semantic indication, never color only.
 
 ### `FlagList`
 
-Separate groups:
+Groups:
 - Triggered;
-- Not evaluated.
-
-Do not show unevaluated items as cleared.
+- Not evaluated;
+- optional evaluated/clear summary when useful.
 
 ### `DataSourceBadge`
 
-Input:
+Supports:
 - horizon;
 - hubble;
 - offers-implied;
 - trades-implied.
 
-`trades-implied` should trigger visible lower-bound language.
-
 ### `MetricValue`
 
 Responsibilities:
 - exact decimal formatting;
-- unit;
+- quote unit;
 - null handling;
-- optional source/status hint.
-
-Avoid ad hoc number formatting across pages.
+- optional source/status hint;
+- tabular numeric treatment.
 
 ### `DepthLadder`
 
@@ -89,33 +87,49 @@ Rows:
 - ±5%;
 - ±10%.
 
-Columns:
+Columns/modes:
 - buy side;
 - sell side;
+- compact headline value;
 - optional SDEX/AMM breakdown.
+
+Must support a compact marketing-preview variant without changing semantics.
+
+### `LiquiditySourceBreakdown`
+
+Displays SDEX and AMM contribution when derivable from backend values.
+
+Possible representations:
+- horizontal stacked bar;
+- paired bars;
+- exact amount + percentage.
+
+Never invent percentages.
 
 ### `DepthChart`
 
-Visualizes depth without replacing the exact table.
+Visual depth evidence. Must not replace exact values/table.
 
 ### `ManipulationRungs`
 
-Renders target delta, target price, cost, and reachability together.
+Renders:
+- target delta;
+- target price when relevant;
+- cost;
+- reachability.
 
 ### `SafeCollateralCard`
 
-Displays maximum safe collateral prominently with quote unit and a short explanation.
+Displays max safe collateral prominently with quote unit and concise explanation.
 
 ### `PriceHealth`
 
 Displays:
 - reference price/source;
-- pool spot price if present;
+- pool spot price when present;
 - spread;
-- divergence;
+- source divergence;
 - conflict/extreme state.
-
-Must support a “price is not reliable” presentation.
 
 ### `SupportingMetrics`
 
@@ -125,46 +139,157 @@ Displays:
 - HHI;
 - volume-to-supply;
 - last genuine trade;
-- excluded trade percentage.
+- excluded-trade percentage.
 
-Must gracefully handle `null` and not-yet-evaluated values.
+### `ProvenanceStrip`
+
+Compact presentation of:
+- ledger;
+- methodology version;
+- source;
+- confidence;
+- computed time where useful.
+
+This should be reusable on landing previews and detailed pages.
 
 ### `ProvenancePanel`
 
-Displays:
+Expanded version for asset detail:
 - ledger;
 - timestamps;
 - methodology version;
-- data source;
-- live staleness;
-- warnings.
+- source;
+- staleness;
+- warnings;
+- reconstruction note.
 
 ### `RiskFindingCallout`
 
-Human-readable summary such as:
+Human-readable explanation derived from backend flags.
 
-```text
-Critical: the market has zero executable depth within 2% on one side.
-```
+Do not create a new frontend risk model.
 
-This is a UI interpretation layer, not a new methodology layer. Copy must derive from existing flags and never invent a new risk classification.
+## 4. Landing-page components
 
-## 4. Page-level components
+The previous inventory was too generic and produced an explanatory/editorial page. Replace it with product-led sections.
 
-### Landing
+### `HeroProductPreview`
 
-- `HeroDepthVisual`
-- `PriceVsLiquidityComparison`
-- `MetricExplainerGrid`
-- `ExplainableRiskDemo`
-- `CaseStudyPreview`
+Purpose:
+- show a believable Keel result above the fold.
+
+Uses/reuses:
+- `AssetIdentity`;
+- `RiskBadge`;
+- compact `DepthLadder`;
+- `LiquiditySourceBreakdown`;
+- `SafeCollateralCard` or compact equivalent;
+- `ProvenanceStrip`.
+
+Do not rebuild these semantics as arbitrary decorative markup if shared domain components already exist.
+
+### `PriceLiquidityComparison`
+
+Purpose:
+- explain same price / different depth.
+
+May use:
+- simple horizontal bars;
+- redesigned deep/thin curve visualization.
+
+This is an explainer, not the main product preview.
+
+### `MarketSnapshot`
+
+Purpose:
+- preview the monitored-asset dashboard.
+
+Desktop:
+- compact table.
+
+Mobile:
+- `AssetRiskCard` stack.
+
+Fields:
+- asset/quote;
+- risk + confidence;
+- 5% depth;
+- safe collateral;
+- key flags/count.
+
+### `MetricBento`
+
+Purpose:
+- demonstrate core Keel capabilities with asymmetric hierarchy.
+
+Modules:
+- dominant depth module;
+- manipulation module;
+- safe collateral module;
+- risk module;
+- optional supporting-signal strip.
+
+Avoid four equal feature cards.
+
+### `ArchitectureFlow`
+
+Purpose:
+- show market data → Keel engine → outputs/surfaces.
+
+Should use CSS/SVG connectors and semantic labels, not generic numbered process cards.
+
+### `ExplainableRiskDemo`
+
+Purpose:
+- show triggered and unevaluated states as real product UI.
+
+Should be visually substantial, not a tiny supporting card.
+
+### `ApiPreview`
+
+Purpose:
+- establish developer/infrastructure credibility.
+
+Contains:
+- current request path;
+- contract-compatible response subset;
+- read-only note;
+- OpenAPI CTA.
+
+### `BlendCasePreview`
+
+Purpose:
+- show historical evidence with an event marker.
+
+Contains:
+- historical chart;
+- source/reconstruction note;
+- incident marker;
+- concise interpretation;
+- case-study CTA.
+
+### `EvidenceStrip`
+
+Purpose:
+- show provenance as actual data rather than generic “Traceable / Reproducible / Read-only” marketing claims.
+
+### `FinalCta`
+
+Brand-coherent CTA surface.
+
+### `SiteFooter`
+
+Footer links + PoC/no-SLA/read-only disclaimer.
+
+## 5. Product-page components
 
 ### Asset overview
 
 - `AssetRiskTable`
-- `AssetRiskCard` (mobile)
+- `AssetRiskCard`
 - `RiskFilters`
 - `AssetSearch`
+- `MarketSummaryBar` when useful
 
 ### Asset detail
 
@@ -172,34 +297,85 @@ This is a UI interpretation layer, not a new methodology layer. Copy must derive
 - `RiskSummary`
 - `DepthSection`
 - `ManipulationSection`
+- `PriceHealthSection`
 - `SupportingMetricsSection`
 - `HistorySection`
+- `ProvenancePanel`
 
 ### Case study
 
-- `IncidentTimeline`
-- `EventMarker`
 - `HistoricalRiskChart`
+- `IncidentMarker`
 - `EvidenceCallout`
+- `ReconstructionNotice`
 - `MethodologyLimitations`
+- `EvidenceLinks`
 
-## 5. Component API rule
+### Methodology
 
-Components should receive backend-shaped data or small explicit derived view models.
+- `MethodologyMetricExplainer`
+- `WorkedMetricExample`
+- `RiskBandExplanation`
+- `DataSourceHierarchy`
 
-Avoid creating a giant “normalized frontend Keel model” that silently changes backend semantics.
+## 6. Component hierarchy rule
+
+Marketing pages should compose domain components where practical.
 
 Good:
+
+```text
+HeroProductPreview
+  ├─ RiskBadge
+  ├─ DepthLadder
+  ├─ LiquiditySourceBreakdown
+  └─ ProvenanceStrip
+```
+
+Less desirable:
+
+```text
+HeroProductPreview
+  └─ 150 lines of one-off spans that imitate the product
+```
+
+The goal is for the landing page and dashboard to feel like one product, not two unrelated sites.
+
+## 7. Component API rule
+
+Prefer exact backend semantics:
 
 ```text
 RiskBadge({ band, bandConfidence })
 ```
 
-Bad:
+Avoid lossy abstractions:
 
 ```text
 RiskBadge({ safe: boolean })
 ```
 
-The latter throws away the exact meaning Keel worked to preserve.
+Prefer small explicit view models only when they preserve meaning and simplify composition.
 
+## 8. Visual uniqueness rule
+
+Before creating a new marketing component, ask:
+
+> Does this component contain something recognizably Keel-specific?
+
+Strong answers:
+- depth;
+- risk finding;
+- collateral;
+- market source;
+- API data;
+- provenance;
+- historical evidence.
+
+Weak answers:
+- generic feature card;
+- generic icon + heading;
+- generic three-step card;
+- decorative gradient box.
+
+Prefer strong answers.
