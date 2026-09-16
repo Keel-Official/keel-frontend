@@ -47,6 +47,7 @@ curl -sI -H 'Origin: http://localhost:3000' \
 | `pnpm check:contract-upstream` | fail if the vendored contract differs from the backend's copy (local only) |
 | `pnpm check:no-float-math` | fail on `parseFloat`, `Number(`, or browser storage outside the geometry allowlist |
 | `pnpm smoke:api` | send one request per endpoint through the typed client and print what came back |
+| `pnpm test` | unit tests for the formatting layer |
 | `pnpm mock` | Prism, static mode, on port 4010 |
 | `pnpm check:mock-states` | assert the mock still serves every display state the UI handles |
 
@@ -94,6 +95,44 @@ curl -H 'Prefer: example=bukuRusak' localhost:4010/asset/XLM/depth
 on — 35 assertions covering, among others, that the no-price case answers 200 rather
 than an error, and that the broken book carries both a `cost: "0"` that **is**
 reachable and rungs that are not.
+
+## The formatting layer
+
+`lib/format/` is the only place a value from the API is turned into something a
+component renders. It is unit tested first, because it is where a float would sneak in
+if one ever did.
+
+| Module | Responsibility |
+|---|---|
+| `value.ts` | classifies a field into one of four states |
+| `decimal.ts` | display formatting by string manipulation only |
+| `compare.ts` | exact ordering of decimal strings, for sortable columns |
+| `cost.ts` | the `cost` + `reachable` pair as one value |
+| `flags.ts` | triggered against unevaluated, and data-source provenance |
+
+**Four states, never collapsed.** `classify()` returns `absent`, `unknown`, `zero`, or
+`present`. A computed `"0"` is a finding about the asset; `null` means the engine could
+not compute one. `isMeasured()` is true for the first two and false for the others.
+
+**Truncated, never rounded.** `formatDecimal()` slices fraction digits and returns
+`truncated: true` when it dropped any, alongside the untouched `exact` string. Rounding
+was rejected because carrying a digit is arithmetic and would show more than the engine
+computed. Truncation is not safe either — it shows less — which is why a caller that
+drops digits is required to mark it and keep `exact` reachable.
+
+**No decimal library.** Sorting a column needs ordering, not arithmetic, and two plain
+decimal strings can be ordered exactly by comparing their digits.
+`compareDecimalStrings()` does that, and is tested against pairs a double collapses,
+including 2^53 against 2^53 + 1. Carrying `decimal.js` would put `.toNumber()` one
+keystroke away in every file that sorts a column, which `pnpm check:no-float-math`
+exists to prevent; the guard bans `.toNumber(` for the same reason.
+
+**Unmeasured values sort last in both directions.** An asset whose collateral ceiling
+could not be computed is not the safest in the table, and not the riskiest either.
+Sorting it to either end would state something the engine did not.
+
+**An empty `flags` array is not a pass.** `assessFlags()` returns `clear` only when
+nothing fired *and* nothing went unevaluated; otherwise `incomplete` or `triggered`.
 
 ## Three wire states, not two
 

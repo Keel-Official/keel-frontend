@@ -49,6 +49,12 @@ const RULES: readonly Rule[] = [
     geometryMayUse: true,
   },
   {
+    name: '.toNumber(',
+    pattern: /\.toNumber\s*\(/,
+    reason: 'a decimal type converted back to a float is a float',
+    geometryMayUse: true,
+  },
+  {
     name: 'localStorage',
     pattern: /\blocalStorage\b/,
     reason: 'no browser storage: there is no user state to persist',
@@ -65,7 +71,7 @@ const RULES: readonly Rule[] = [
 function trackedSourceFiles(): string[] {
   const out = execFileSync(
     'git',
-    ['ls-files', '--cached', '--others', '--exclude-standard', '--', 'app', 'components', 'lib', 'hooks', 'scripts'],
+    ['ls-files', '--cached', '--others', '--exclude-standard', '--', 'app', 'components', 'lib', 'hooks', 'scripts', 'tests'],
     { encoding: 'utf8' },
   );
   return out

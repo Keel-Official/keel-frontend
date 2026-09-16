@@ -13,10 +13,11 @@
     "smoke:api": "node scripts/smoke-api.mts",
     "check:contract": "node scripts/check-contract.mts",
     "check:no-float-math": "node scripts/check-no-float-math.mts",
-    "check": "pnpm typecheck && pnpm lint && pnpm check:contract && pnpm check:no-float-math",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm check:contract && pnpm check:no-float-math",
     "check:contract-upstream": "node scripts/check-contract-upstream.mts",
     "mock": "prism mock docs/api/keel-openapi.yaml -p 4010",
-    "check:mock-states": "node scripts/check-mock-states.mts"
+    "check:mock-states": "node scripts/check-mock-states.mts",
+    "test": "vitest run"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -40,7 +41,8 @@
     "eslint-config-next": "16.3.4",
     "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.1"
   },
   "packageManager": "pnpm@11.25.0",
   "license": "MIT"
