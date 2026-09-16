@@ -198,6 +198,15 @@ function AssetRiskView({
         title="What would it cost to move the price?"
         standfirst="Read cost together with reachability: a figure on an unreachable rung says how far the book goes, not what the move costs."
       >
+        {spreadExtreme ? (
+          <Notice
+            className="mb-4"
+            tone="problem"
+            title="Every target price below is measured from the same unreliable mid"
+            detail="SPREAD_EXTREME is triggered. A target price is the mid price moved by the delta, so when the mid sits between quotes that are far apart, the targets describe a market that is not there. Reachability and the furthest price the book reaches are the readings that still mean something here."
+          />
+        ) : null}
+
         <ManipulationTable
           combined={risk.manipulationCostCombined}
           orderbookOnly={risk.manipulationCostOrderbookOnly}
@@ -210,6 +219,19 @@ function AssetRiskView({
           The order-book-only column is the one that answers whether a target is
           attainable, and it is the one Keel itself uses.
         </p>
+
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+            How far the book actually goes
+          </h3>
+          {/*
+            The ceiling of the ladder above. When the order book runs out before any of
+            the four deltas is reached, these two say where it ran out and what getting
+            there costs — which is the only figure on the page that describes the end of
+            the book rather than a target.
+          */}
+          <FigureList className="mt-3" rows={reachRows(risk, quoteCode)} />
+        </div>
 
         <div className="mt-6">
           <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
@@ -335,6 +357,47 @@ function priceRows(
       note: priceConflict
         ? 'PRICE_SOURCE_CONFLICT is triggered: the two sources disagree past the threshold and the pool was taken'
         : 'Null means there is no pool to diverge from, not that the sources agree',
+    },
+  ];
+}
+
+/**
+ * The furthest the order book reaches, and what reaching it costs.
+ *
+ * Both are null for a structural reason whenever an active pool exists: under a
+ * constant product curve the price tends to infinity as the base reserve tends to
+ * zero, so every target is reachable and a highest price has no meaning. The engine
+ * says exactly that in `warnings`, which is rendered above. That null is therefore not
+ * a gap in the measurement, and the note says so rather than leaving "not computed" to
+ * be read as a failure.
+ *
+ * They carry real figures in the case they were built for: a book with one ask and one
+ * bid far apart, where the deltas are unreachable and the only honest answer to "how
+ * far can this be pushed" is the top of the book.
+ */
+function reachRows(risk: AssetRisk, quoteCode: string): FigureRow[] {
+  const pooled = risk.poolSpotPrice !== null && risk.poolSpotPrice !== undefined;
+
+  const structuralNote = pooled
+    ? 'Null by structure, not by failure: an active pool means every target is reachable and a highest price has no meaning'
+    : 'The highest price the order book can be walked to';
+
+  return [
+    {
+      key: 'maxReachablePrice',
+      label: 'Furthest price the book reaches',
+      value: classify(risk.maxReachablePrice, quoteCode),
+      maxFractionDigits: 8,
+      note: structuralNote,
+    },
+    {
+      key: 'costToMaxReachablePrice',
+      label: 'Cost to walk it that far',
+      value: classify(risk.costToMaxReachablePrice, quoteCode),
+      maxFractionDigits: 2,
+      note: pooled
+        ? 'Null for the same reason as the price above'
+        : 'What it costs to consume the book up to that price',
     },
   ];
 }
