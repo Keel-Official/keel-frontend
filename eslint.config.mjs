@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     '.artifacts/**',
     'test-results/**',
     'playwright-report/**',
+    // keel-web is a separate app with its own flat config.
+    'keel-web/**',
   ]),
 ]);
 
