@@ -50,17 +50,30 @@ export function BandSegments({ band, confidence, className }: BandSegmentsProps)
               key={candidate}
               aria-current={active ? 'true' : undefined}
               className={cn(
-                'flex-1 border-r border-[var(--keel-border-strong)] px-2 py-1.5 text-center text-xs last:border-r-0',
+                'flex-1 border-r border-[var(--keel-border-strong)] last:border-r-0',
                 active ? 'font-semibold' : 'text-[var(--keel-muted)]',
               )}
               style={
                 active
-                  ? { backgroundColor: candidateToken.mark, color: '#ffffff' }
+                  ? { backgroundColor: candidateToken.surface, color: candidateToken.ink }
                   : { backgroundColor: 'var(--keel-surface)' }
               }
             >
-              {candidateToken.label}
-              {active ? <span className="sr-only"> — this asset</span> : null}
+              {/*
+                The hue rides on a solid bar, not behind the label. White on the band
+                mark measures 3.35:1 for LOW and 1.83:1 for MEDIUM, so a label set on
+                the mark is unreadable for three of the four bands. The tint carries the
+                text at 5.2:1 or better and the bar above it carries the colour.
+              */}
+              <span
+                aria-hidden="true"
+                className="block h-1.5 w-full"
+                style={{ backgroundColor: active ? candidateToken.mark : 'transparent' }}
+              />
+              <span className="block px-2 py-1.5 text-center text-xs">
+                {candidateToken.label}
+                {active ? <span className="sr-only"> — this asset</span> : null}
+              </span>
             </li>
           );
         })}

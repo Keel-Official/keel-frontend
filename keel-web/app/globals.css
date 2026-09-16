@@ -202,7 +202,7 @@
    * the risk scale or on the sequential ramp. It gets a neutral plus the hatch below,
    * so it stays distinguishable in greyscale, in print, and in forced-colors mode.
    */
-  --unmeasured: #7b8b93;
+  --unmeasured: #626f77;
   --unmeasured-surface: #f1f3f4;
 
   /*

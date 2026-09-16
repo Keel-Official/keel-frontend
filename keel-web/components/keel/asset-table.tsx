@@ -40,7 +40,7 @@ export function AssetTable({ items, query }: AssetTableProps) {
   return (
     <>
       {/* Desktop */}
-      <div className="hidden overflow-x-auto rounded-lg border border-[var(--keel-border)] md:block">
+      <div className="relative hidden overflow-x-auto rounded-lg border border-[var(--keel-border)] md:block">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)]">

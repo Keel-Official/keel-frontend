@@ -143,8 +143,10 @@ function Term({
         )}
       >
         {children}
+        {/* Inside the dd: a div within a dl may contain only dt and dd, so a
+            sibling paragraph makes the definition list invalid. */}
+        <p className="mt-1 text-xs font-normal text-[var(--keel-muted)]">{detail}</p>
       </dd>
-      <p className="mt-1 text-xs text-[var(--keel-muted)]">{detail}</p>
     </div>
   );
 }

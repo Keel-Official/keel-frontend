@@ -84,6 +84,12 @@ describe('sortHref', () => {
     expect(sortHref(query, 'depth')).toContain('dir=desc');
   });
 
+  it('names the sort column even when it is the default one', () => {
+    // Otherwise a shared link reads `?dir=desc` with nothing saying what it orders.
+    const query = parseAssetQuery({});
+    expect(sortHref(query, 'band')).toBe('/?sort=band&dir=desc');
+  });
+
   it('starts a new column ascending, so the first click is predictable', () => {
     const query = parseAssetQuery({ sort: 'depth', dir: 'desc' });
     expect(sortHref(query, 'collateral')).toBe('/?sort=collateral');

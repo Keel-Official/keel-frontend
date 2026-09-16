@@ -73,10 +73,12 @@ export function KpiStrip({ items, className }: KpiStripProps) {
             ) : (
               <span className="tabular text-xl">{item.text}</span>
             )}
+            {/* Inside the dd: a div within a dl may contain only dt and dd, so a
+                sibling paragraph makes the definition list invalid. */}
+            {item.note ? (
+              <p className="mt-1 text-xs text-[var(--keel-muted)]">{item.note}</p>
+            ) : null}
           </dd>
-          {item.note ? (
-            <p className="mt-1 text-xs text-[var(--keel-muted)]">{item.note}</p>
-          ) : null}
         </div>
       ))}
     </dl>

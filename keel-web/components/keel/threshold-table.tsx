@@ -24,7 +24,7 @@ export interface ThresholdTableProps {
 
 export function ThresholdTable({ groups, className }: ThresholdTableProps) {
   return (
-    <div className={cn('overflow-x-auto rounded-lg border border-[var(--keel-border)]', className)}>
+    <div className={cn('relative overflow-x-auto rounded-lg border border-[var(--keel-border)]', className)}>
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">
           Every threshold served by the methodology endpoint, with the asset a figure is

@@ -92,8 +92,11 @@ export function assetHref(query: AssetQuery, patch: Partial<AssetQuery> = {}): s
   if (next.band !== null) params.set('band', next.band);
   if (next.hasFlag !== null) params.set('hasFlag', next.hasFlag);
   if (next.q !== '') params.set('q', next.q);
-  if (next.sort !== DEFAULT_QUERY.sort) params.set('sort', next.sort);
-  if (next.dir !== DEFAULT_QUERY.dir) params.set('dir', next.dir);
+  // The sort column is written whenever the direction is not the default, so a
+  // shared link never reads `?dir=desc` with nothing saying what it orders.
+  const dirDiffers = next.dir !== DEFAULT_QUERY.dir;
+  if (next.sort !== DEFAULT_QUERY.sort || dirDiffers) params.set('sort', next.sort);
+  if (dirDiffers) params.set('dir', next.dir);
 
   const search = params.toString();
   return search === '' ? '/' : `/?${search}`;

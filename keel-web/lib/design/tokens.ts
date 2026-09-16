@@ -110,7 +110,7 @@ export const SEQUENTIAL_RAMP: readonly string[] = [
  * besides colour, for greyscale, print, and forced-colors.
  */
 export const UNMEASURED_TOKEN = {
-  mark: '#7b8b93',
+  mark: '#626f77',
   surface: '#f1f3f4',
   hatchClassName: 'keel-hatch-unmeasured',
   icon: 'circle-dashed',

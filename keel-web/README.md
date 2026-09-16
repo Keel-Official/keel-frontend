@@ -134,6 +134,53 @@ Sorting it to either end would state something the engine did not.
 **An empty `flags` array is not a pass.** `assessFlags()` returns `clear` only when
 nothing fired *and* nothing went unevaluated; otherwise `incomplete` or `triggered`.
 
+## Accessibility and layout
+
+`pnpm test:e2e` runs axe, keyboard operation, and a 360px layout pass against the
+contract mock. It runs in CI.
+
+The mock rather than the live API, for two reasons. The live set changes between runs,
+so an assertion about it is a flake waiting to happen. And the states where
+accessibility actually gets hard — an unmeasured value, a band that colour cannot
+carry, a check that could not be evaluated — are mostly unreachable from live data.
+
+What the suite holds to:
+
+- No serious or critical axe violation on any route, in the healthy, no-price,
+  broken-book and pool-only states.
+- The ledger and the methodology version are on screen on every page.
+- A band is never carried by colour alone.
+- An unmeasured value says so rather than showing a zero.
+- Mock data is labelled as mock data in the page itself.
+- The first tab stop skips to the content, and focus is visible on every control.
+- The table can be sorted and filtered with the keyboard, and the result is a URL.
+- No page scrolls sideways at 360px.
+- Motion is suppressed under `prefers-reduced-motion`.
+
+Three defects it caught, all found rather than assumed:
+
+1. `--unmeasured` was `#7b8b93`, which measures 3.43:1 against the page surface and
+   needs 4.5:1. The band inks and neutrals had been contrast-checked when the tokens
+   were written; this one had not. It is now `#626f77` at 5.03:1.
+2. Several `<dl>` elements were invalid: a `<div>` inside a definition list may contain
+   only `<dt>` and `<dd>`, and a sibling `<p>` note broke that. The notes moved inside
+   the `<dd>`.
+3. The band segment set white text on the band hue, which measures 3.35:1 for LOW and
+   1.83:1 for MEDIUM. The hue now rides on a solid bar above the label and the label
+   sits on the band tint, which clears 5.2:1 for all four.
+
+### One non-obvious rule
+
+A scroll wrapper around a wide table must also be `relative`.
+
+An absolutely positioned element is not clipped by an ancestor's `overflow` unless that
+ancestor is its containing block. Every figure carries an absolutely positioned
+screen-reader note, so without a positioned wrapper those notes resolve against the
+viewport, sit at the x offset they would have had inside a 434px table, and widen the
+whole page at 360px — while the table itself scrolls correctly and every ancestor
+reports `scrollWidth === clientWidth`. The page overflows and nothing visible is out of
+place.
+
 ## Three wire states, not two
 
 Fourteen fields on `AssetRisk` are both optional and nullable, including the headline

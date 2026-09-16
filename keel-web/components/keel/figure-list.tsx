@@ -75,10 +75,12 @@ export function FigureList({ rows, columns = 2, className }: FigureListProps) {
             ) : (
               <span className="tabular">{row.text}</span>
             )}
+            {/* Inside the dd, not beside it: a div within a dl may contain only dt
+                and dd, so a sibling <p> makes the list invalid. */}
+            {row.note ? (
+              <p className="mt-1 text-xs font-normal text-[var(--keel-muted)]">{row.note}</p>
+            ) : null}
           </dd>
-          {row.note ? (
-            <p className="mt-1 text-xs text-[var(--keel-muted)]">{row.note}</p>
-          ) : null}
         </div>
       ))}
     </dl>

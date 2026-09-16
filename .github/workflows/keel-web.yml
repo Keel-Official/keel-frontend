@@ -41,3 +41,8 @@ jobs:
       - run: pnpm check
 
       - run: pnpm build
+
+      # Accessibility, keyboard operation, and the 360px layout, against the contract
+      # mock rather than the live API so the run is deterministic.
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e

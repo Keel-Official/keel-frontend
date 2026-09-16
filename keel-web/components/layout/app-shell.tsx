@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { cn } from '@/lib/utils';
+
 import { Provenance } from '@/components/keel/provenance';
 import { SiteNav } from '@/components/layout/site-nav';
 
@@ -126,14 +128,21 @@ export function Section({
   className?: string;
 }) {
   return (
-    <section className={className}>
+    // min-w-0 on the section itself, not only on its content: a section is a child of
+    // the page's flex column, where min-width defaults to auto and refuses to shrink
+    // below the widest thing inside it. Without this the manipulation table widens the
+    // whole page at 360px instead of scrolling inside its own wrapper.
+    <section className={cn('min-w-0', className)}>
       <h2 className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]">
         {title}
       </h2>
       {standfirst ? (
         <div className="mt-1 max-w-3xl text-sm text-[var(--keel-muted)]">{standfirst}</div>
       ) : null}
-      <div className="mt-4">{children}</div>
+      {/* min-w-0 so a wide child — the manipulation table is 434px — scrolls inside
+          its own wrapper instead of widening the page. A flex item defaults to
+          min-width:auto and will not shrink below its content without this. */}
+      <div className="mt-4 min-w-0">{children}</div>
     </section>
   );
 }

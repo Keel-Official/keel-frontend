@@ -39,7 +39,13 @@ export function ManipulationTable({
   const orderbookByDelta = new Map(orderbookOnly.map((rung) => [rung.delta, rung]));
 
   return (
-    <div className={cn('overflow-x-auto rounded-lg border border-[var(--keel-border)]', className)}>
+    // `relative` is load-bearing, not decoration. Every figure in this table carries an
+    // absolutely positioned screen-reader note, and an absolutely positioned element is
+    // NOT clipped by an ancestor's overflow unless that ancestor is its containing
+    // block. Without a positioned wrapper those notes resolve against the viewport,
+    // sit at the x offset they would have had in a 434px-wide table, and widen the
+    // whole page at 360px even though the table itself scrolls correctly.
+    <div className={cn('relative overflow-x-auto rounded-lg border border-[var(--keel-border)]', className)}>
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">
           Cost to move the price by each delta, through all venues and through the order
