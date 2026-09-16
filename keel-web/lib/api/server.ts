@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { createTtlCache } from './ttl-cache';
+
 import {
   createKeelClient,
   readProvenance,
@@ -94,7 +96,37 @@ function transportFailure(cause: unknown): Fetched<never> {
   };
 }
 
+/**
+ * `/health` is the same answer for every visitor and only moves when a scan lands,
+ * roughly every fifteen minutes. Every page fetches it, so without this each page view
+ * costs two upstream requests instead of one.
+ *
+ * That matters because the API allows sixty requests a minute and every read here is
+ * made from the server, so the whole audience shares one budget. Two calls per view put
+ * the ceiling at thirty views a minute for the entire site; one call doubles it.
+ *
+ * Only a success is held, so an outage is visible immediately rather than kept for the
+ * length of the window, and so is the recovery.
+ *
+ * On a single server this is exact. On a serverless platform each instance keeps its
+ * own copy, so the saving is proportional to how much traffic an instance handles —
+ * still a real reduction, just not a guaranteed one.
+ */
+const healthCache = createTtlCache<Fetched<Health>>({
+  ttlMs: 15_000,
+  shouldCache: (result) => result.data !== null && result.failure === null,
+});
+
+/** Exposed so a test or a script can start from a known state. */
+export function clearHealthCache(): void {
+  healthCache.clear();
+}
+
 export async function fetchHealth(): Promise<Fetched<Health>> {
+  return healthCache.read(readHealth);
+}
+
+async function readHealth(): Promise<Fetched<Health>> {
   try {
     const client = createKeelClient();
     const result = await client.GET('/health', NO_CACHE);
