@@ -1,69 +1,93 @@
-import Image from "next/image";
+import { KpiStrip, type KpiItem } from '@/components/keel/kpi-strip';
+import { Notice } from '@/components/keel/notice';
+import { AppShell, PageHeader } from '@/components/layout/app-shell';
+import { fetchHealth } from '@/lib/api/server';
+import { classifyCount } from '@/lib/format/value';
 
-export default function Home() {
+/**
+ * Never prerendered. A build that cannot reach the API would otherwise bake its error
+ * state into static HTML and serve it forever, which no runtime recovery can undo, and
+ * a page that did prerender would freeze the ledger and staleness it was built with —
+ * the one thing this product exists to report accurately.
+ */
+export const dynamic = 'force-dynamic';
+
+export default async function AssetsPage() {
+  const health = await fetchHealth();
+
+  const items: KpiItem[] = [
+    {
+      key: 'assets',
+      label: 'Assets monitored',
+      value: classifyCount(health.data?.assetsMonitored),
+    },
+    {
+      key: 'ledger',
+      label: 'Latest scan ledger',
+      value: classifyCount(health.data?.latestScanLedgerSeq),
+    },
+    {
+      key: 'methodology',
+      label: 'Methodology',
+      text: health.data?.methodologyVersion ?? null,
+      note: 'Thresholds are served, never hardcoded here',
+    },
+    {
+      key: 'status',
+      label: 'Engine',
+      text: health.data?.status ?? null,
+      note:
+        health.data?.historicalAvailable === false
+          ? 'Historical replay unavailable on this deployment'
+          : undefined,
+    },
+  ];
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <AppShell
+      methodologyVersion={health.data?.methodologyVersion ?? health.provenance.methodologyVersion}
+      ledgerSeq={health.data?.latestScanLedgerSeq}
+      stalenessSeconds={health.provenance.stalenessSeconds}
+    >
+      <PageHeader title="Is this price backed by executable depth?">
+        <p>
+          An oracle answers what a Stellar asset is worth. Keel answers what volume that
+          price can actually support, and what it would cost to move it. Every figure on
+          this site is served by the engine; nothing is recomputed here.
+        </p>
+      </PageHeader>
+
+      {health.failure ? (
+        <Notice
+          tone="problem"
+          title={
+            health.failure.kind === 'transport'
+              ? 'The Keel API could not be reached'
+              : `The engine reported ${health.failure.code}`
+          }
+          detail={health.failure.message}
+        >
+          {health.failure.kind === 'transport' ? (
+            <p>
+              Set <code className="tabular">NEXT_PUBLIC_KEEL_API_URL</code> to the
+              contract mock on <code className="tabular">http://localhost:4010</code> or
+              to the live API, then reload.
+            </p>
+          ) : null}
+        </Notice>
+      ) : (
+        <KpiStrip items={items} />
+      )}
+
+      <section className="mt-8">
+        <h2 className="text-lg font-medium text-[var(--keel-ink-strong)]">
+          The monitored set
+        </h2>
+        <p className="mt-1 text-sm text-[var(--keel-muted)]">
+          The asset table, its filters, and the drill-down into each asset are not built
+          yet.
+        </p>
+      </section>
+    </AppShell>
   );
 }

@@ -153,17 +153,35 @@ Confirmed in the mock: the no-price example sends `maxSafeCollateral: null`, whi
 broken-book example sends `"0.0000000"`. Those are different findings and must not look
 alike.
 
-## Open blocker: CORS origin for the deployed dashboard
+## CORS: no longer a deployment blocker, with one condition
 
-Before this app is deployed anywhere, the deployment origin must be added to
-`KEEL_CORS_ORIGINS` in the Keel API production environment. That is a production change
-on the backend and is not made from this repository.
+Every read happens in a server component, so the browser never calls
+`api.keels.app` and the API's CORS allowlist does not gate the deployed dashboard.
+This was a blocker while the plan assumed client-side fetching; it is not one now.
 
-As of 16 September 2026 no public origin is allowed, including `https://keels.app`. A
-wildcard is refused at startup by design, so "allow `*`" is not available.
+The condition: the allowlist still gates anything that reads the API **from the
+browser**. If a control is ever built that fetches client-side, the deployment origin
+has to be added to `KEEL_CORS_ORIGINS` in the Keel API production environment first,
+which is a backend production change made by a person. As of 16 September 2026 no
+public origin is allowed, including `https://keels.app`, and a wildcard is refused at
+startup by design.
 
-**The deployment domain has not been decided yet.** Raise this with the operator before
-deploy day, not on it.
+Local development still runs on port 5173 because `pnpm smoke:api` and any future
+browser-side call need an allowed origin.
+
+## Never prerendered
+
+All three data routes set `export const dynamic = 'force-dynamic'`.
+
+This is not a performance preference. Without it, a build that cannot reach the API
+prerenders its **error state into static HTML and serves that forever** — verified: a
+build with no `NEXT_PUBLIC_KEEL_API_URL` baked "could not be reached" into
+`.next/server/app/index.html`, and no runtime recovery undoes a static file. A page
+that did prerender successfully would be worse: it would freeze the ledger sequence and
+staleness reading it was built with, which is the one thing this product exists to
+report accurately.
+
+Nothing is cached, for the same reason.
 
 ## The API
 
