@@ -12,6 +12,7 @@ import type {
   AssetListResponse,
   AssetRisk,
   Health,
+  HistoryResponse,
   KeelError,
   Methodology,
 } from './types';
@@ -226,10 +227,69 @@ export async function fetchDepth(
  * renders whatever comes back rather than a list this build knows about. No threshold
  * is written into this dashboard.
  */
+/**
+ * The methodology moves only when the engine is redeployed, and every page that shows
+ * a band has to show the service's own words about calibration alongside it. Without a
+ * cache that would be a third upstream call on every view.
+ */
+const methodologyCache = createTtlCache<Fetched<Methodology>>({
+  ttlMs: 300_000,
+  shouldCache: (result) => result.data !== null && result.failure === null,
+});
+
+export function clearMethodologyCache(): void {
+  methodologyCache.clear();
+}
+
 export async function fetchMethodology(): Promise<Fetched<Methodology>> {
+  return methodologyCache.read(readMethodology);
+}
+
+async function readMethodology(): Promise<Fetched<Methodology>> {
   try {
     const client = createKeelClient();
     const result = await client.GET('/methodology', NO_CACHE);
+    return {
+      data: result.data ?? null,
+      failure: toFailure(result.error),
+      status: result.response.status,
+      provenance: readProvenance(result.response),
+    };
+  } catch (cause) {
+    return transportFailure(cause);
+  }
+}
+
+/**
+ * The series behind the trend chart.
+ *
+ * This is NOT the historical replay path. `health.historicalAvailable` being false
+ * turns off `GET /asset/{id}/depth?ledger=`, which reconstructs a full risk result at a
+ * past ledger; this endpoint reads the stored series and answers today. Conflating the
+ * two hides a working chart behind a flag about a different feature.
+ *
+ * Coverage is as old as the deployment, which is days rather than months, so the caller
+ * picks a window it can actually fill and the chart labels itself from the points that
+ * came back rather than from the range that was asked for.
+ *
+ * One request is one `source`. The response names it in `dataSource`, and two sources
+ * are never drawn as one line: `trades-implied` is a lower bound rather than a
+ * measurement, and averaging it with a direct reading would present the weakest number
+ * in the range as the same kind of number as the strongest.
+ */
+export async function fetchHistory(
+  assetId: string,
+  range: { from: number; to: number; resolution: 'hour' | 'day' },
+): Promise<Fetched<HistoryResponse>> {
+  try {
+    const client = createKeelClient();
+    const result = await client.GET('/asset/{assetId}/history', {
+      ...NO_CACHE,
+      params: {
+        path: { assetId },
+        query: { from: range.from, to: range.to, resolution: range.resolution },
+      },
+    });
     return {
       data: result.data ?? null,
       failure: toFailure(result.error),
