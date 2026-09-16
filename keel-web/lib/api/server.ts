@@ -6,7 +6,13 @@ import {
   type KeelExampleName,
   type KeelProvenance,
 } from './client';
-import type { AssetListResponse, AssetRisk, Health, KeelError } from './types';
+import type {
+  AssetListResponse,
+  AssetRisk,
+  Health,
+  KeelError,
+  Methodology,
+} from './types';
 import type { Band, Flag } from '../format/flags';
 
 /**
@@ -170,6 +176,28 @@ export async function fetchDepth(
       ...NO_CACHE,
       params: { path: { assetId } },
     });
+    return {
+      data: result.data ?? null,
+      failure: toFailure(result.error),
+      status: result.response.status,
+      provenance: readProvenance(result.response),
+    };
+  } catch (cause) {
+    return transportFailure(cause);
+  }
+}
+
+/**
+ * The version and every threshold that produced the numbers.
+ *
+ * This is what lets a protocol apply its own thresholds instead of Keel's, so the page
+ * renders whatever comes back rather than a list this build knows about. No threshold
+ * is written into this dashboard.
+ */
+export async function fetchMethodology(): Promise<Fetched<Methodology>> {
+  try {
+    const client = createKeelClient();
+    const result = await client.GET('/methodology', NO_CACHE);
     return {
       data: result.data ?? null,
       failure: toFailure(result.error),
