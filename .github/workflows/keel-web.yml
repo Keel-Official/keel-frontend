@@ -1,0 +1,43 @@
+name: keel-web
+
+# Scoped to the dashboard app. The marketing site at the repository root has its own
+# toolchain and is not built here.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'keel-web/**'
+      - '.github/workflows/keel-web.yml'
+  pull_request:
+    paths:
+      - 'keel-web/**'
+      - '.github/workflows/keel-web.yml'
+
+defaults:
+  run:
+    working-directory: keel-web
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: keel-web/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # Types must be what the vendored contract generates, and no module outside the
+      # named geometry allowlist may turn a decimal string into a float. Both are
+      # build-failing: a rule enforced by a check is a rule.
+      - run: pnpm check
+
+      - run: pnpm build

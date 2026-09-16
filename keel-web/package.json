@@ -7,13 +7,20 @@
     "build": "next build",
     "start": "next start --port 5173",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "generate:api": "openapi-typescript docs/api/keel-openapi.yaml -o lib/api/schema.d.ts",
+    "smoke:api": "node scripts/smoke-api.mts",
+    "check:contract": "node scripts/check-contract.mts",
+    "check:no-float-math": "node scripts/check-no-float-math.mts",
+    "check": "pnpm typecheck && pnpm lint && pnpm check:contract && pnpm check:no-float-math",
+    "check:contract-upstream": "node scripts/check-contract-upstream.mts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
     "cn": "^0.3.0",
     "lucide-react": "^1.46.0",
     "next": "16.3.4",
+    "openapi-fetch": "^0.17.0",
     "radix-ui": "^1.6.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -27,6 +34,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

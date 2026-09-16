@@ -35,6 +35,21 @@ curl -sI -H 'Origin: http://localhost:3000' \
 # (no output — origin not allowed)
 ```
 
+## Commands
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | dev server on port 5173 |
+| `pnpm build` | production build |
+| `pnpm check` | typecheck, lint, contract drift, and the float/storage guard |
+| `pnpm generate:api` | regenerate `lib/api/schema.d.ts` from the vendored contract |
+| `pnpm check:contract` | fail if the committed types are not what the contract generates |
+| `pnpm check:contract-upstream` | fail if the vendored contract differs from the backend's copy (local only) |
+| `pnpm check:no-float-math` | fail on `parseFloat`, `Number(`, or browser storage outside the geometry allowlist |
+| `pnpm smoke:api` | send one request per endpoint through the typed client and print what came back |
+
+`pnpm check` is what CI runs, plus the build. See `.github/workflows/keel-web.yml`.
+
 ## Open blocker: CORS origin for the deployed dashboard
 
 Before this app is deployed anywhere, the deployment origin must be added to
@@ -65,6 +80,18 @@ alone: 97 distinct assets share the AQUA ticker.
 `GET /asset/{id}/depth?ledger=` returns **503 `HISTORICAL_UNAVAILABLE`** on this
 deployment, always. Do not build UI around that parameter.
 
+Two response headers are CORS-exposed and carry provenance:
+
+| Header | Present on |
+|---|---|
+| `X-Keel-Methodology-Version` | every endpoint |
+| `X-Keel-Staleness-Seconds` | `/assets` and `/asset/{id}/depth` only |
+
+Measured 16 September 2026: `/health` and `/methodology` do **not** carry the
+staleness header. A screen built on those two sources gets its staleness from
+`/health.latestScanAt` instead. `readProvenance()` in `lib/api/client.ts` returns
+`null` for an absent header rather than inventing a zero.
+
 ## Contract
 
 Types are generated from `../../keel-backend/docs/api/keel-openapi.yaml`, which is
@@ -73,8 +100,19 @@ version **1.6.1 (16 September 2026)**.
 Note that this is *not* the document published at
 `https://keels.app/evidence/keel-openapi.yaml`, which is still **1.5.0 (5 September
 2026)**. The two differ, and 1.6.1 carries corrections a consumer can act on — most
-importantly `manipulationRatioLowPct`, which reads `0.1` and not `1.0`. The generated
-types are committed so CI can detect drift.
+importantly `manipulationRatioLowPct`, which reads `0.1` and not `1.0`.
+
+The generated types are committed, and two separate drifts are checked:
+
+- `pnpm check:contract` — do the committed types still match the vendored contract?
+  Runs in CI, no network, build-failing.
+- `pnpm check:contract-upstream` — does the vendored contract still match the copy in
+  `keel-backend/docs/api/`? Local only, because the backend is not checked out in CI,
+  and a difference is a decision for a person rather than for a build step.
+
+The vendored copy is kept byte-identical to the backend's so that comparison means
+something. Do not edit it in place — including its `servers:` block, which still lists
+the placeholder `https://api.keel.example/v1` rather than the real base URL.
 
 ## Rules this codebase enforces
 
