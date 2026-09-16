@@ -18,7 +18,9 @@ import { execFileSync } from 'node:child_process';
 
 /** The single module permitted to turn a decimal string into a JS number. */
 const GEOMETRY_MODULE_ALLOWLIST: readonly string[] = [
-  // 'lib/chart/geometry.ts' — add when the geometry module lands.
+  // Pixel positions need numbers. Everything this module returns is a coordinate; no
+  // value it produces is ever shown to a reader.
+  'lib/chart/geometry.ts',
 ];
 
 interface Rule {

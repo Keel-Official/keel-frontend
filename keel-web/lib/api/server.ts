@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { createKeelClient, readProvenance, type KeelProvenance } from './client';
-import type { AssetListResponse, Health, KeelError } from './types';
+import type { AssetListResponse, AssetRisk, Health, KeelError } from './types';
 import type { Band, Flag } from '../format/flags';
 
 /**
@@ -126,6 +126,34 @@ export async function fetchAssets(filters: {
           ...(filters.hasFlag ? { hasFlag: filters.hasFlag } : {}),
         },
       },
+    });
+    return {
+      data: result.data ?? null,
+      failure: toFailure(result.error),
+      status: result.response.status,
+      provenance: readProvenance(result.response),
+    };
+  } catch (cause) {
+    return transportFailure(cause);
+  }
+}
+
+/**
+ * The full risk result for one asset.
+ *
+ * `priceSource: "none"` comes back as HTTP 200 with band CRITICAL. That is a finding,
+ * not an error, and it is the most dangerous state the engine can report — so it is
+ * returned as data here and must never be rendered as an error screen or an empty row.
+ *
+ * The `quote` parameter is omitted, which gives the primary pair. The methodology is
+ * explicit that the primary pair is USDC, always.
+ */
+export async function fetchDepth(assetId: string): Promise<Fetched<AssetRisk>> {
+  try {
+    const client = createKeelClient();
+    const result = await client.GET('/asset/{assetId}/depth', {
+      ...NO_CACHE,
+      params: { path: { assetId } },
     });
     return {
       data: result.data ?? null,
