@@ -1,0 +1,56 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+
+import { cn } from '@/lib/utils';
+
+/**
+ * Two destinations, because there are three routes and one of them is reached by
+ * clicking a row rather than a menu item.
+ *
+ * A top bar rather than a sidebar. The primary content is a wide table of sixty-one
+ * assets with a band, a confidence, two figures, and a flag count per row, and a
+ * sidebar spends horizontal space that the table needs. It also collapses to a drawer
+ * on a narrow screen, which is a control to build and test for two links.
+ */
+const LINKS = [
+  { href: '/', label: 'Assets' },
+  { href: '/methodology', label: 'Methodology' },
+] as const;
+
+export function SiteNav({ className }: { className?: string }) {
+  const pathname = usePathname();
+
+  return (
+    <nav aria-label="Primary" className={className}>
+      <ul className="flex items-center gap-1">
+        {LINKS.map((link) => {
+          // An asset detail page is reached from the table, so it keeps Assets marked.
+          const active =
+            link.href === '/'
+              ? pathname === '/' || pathname.startsWith('/asset/')
+              : pathname.startsWith(link.href);
+
+          return (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  'rounded-md px-3 py-1.5 text-sm transition-colors',
+                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
+                  active
+                    ? 'bg-[var(--keel-accent-soft)] font-medium text-[var(--keel-brand)]'
+                    : 'text-[var(--keel-muted)] hover:bg-[var(--keel-surface-subtle)] hover:text-[var(--keel-ink)]',
+                )}
+              >
+                {link.label}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}

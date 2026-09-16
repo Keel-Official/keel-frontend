@@ -1,0 +1,259 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Design tokens. See docs/decisions/001-design-tokens.md for the validator output
+ * behind every number here and for the alternatives that were rejected.
+ *
+ * Three families, and they do not mix:
+ *   - neutrals and brand, inherited from the marketing site so the two read as one product
+ *   - band, a reserved STATUS palette, never reused for a data series
+ *   - series and ramps, for charts
+ *
+ * There is no dark theme. One was not shipped rather than shipped unvalidated: a dark
+ * mode has to be selected deliberately from the same ramps and checked against the
+ * dark surface, not produced by flipping the light one.
+ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-jetbrains);
+  --font-heading: var(--font-manrope);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Band, as a status palette. Always paired with an icon and a text label. */
+  --color-band-low: var(--band-low);
+  --color-band-medium: var(--band-medium);
+  --color-band-high: var(--band-high);
+  --color-band-critical: var(--band-critical);
+  --color-band-low-ink: var(--band-low-ink);
+  --color-band-medium-ink: var(--band-medium-ink);
+  --color-band-high-ink: var(--band-high-ink);
+  --color-band-critical-ink: var(--band-critical-ink);
+  --color-band-low-surface: var(--band-low-surface);
+  --color-band-medium-surface: var(--band-medium-surface);
+  --color-band-high-surface: var(--band-high-surface);
+  --color-band-critical-surface: var(--band-critical-surface);
+
+  /* Venue series. Three slots, and there is no fourth. */
+  --color-venue-sdex: var(--venue-sdex);
+  --color-venue-amm: var(--venue-amm);
+  --color-venue-third: var(--venue-third);
+
+  /* Values the engine did not produce. Not a point on the risk scale. */
+  --color-unmeasured: var(--unmeasured);
+  --color-unmeasured-surface: var(--unmeasured-surface);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* --- Neutrals and brand, from the marketing site ---------------------- */
+  --keel-bg: #fbfcfc;
+  --keel-surface: #ffffff;
+  --keel-surface-subtle: #f1f6f5;
+  --keel-ink: #193440; /* 12.72:1 on --keel-bg */
+  --keel-ink-strong: #102d3b; /* 13.99:1 */
+  --keel-muted: #536a72; /* 5.56:1, clears AA for body text */
+  --keel-border: #dbe5e3;
+  --keel-border-strong: #c3d3d0;
+  --keel-brand: #102e3c;
+  --keel-brand-deep: #0b2430;
+  --keel-accent: #216c5d;
+  --keel-accent-soft: #e7f3ed;
+
+  /* --- shadcn contract, pointed at the Keel neutrals -------------------- */
+  --background: var(--keel-bg);
+  --foreground: var(--keel-ink);
+  --card: var(--keel-surface);
+  --card-foreground: var(--keel-ink);
+  --popover: var(--keel-surface);
+  --popover-foreground: var(--keel-ink);
+  --primary: var(--keel-brand);
+  --primary-foreground: #ffffff;
+  --secondary: var(--keel-surface-subtle);
+  --secondary-foreground: var(--keel-ink-strong);
+  --muted: var(--keel-surface-subtle);
+  --muted-foreground: var(--keel-muted);
+  --accent: var(--keel-accent-soft);
+  --accent-foreground: var(--keel-brand);
+  --destructive: #ae3737;
+  --border: var(--keel-border);
+  --input: var(--keel-border-strong);
+  --ring: var(--keel-accent);
+  --radius: 0.5rem;
+
+  --sidebar: var(--keel-surface-subtle);
+  --sidebar-foreground: var(--keel-ink);
+  --sidebar-primary: var(--keel-brand);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--keel-accent-soft);
+  --sidebar-accent-foreground: var(--keel-brand);
+  --sidebar-border: var(--keel-border);
+  --sidebar-ring: var(--keel-accent);
+
+  /*
+   * --- Band: a reserved status palette ----------------------------------
+   *
+   * Marks carry the validated hues. Labels do NOT: at 1.78:1 and 2.57:1 against the
+   * surface, medium and high are unreadable as text, so every band label wears an ink
+   * that clears AA while the mark beside it carries the hue.
+   *
+   * The four hues fail a categorical check on purpose. Medium against high measures a
+   * normal-vision delta E of 13.6, under the floor of 15, so colour alone cannot carry
+   * the distinction. The icon and the text label are the mitigation and are mandatory,
+   * not decorative.
+   */
+  --band-low: #0ca30c;
+  --band-medium: #fab219;
+  --band-high: #ec835a;
+  --band-critical: #d03b3b;
+
+  --band-low-ink: #24664f; /* 6.62:1 */
+  --band-medium-ink: #8a5c14; /* 5.64:1 */
+  --band-high-ink: #9a4b20; /* 6.01:1 */
+  --band-critical-ink: #ae3737; /* 6.01:1 */
+
+  --band-low-surface: #e6f3ea;
+  --band-medium-surface: #fff2d7;
+  --band-high-surface: #fff0e2;
+  --band-critical-surface: #fdf0ee;
+
+  /*
+   * --- Venue series: categorical ----------------------------------------
+   *
+   * Validated as a set: worst adjacent pair delta E 27.6 normal, 9.2 deutan. Three
+   * slots is the limit; a fourth puts yellow beside orange and fails separation.
+   * These are never used for a band, and a band hue is never used for a venue.
+   */
+  --venue-sdex: #2a78d6;
+  --venue-amm: #eb6834;
+  --venue-third: #1baf7a;
+
+  --chart-1: var(--venue-sdex);
+  --chart-2: var(--venue-amm);
+  --chart-3: var(--venue-third);
+  --chart-4: var(--keel-muted);
+  --chart-5: var(--keel-border-strong);
+
+  /*
+   * --- Sequential ramp: magnitude in a heatmap ---------------------------
+   *
+   * One hue, light to dark, strictly monotonic in luminance from 1.29:1 to 11.63:1.
+   * Blue, which puts step 450 on the same value as the SDEX series; that is the same
+   * design system rather than a collision, and the two never appear in one chart.
+   * A rainbow was rejected: hue is not ordered, so a reader cannot rank it.
+   */
+  --seq-100: #cde2fb;
+  --seq-150: #b7d3f6;
+  --seq-200: #9ec5f4;
+  --seq-250: #86b6ef;
+  --seq-300: #6da7ec;
+  --seq-350: #5598e7;
+  --seq-400: #3987e5;
+  --seq-450: #2a78d6;
+  --seq-500: #256abf;
+  --seq-550: #1c5cab;
+  --seq-600: #184f95;
+  --seq-650: #104281;
+  --seq-700: #0d366b;
+
+  /*
+   * --- Absent, unknown, and unevaluated ----------------------------------
+   *
+   * A value the engine did not produce is not a low value, so it never takes a step on
+   * the risk scale or on the sequential ramp. It gets a neutral plus the hatch below,
+   * so it stays distinguishable in greyscale, in print, and in forced-colors mode.
+   */
+  --unmeasured: #626f77;
+  --unmeasured-surface: #f1f3f4;
+
+  /*
+   * --- Confidence: orthogonal to band ------------------------------------
+   *
+   * bandConfidence is `partial` on every monitored asset today, so a loud marker on
+   * every row would be wallpaper rather than signal. It is carried as a quiet
+   * qualifier beside the band and stated in full on the detail view.
+   */
+  --confidence-partial: var(--keel-muted);
+  --confidence-full: var(--keel-ink);
+}
+
+/*
+ * Hatch for the unmeasured state. A second channel besides colour, so "the engine did
+ * not produce this" survives greyscale printing and forced-colors mode.
+ */
+.keel-hatch-unmeasured {
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--unmeasured-surface),
+    var(--unmeasured-surface) 3px,
+    color-mix(in srgb, var(--unmeasured) 22%, var(--unmeasured-surface)) 3px,
+    color-mix(in srgb, var(--unmeasured) 22%, var(--unmeasured-surface)) 6px
+  );
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* Ledgers, issuers, API paths, methodology versions, and exact figures. */
+  .tabular {
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

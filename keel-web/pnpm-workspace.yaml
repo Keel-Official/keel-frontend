@@ -1,0 +1,6 @@
+allowBuilds:
+  sharp: false
+  unrs-resolver: false
+  # Telemetry shipped with @stoplight/prism-cli. Denied rather than left undecided,
+  # so `pnpm install` stops failing the dependency check that precedes every script.
+  '@scarf/scarf': false

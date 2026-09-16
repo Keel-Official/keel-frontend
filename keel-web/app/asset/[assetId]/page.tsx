@@ -1,0 +1,461 @@
+import Link from 'next/link';
+
+import { BandSegments } from '@/components/keel/band-segments';
+import { CollateralCeilingPanel } from '@/components/keel/collateral-ceiling';
+import { DepthLadder } from '@/components/keel/depth-ladder';
+import { EngineWarnings } from '@/components/keel/engine-warnings';
+import { FigureList, type FigureRow } from '@/components/keel/figure-list';
+import { FlagGroups } from '@/components/keel/flag-groups';
+import { ManipulationTable } from '@/components/keel/manipulation-table';
+import { MethodologyBlock } from '@/components/keel/methodology-block';
+import { Notice } from '@/components/keel/notice';
+import { AppShell, PageHeader, Section } from '@/components/layout/app-shell';
+import {
+  isKeelExampleName,
+  mockSelectionAllowed,
+  type KeelExampleName,
+} from '@/lib/api/client';
+import { fetchDepth, fetchHealth } from '@/lib/api/server';
+import type { AssetRisk } from '@/lib/api/types';
+import { readCollateralCeiling } from '@/lib/format/collateral';
+import { truncateIssuer } from '@/lib/format/decimal';
+import { isLowerBound } from '@/lib/format/flags';
+import { classify, classifyCount } from '@/lib/format/value';
+
+/**
+ * Never prerendered. A build that cannot reach the API would otherwise bake its error
+ * state into static HTML and serve it forever, which no runtime recovery can undo, and
+ * a page that did prerender would freeze the ledger and staleness it was built with —
+ * the one thing this product exists to report accurately.
+ */
+export const dynamic = 'force-dynamic';
+
+export default async function AssetDetailPage({
+  params,
+  searchParams,
+}: PageProps<'/asset/[assetId]'>) {
+  // Route params arrive decoded, and the client percent-encodes the path segment again
+  // on the way out. Decoding here a second time would corrupt any id that ever carried
+  // a literal `%`, so the value is passed through as the router gives it.
+  const { assetId } = await params;
+  const example = readMockExample(await searchParams);
+
+  const [health, depth] = await Promise.all([fetchHealth(), fetchDepth(assetId, example)]);
+  const risk = depth.data;
+
+  return (
+    <AppShell
+      methodologyVersion={
+        risk?.methodologyVersion ??
+        health.data?.methodologyVersion ??
+        depth.provenance.methodologyVersion
+      }
+      ledgerSeq={risk?.ledgerSeq ?? health.data?.latestScanLedgerSeq}
+      stalenessSeconds={depth.provenance.stalenessSeconds}
+    >
+      {example ? (
+        <Notice
+          className="mb-6"
+          tone="problem"
+          title={`Showing the contract mock example "${example}", not live data`}
+          detail="Every figure below was served by the mock. Drop the mock parameter from the URL to read the engine."
+        />
+      ) : null}
+
+      <PageHeader title="What depth stands behind this price?">
+        {risk ? (
+          <p>
+            <span className="tabular font-medium text-[var(--keel-ink-strong)]">
+              {risk.asset.code}
+            </span>{' '}
+            against{' '}
+            <span className="tabular">{risk.quote.code}</span>
+            {risk.asset.issuer ? (
+              <>
+                {' · '}
+                <span className="tabular" title={risk.asset.issuer}>
+                  {truncateIssuer(risk.asset.issuer, 6)}
+                </span>
+              </>
+            ) : (
+              ' · native'
+            )}
+          </p>
+        ) : (
+          <p className="tabular break-all">{assetId}</p>
+        )}
+      </PageHeader>
+
+      {depth.failure ? (
+        <Notice
+          tone="problem"
+          title={
+            depth.failure.kind === 'transport'
+              ? 'The Keel API could not be reached'
+              : `The engine reported ${depth.failure.code}`
+          }
+          // Shown as served: `ASSET_NOT_MONITORED` covers both "not in the monitored
+          // set" and "monitored but not computed yet", and the message is the only
+          // thing that separates them.
+          detail={depth.failure.message}
+        >
+          {depth.failure.kind === 'transport' ? (
+            <p>
+              Set <code className="tabular">NEXT_PUBLIC_KEEL_API_URL</code> to the
+              contract mock on <code className="tabular">http://localhost:4010</code> or
+              to the live API, then reload.
+            </p>
+          ) : (
+            <p>
+              <Link className="underline underline-offset-2" href="/">
+                Back to the monitored set
+              </Link>
+            </p>
+          )}
+        </Notice>
+      ) : risk === null ? (
+        <Notice tone="empty" title="The engine returned no result for this asset" />
+      ) : (
+        <AssetRiskView risk={risk} historicalAvailable={health.data?.historicalAvailable} />
+      )}
+    </AppShell>
+  );
+}
+
+function AssetRiskView({
+  risk,
+  historicalAvailable,
+}: {
+  risk: AssetRisk;
+  historicalAvailable: boolean | undefined;
+}) {
+  const quoteCode = risk.quote.code;
+  const ceiling = readCollateralCeiling(risk, quoteCode);
+
+  // The engine's own answer, not a threshold applied here. Above the extreme-spread
+  // threshold the contract says `midPrice` and everything derived from it — the whole
+  // 2/5/10 per cent ladder — lose their meaning, so the ladder has to say so.
+  const spreadExtreme = risk.flags.includes('SPREAD_EXTREME');
+  const priceConflict = risk.flags.includes('PRICE_SOURCE_CONFLICT');
+
+  return (
+    <div className="flex flex-col gap-10">
+      <Section
+        title="How much can this asset safely back?"
+        standfirst="The ceiling is the lower of two independent limits. Which one binds is the part a lender acts on, so both are shown."
+      >
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+          <div>
+            <BandSegments band={risk.band} confidence={risk.bandConfidence} />
+            {risk.priceSource === 'none' ? (
+              <p className="mt-3 text-sm text-[var(--band-critical-ink)]">
+                This asset has no executable price at all. The band is a result the
+                engine computed, not an error, and every figure derived from a price is
+                unmeasured below.
+              </p>
+            ) : null}
+          </div>
+
+          <CollateralCeilingPanel ceiling={ceiling} />
+        </div>
+
+        <MethodologyBlock source="GET /asset/{assetId}/depth → maxSafeCollateral, maxSafeCollateralLiquidation, maxSafeCollateralManipulation" />
+      </Section>
+
+      <EngineWarnings warnings={risk.warnings} />
+
+      <Section
+        title="Where does the price come from?"
+        standfirst="Two venues can disagree. Both readings are shown, not only the one that won."
+      >
+        <FigureList rows={priceRows(risk, quoteCode, priceConflict)} />
+        <MethodologyBlock source="GET /asset/{assetId}/depth → midPrice, priceSource, spreadPct, poolSpotPrice, priceDivergencePct" />
+      </Section>
+
+      <Section
+        title="What volume can it absorb before the price moves?"
+        standfirst="Three rungs at 2, 5 and 10 per cent, in each direction. The buy side matters for oracle manipulation and the sell side for liquidation."
+      >
+        {spreadExtreme ? (
+          <Notice
+            className="mb-4"
+            tone="problem"
+            title="SPREAD_EXTREME is triggered, so this ladder is not meaningful"
+            detail="The spread is past the threshold at which the engine says the mid price, and every figure derived from it including these rungs, stops describing an executable market."
+          />
+        ) : null}
+
+        {risk.depth.length === 0 ? (
+          <Notice tone="empty" title="No depth rungs were returned for this asset" />
+        ) : (
+          <DepthLadder depth={risk.depth} quoteCode={quoteCode} />
+        )}
+
+        <MethodologyBlock source="GET /asset/{assetId}/depth → depth[]" />
+      </Section>
+
+      <Section
+        title="What would it cost to move the price?"
+        standfirst="Read cost together with reachability: a figure on an unreachable rung says how far the book goes, not what the move costs."
+      >
+        <ManipulationTable
+          combined={risk.manipulationCostCombined}
+          orderbookOnly={risk.manipulationCostOrderbookOnly}
+          quoteCode={quoteCode}
+        />
+
+        <p className="mt-3 text-xs text-[var(--keel-muted)]">
+          Reachability on the all-venues ladder is unconditionally true whenever an
+          active pool exists, because a constant product curve has no upper price bound.
+          The order-book-only column is the one that answers whether a target is
+          attainable, and it is the one Keel itself uses.
+        </p>
+
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+            Against genuine volume
+          </h3>
+          {risk.oracleResistance ? (
+            <FigureList
+              className="mt-3"
+              rows={oracleRows(risk.oracleResistance, quoteCode)}
+            />
+          ) : (
+            <p className="mt-2 text-sm text-[var(--keel-muted)]">
+              Not reported for this asset. Without it there is no comparison between the
+              cost of an attack and the genuine trading it would have to hide inside.
+            </p>
+          )}
+        </div>
+
+        <MethodologyBlock source="GET /asset/{assetId}/depth → manipulationCostCombined[], manipulationCostOrderbookOnly[], oracleResistance" />
+      </Section>
+
+      <Section
+        title="Which checks fired, and which could not run?"
+        standfirst="An unevaluated check is not a check that came back clear. The two never share a treatment."
+      >
+        <FlagGroups triggered={risk.flags} unevaluated={risk.unevaluatedFlags} />
+        <MethodologyBlock source="GET /asset/{assetId}/depth → flags[], unevaluatedFlags[], bandConfidence" />
+      </Section>
+
+      <Section
+        title="Who holds it, and is it genuinely traded?"
+        standfirst="Concentration and wash trading bound how much of the depth above is real."
+      >
+        <FigureList rows={supplyRows(risk)} />
+        <MethodologyBlock source="GET /asset/{assetId}/depth → holderTop1Pct, holderTop10Pct, holderHhi, volumeToSupply, lastGenuineTrade, tradesExcludedPct" />
+      </Section>
+
+      <Section
+        title="How has this moved over time?"
+        standfirst="A single reading cannot separate a thin asset from one that just got thin."
+      >
+        {historicalAvailable === false ? (
+          <Notice
+            tone="empty"
+            title="Historical replay is unavailable on this deployment"
+            detail="GET /health reports historicalAvailable: false, so there is no series to draw. The series is not empty and it is not zero — it was never stored."
+          />
+        ) : (
+          <Notice
+            tone="empty"
+            title="Not built yet"
+            detail="The series from GET /asset/{assetId}/history, with its reported gaps drawn as gaps rather than interpolated across."
+          />
+        )}
+      </Section>
+
+      <Section title="What was this computed from?">
+        <FigureList rows={provenanceRows(risk)} />
+      </Section>
+    </div>
+  );
+}
+
+/**
+ * Reads the mock selector off the URL.
+ *
+ * Gated twice on purpose. `mockSelectionAllowed` keeps it out of a production build,
+ * where a query string that changed what a reader is shown would be a way to make this
+ * dashboard lie; and an unrecognised value is dropped rather than corrected, so a
+ * hand-edited URL degrades to the live reading instead of to a guess. The page also
+ * says on screen when an example is in force — a mock figure that looks like a
+ * measurement is the one failure this product cannot afford.
+ */
+function readMockExample(
+  searchParams: Record<string, string | string[] | undefined>,
+): KeelExampleName | undefined {
+  if (!mockSelectionAllowed()) return undefined;
+  const raw = searchParams.mock;
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return isKeelExampleName(value) ? value : undefined;
+}
+
+const PRICE_SOURCE_WORDS: Readonly<Record<AssetRisk['priceSource'], string>> = {
+  book: 'order book mid',
+  pool: 'AMM pool spot',
+  none: 'no executable price',
+};
+
+function priceRows(
+  risk: AssetRisk,
+  quoteCode: string,
+  priceConflict: boolean,
+): FigureRow[] {
+  return [
+    {
+      key: 'mid',
+      label: 'Mid price',
+      value: classify(risk.midPrice, quoteCode),
+      maxFractionDigits: 8,
+      note: `Source: ${PRICE_SOURCE_WORDS[risk.priceSource]}`,
+    },
+    {
+      key: 'spread',
+      label: 'Spread',
+      // Percent is the unit the API serves for every field ending in `Pct`, so the
+      // figure is shown as served rather than rescaled into a fraction.
+      value: classify(risk.spreadPct, '%'),
+      maxFractionDigits: 4,
+      note: 'Undefined unless the price came from a two-sided book',
+    },
+    {
+      key: 'pool',
+      label: 'Pool spot price',
+      value: classify(risk.poolSpotPrice, quoteCode),
+      maxFractionDigits: 8,
+      note: 'Reported whenever an active pool exists, whichever source won',
+    },
+    {
+      key: 'divergence',
+      label: 'Divergence between the two',
+      value: classify(risk.priceDivergencePct, '%'),
+      maxFractionDigits: 4,
+      note: priceConflict
+        ? 'PRICE_SOURCE_CONFLICT is triggered: the two sources disagree past the threshold and the pool was taken'
+        : 'Null means there is no pool to diverge from, not that the sources agree',
+    },
+  ];
+}
+
+function oracleRows(
+  resistance: NonNullable<AssetRisk['oracleResistance']>,
+  quoteCode: string,
+): FigureRow[] {
+  return [
+    {
+      key: 'cost',
+      label: `Cost at the critical delta (${resistance.criticalDelta})`,
+      value: classify(resistance.manipulationCost, quoteCode),
+      maxFractionDigits: 2,
+      note: resistance.reachable
+        ? 'Order-book-only, at the delta the engine treats as critical'
+        : 'The target is not reachable, so this is not the cost of reaching it',
+    },
+    {
+      key: 'volume',
+      label: 'Genuine volume in the window',
+      value: classify(resistance.genuineVolume, quoteCode),
+      maxFractionDigits: 2,
+      note: `Over ${resistance.windowSeconds}s, after the genuine trade filter`,
+    },
+    {
+      key: 'ratio',
+      label: 'Cost as a share of that volume',
+      value: classify(resistance.ratio),
+      maxFractionDigits: 4,
+      note: 'Below 1 means moving the price costs less than all the genuine trading it hides in',
+    },
+    {
+      key: 'total',
+      label: 'Total capital an attack needs',
+      value: classify(resistance.totalAttackCost, quoteCode),
+      maxFractionDigits: 2,
+      note: 'A lower bound: the book has to be paid and the genuine volume outweighed',
+    },
+  ];
+}
+
+function supplyRows(risk: AssetRisk): FigureRow[] {
+  // Optional chaining would turn a served `null` into `undefined` and collapse two
+  // findings this whole layer exists to keep apart: a key the response did not carry
+  // against one the engine sent because it could not compute the figure.
+  const volume = risk.volumeToSupply;
+  const volumeToSupply30 =
+    volume === undefined ? undefined : volume === null ? null : volume.d30;
+
+  const lastTrade = risk.lastGenuineTrade;
+  const lastTradeAt =
+    lastTrade === undefined ? undefined : lastTrade === null ? null : lastTrade.at;
+
+  return [
+    {
+      key: 'top1',
+      label: 'Largest holder',
+      value: classify(risk.holderTop1Pct, '%'),
+      maxFractionDigits: 4,
+    },
+    {
+      key: 'top10',
+      label: 'Top ten holders',
+      value: classify(risk.holderTop10Pct, '%'),
+      maxFractionDigits: 4,
+    },
+    {
+      key: 'hhi',
+      label: 'Concentration index',
+      value: classify(risk.holderHhi),
+      maxFractionDigits: 2,
+      note: 'Herfindahl–Hirschman, over the holder distribution',
+    },
+    {
+      key: 'excluded',
+      label: 'Volume excluded as not genuine',
+      value: classify(risk.tradesExcludedPct, '%'),
+      maxFractionDigits: 4,
+      note: 'Of 30 day volume. A high share indicates suspected wash trading',
+    },
+    {
+      key: 'v30',
+      label: 'Volume to supply, 30 day',
+      value: classify(volumeToSupply30),
+      maxFractionDigits: 6,
+      note: volume ? `1 day ${volume.d1} · 7 day ${volume.d7}` : undefined,
+    },
+    {
+      key: 'lastTrade',
+      label: 'Last genuine trade',
+      text: lastTradeAt,
+      note: lastTrade
+        ? `Ledger ${lastTrade.ledgerSeq}`
+        : 'No genuine trade was found in the window',
+    },
+  ];
+}
+
+function provenanceRows(risk: AssetRisk): FigureRow[] {
+  return [
+    {
+      key: 'ledger',
+      label: 'Ledger',
+      value: classifyCount(risk.ledgerSeq),
+      note: `Closed at ${risk.ledgerClosedAt}`,
+    },
+    { key: 'computed', label: 'Computed at', text: risk.computedAt },
+    {
+      key: 'source',
+      label: 'Data source',
+      text: risk.dataSource,
+      note: isLowerBound(risk.dataSource)
+        ? 'Reconstructed from trades, so every figure here is a lower bound rather than a measurement'
+        : undefined,
+    },
+    {
+      key: 'methodology',
+      label: 'Methodology',
+      text: risk.methodologyVersion,
+      note: 'The version that produced these figures, not the one this page was built against',
+    },
+  ];
+}
