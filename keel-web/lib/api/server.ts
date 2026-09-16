@@ -1,6 +1,11 @@
 import 'server-only';
 
-import { createKeelClient, readProvenance, type KeelProvenance } from './client';
+import {
+  createKeelClient,
+  readProvenance,
+  type KeelExampleName,
+  type KeelProvenance,
+} from './client';
 import type { AssetListResponse, AssetRisk, Health, KeelError } from './types';
 import type { Band, Flag } from '../format/flags';
 
@@ -148,9 +153,19 @@ export async function fetchAssets(filters: {
  * The `quote` parameter is omitted, which gives the primary pair. The methodology is
  * explicit that the primary pair is USDC, always.
  */
-export async function fetchDepth(assetId: string): Promise<Fetched<AssetRisk>> {
+export async function fetchDepth(
+  assetId: string,
+  /**
+   * Names a contract-mock example instead of taking whatever the mock serves by
+   * default. Several display states cannot be reached from live data at all —
+   * `priceSource: "none"` is not on any monitored asset today — so they are otherwise
+   * unreachable in the running UI. `createKeelClient` drops this in a production
+   * build, so a URL cannot change what a reader is shown.
+   */
+  example?: KeelExampleName,
+): Promise<Fetched<AssetRisk>> {
   try {
-    const client = createKeelClient();
+    const client = createKeelClient(example ? { example } : {});
     const result = await client.GET('/asset/{assetId}/depth', {
       ...NO_CACHE,
       params: { path: { assetId } },

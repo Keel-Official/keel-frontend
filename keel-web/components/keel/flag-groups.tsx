@@ -58,9 +58,11 @@ export function FlagGroups({ triggered, unevaluated, className }: FlagGroupsProp
         </p>
       ) : assessment.kind === 'incomplete' ? (
         <p className="text-sm text-[var(--keel-ink)]">
-          Nothing triggered, but {assessment.unevaluated.length} check
-          {assessment.unevaluated.length === 1 ? '' : 's'} could not run. This is not a
-          clean result.
+          {/* One expression, not a word and a suffix on two lines: JSX collapses the
+              line break into a space, which rendered as "6 check s" against live data. */}
+          {`Nothing triggered, but ${assessment.unevaluated.length} ${
+            assessment.unevaluated.length === 1 ? 'check' : 'checks'
+          } could not run. This is not a clean result.`}
         </p>
       ) : null}
     </div>

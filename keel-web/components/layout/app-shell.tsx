@@ -105,3 +105,35 @@ export function PageHeader({
     </div>
   );
 }
+
+/**
+ * A section of a page, with its heading and an optional standfirst.
+ *
+ * The heading is a question for the same reason the page title is: it names what a
+ * reader came to find out rather than which widget is below it. The standfirst is
+ * where a section says what its figures are not, which is the sentence that usually
+ * goes missing.
+ */
+export function Section({
+  title,
+  standfirst,
+  children,
+  className,
+}: {
+  title: string;
+  standfirst?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section className={className}>
+      <h2 className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]">
+        {title}
+      </h2>
+      {standfirst ? (
+        <div className="mt-1 max-w-3xl text-sm text-[var(--keel-muted)]">{standfirst}</div>
+      ) : null}
+      <div className="mt-4">{children}</div>
+    </section>
+  );
+}
