@@ -65,6 +65,27 @@ describe('CollateralCeilingPanel', () => {
     expect(container.textContent).not.toContain('not computed');
   });
 
+  it('does not borrow the unreachable-target reason when nothing was computed', () => {
+    // The no-price example from the contract mock. Every term is null because the asset
+    // has no executable price, which is not the reason the contract attaches to a null
+    // manipulation term — and the engine's own warning says what the reason is.
+    const ceiling = readCollateralCeiling(
+      {
+        maxSafeCollateral: null,
+        maxSafeCollateralLiquidation: null,
+        maxSafeCollateralManipulation: null,
+      },
+      'XLM',
+    );
+
+    const { container } = render(<CollateralCeilingPanel ceiling={ceiling} />);
+
+    expect(ceiling.manipulationTerm).toBe('unmeasured');
+    expect(container.textContent).not.toContain('not reachable through the order book');
+    expect(container.textContent).not.toContain('not applicable');
+    expect(container.textContent).toContain('No ceiling was computed');
+  });
+
   it('names the binding term when the ceiling is a computed zero', () => {
     // ACT, live. The ceiling is zero and the manipulation term is what put it there.
     const ceiling = readCollateralCeiling(

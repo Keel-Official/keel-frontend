@@ -12,11 +12,14 @@
  * minimum is not recomputed and the two terms are never combined: this module reports
  * which figure the engine's own answer matches.
  *
- * A null manipulation term is NOT a missing measurement. The contract is explicit that
- * it means the critical target is unreachable through the order book, so the term is
- * not applied at all and the ceiling falls back to the liquidation term — with a
- * `warnings` entry saying so. Reading that null as "unknown", or worse as zero, would
- * invert the finding: zero would claim the attack is free.
+ * A null manipulation term beside a computed ceiling is NOT a missing measurement. The
+ * contract is explicit that it means the critical target is unreachable through the
+ * order book, so the term is not applied at all and the ceiling falls back to the
+ * liquidation term — with a `warnings` entry saying so. Reading that null as "unknown",
+ * or worse as zero, would invert the finding: zero would claim the attack is free.
+ *
+ * That reason does not carry over to a response where nothing was computed at all, and
+ * {@link ManipulationTermState} keeps the two apart.
  */
 import type { AssetRisk } from '../api/types';
 import { compareDecimalStrings } from './compare';
@@ -39,16 +42,27 @@ export type CeilingBinding =
   /** No ceiling was computed, so no term binds. */
   | 'unmeasured';
 
+/**
+ * Why the manipulation term reads the way it does.
+ *
+ * `not-applicable` is the contract's documented case: the term is null because the
+ * critical target cannot be reached through the order book, so it was not applied and
+ * the ceiling is the liquidation term alone. That is a complete answer.
+ *
+ * `unmeasured` is the case where nothing was computed at all — no executable price, so
+ * no ceiling and no terms. The reason the manipulation term is missing is then the
+ * reason everything is missing, and claiming the documented one would put a sentence
+ * on screen that does not describe this response. The engine's own `warnings` entry
+ * carries the actual reason.
+ */
+export type ManipulationTermState = 'applied' | 'not-applicable' | 'unmeasured';
+
 export interface CollateralCeiling {
   readonly ceiling: KeelValue;
   readonly liquidation: KeelValue;
   readonly manipulation: KeelValue;
   readonly binding: CeilingBinding;
-  /**
-   * False when the manipulation term was not applied. The ceiling is then the
-   * liquidation term alone, which is a complete answer rather than a partial one.
-   */
-  readonly manipulationApplied: boolean;
+  readonly manipulationTerm: ManipulationTermState;
   /**
    * True when the engine sent a ceiling without the liquidation term. The contract
    * says the liquidation term is "always present when `maxSafeCollateral` is", so this
@@ -84,12 +98,17 @@ export function readCollateralCeiling(
   else if (byManipulation) binding = 'manipulation';
   else binding = 'unmatched';
 
+  let manipulationTerm: ManipulationTermState;
+  if (isMeasured(manipulation)) manipulationTerm = 'applied';
+  else if (isMeasured(ceiling)) manipulationTerm = 'not-applicable';
+  else manipulationTerm = 'unmeasured';
+
   return {
     ceiling,
     liquidation,
     manipulation,
     binding,
-    manipulationApplied: isMeasured(manipulation),
+    manipulationTerm,
     missingLiquidationTerm: isMeasured(ceiling) && !isMeasured(liquidation),
   };
 }

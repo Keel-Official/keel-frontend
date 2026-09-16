@@ -17,11 +17,14 @@ import { Value } from './value';
  * has to open something to learn that a position is limited by manipulation cost and
  * not by liquidation depth is a reader who will not open it.
  *
- * A NULL MANIPULATION TERM IS NOT A GAP. It means the critical target cannot be
- * reached through the order book, so the term does not apply and the ceiling is the
- * liquidation term alone. That is a complete answer, and it is labelled as not
- * applicable rather than as not computed — the engine's own `warnings` entry carries
- * the reason and is rendered verbatim elsewhere on the page.
+ * A NULL MANIPULATION TERM BESIDE A COMPUTED CEILING IS NOT A GAP. It means the
+ * critical target cannot be reached through the order book, so the term does not apply
+ * and the ceiling is the liquidation term alone. That is a complete answer, and it is
+ * labelled as not applicable rather than as not computed — the engine's own `warnings`
+ * entry carries the reason and is rendered verbatim elsewhere on the page.
+ *
+ * A null term beside a null ceiling is a different thing entirely and gets a different
+ * sentence. See {@link MANIPULATION_TERM_DETAIL}.
  */
 
 export interface CollateralCeilingProps {
@@ -61,18 +64,14 @@ export function CollateralCeilingPanel({ ceiling, className }: CollateralCeiling
         <Term
           label="Manipulation term"
           binds={binding === 'manipulation' || binding === 'both'}
-          detail={
-            ceiling.manipulationApplied
-              ? 'Order-book-only manipulation cost at the critical delta, times the safety margin.'
-              : 'Not applied: the critical target is not reachable through the order book.'
-          }
+          detail={MANIPULATION_TERM_DETAIL[ceiling.manipulationTerm]}
         >
-          {ceiling.manipulationApplied ? (
-            <Value value={ceiling.manipulation} maxFractionDigits={2} />
-          ) : (
+          {ceiling.manipulationTerm === 'not-applicable' ? (
             // Deliberately not the unmeasured treatment. The term is inapplicable, not
             // unknown, and it is certainly not zero: zero would say the attack is free.
             <span className="text-base text-[var(--keel-muted)]">not applicable</span>
+          ) : (
+            <Value value={ceiling.manipulation} maxFractionDigits={2} />
           )}
         </Term>
       </dl>
@@ -94,6 +93,25 @@ export function CollateralCeilingPanel({ ceiling, className }: CollateralCeiling
     </div>
   );
 }
+
+/**
+ * The reason a term reads the way it does, and no reason it does not have.
+ *
+ * The inapplicable sentence is the contract's own account of a null manipulation term,
+ * and it only holds when the engine still produced a ceiling. When nothing was computed
+ * — an asset with no executable price — the term is missing for the same reason
+ * everything else is, and attaching the unreachable-target explanation there would put
+ * a cause on screen that this response never gave.
+ */
+const MANIPULATION_TERM_DETAIL: Readonly<
+  Record<CollateralCeiling['manipulationTerm'], string>
+> = {
+  applied:
+    'Order-book-only manipulation cost at the critical delta, times the safety margin.',
+  'not-applicable':
+    'Not applied: the critical target is not reachable through the order book.',
+  unmeasured: 'Not computed, along with the ceiling itself. See the engine notes below.',
+};
 
 function Term({
   label,

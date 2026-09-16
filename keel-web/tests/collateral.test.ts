@@ -32,7 +32,7 @@ describe('readCollateralCeiling', () => {
     );
 
     expect(read.binding).toBe('liquidation');
-    expect(read.manipulationApplied).toBe(true);
+    expect(read.manipulationTerm).toBe('applied');
   });
 
   it('names manipulation when that term is the one that binds', () => {
@@ -62,7 +62,7 @@ describe('readCollateralCeiling', () => {
       'USDC',
     );
 
-    expect(read.manipulationApplied).toBe(false);
+    expect(read.manipulationTerm).toBe('not-applicable');
     expect(read.binding).toBe('liquidation');
     expect(read.manipulation.exact).toBeNull();
     expect(read.manipulation.state).toBe('unknown');
@@ -98,6 +98,17 @@ describe('readCollateralCeiling', () => {
     // happen. If it does, resolving it here would hide the breach.
     const read = readCollateralCeiling(terms('7', '9', '11'), 'USDC');
     expect(read.binding).toBe('unmatched');
+  });
+
+  it('separates a term that does not apply from one that was never computed', () => {
+    // Live XLM: a ceiling stands, and the manipulation term simply did not apply.
+    const applied = readCollateralCeiling(terms('156164.54', '156164.54', null), 'USDC');
+    // The mock's no-price example: nothing was computed, so the reason the term is
+    // missing is the reason everything is missing.
+    const nothing = readCollateralCeiling(terms(null, null, null), 'XLM');
+
+    expect(applied.manipulationTerm).toBe('not-applicable');
+    expect(nothing.manipulationTerm).toBe('unmeasured');
   });
 
   it('has no binding term when no ceiling was computed', () => {
