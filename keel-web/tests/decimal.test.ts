@@ -94,3 +94,35 @@ describe('assetId', () => {
     expect(assetId('XLM', null)).toBe('XLM');
   });
 });
+
+describe('formatDecimal with a value smaller than the display precision', () => {
+  it('does not shorten a small positive value into something that reads as zero', () => {
+    // A computed "0" and a tiny positive figure are different findings, so they must
+    // not render the same.
+    const small = formatDecimal('0.0000001234', { maxFractionDigits: 2 });
+    expect(small.display).toBe('0.00000012');
+    expect(small.display).not.toBe('0.00');
+    expect(small.truncated).toBe(true);
+  });
+
+  it('keeps enough digits to tell two small values apart', () => {
+    const a = formatDecimal('0.0000001', { maxFractionDigits: 2 }).display;
+    const b = formatDecimal('0.0000009', { maxFractionDigits: 2 }).display;
+    expect(a).not.toBe(b);
+  });
+
+  it('still renders a computed zero as zero', () => {
+    const zero = formatDecimal('0.0000000', { maxFractionDigits: 2 });
+    expect(zero.display).toBe('0.00');
+    expect(zero.truncated).toBe(true);
+  });
+
+  it('leaves a value with an integer part alone', () => {
+    // 19.6100001 to two places is 19.61: the leading digits already carry the size.
+    expect(formatDecimal('19.6100001', { maxFractionDigits: 2 }).display).toBe('19.61');
+  });
+
+  it('does not claim truncation when the extension shows the whole value', () => {
+    expect(formatDecimal('0.00012', { maxFractionDigits: 2 }).truncated).toBe(false);
+  });
+});

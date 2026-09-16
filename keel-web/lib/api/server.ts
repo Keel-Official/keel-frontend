@@ -1,7 +1,8 @@
 import 'server-only';
 
 import { createKeelClient, readProvenance, type KeelProvenance } from './client';
-import type { Health, KeelError } from './types';
+import type { AssetListResponse, Health, KeelError } from './types';
+import type { Band, Flag } from '../format/flags';
 
 /**
  * Server-side reads.
@@ -95,6 +96,44 @@ export async function fetchHealth(): Promise<Fetched<Health>> {
   } catch (cause) {
     // A network failure, or a missing NEXT_PUBLIC_KEEL_API_URL, is a state to render
     // rather than a crash: the reader has to be told the engine was not reached.
+    return transportFailure(cause);
+  }
+}
+
+/**
+ * The whole monitored set in one request.
+ *
+ * `band` and `hasFlag` are API parameters, so the engine applies them and `total`
+ * comes back describing the filtered set. Free-text search is not a parameter and is
+ * applied locally.
+ *
+ * The limit is the contract maximum. Sixty-one assets are monitored, so one request
+ * holds the set and local ordering is exact. The caller is handed `total` so it can
+ * say so when that stops being true.
+ */
+export async function fetchAssets(filters: {
+  band?: Band | null;
+  hasFlag?: Flag | null;
+}): Promise<Fetched<AssetListResponse>> {
+  try {
+    const client = createKeelClient();
+    const result = await client.GET('/assets', {
+      ...NO_CACHE,
+      params: {
+        query: {
+          limit: 200,
+          ...(filters.band ? { band: filters.band } : {}),
+          ...(filters.hasFlag ? { hasFlag: filters.hasFlag } : {}),
+        },
+      },
+    });
+    return {
+      data: result.data ?? null,
+      failure: toFailure(result.error),
+      status: result.response.status,
+      provenance: readProvenance(result.response),
+    };
+  } catch (cause) {
     return transportFailure(cause);
   }
 }

@@ -27,6 +27,12 @@
 const GROUP_SEPARATOR = ',';
 const GROUP_SIZE = 3;
 
+/**
+ * Significant digits kept when a value is smaller than the requested display
+ * precision. Two, so a reader can tell 0.0000001 from 0.0000009.
+ */
+const SIGNIFICANT_DIGITS = 2;
+
 export interface DecimalDisplay {
   /** What to put on screen. */
   readonly display: string;
@@ -70,6 +76,19 @@ export function formatDecimal(
   if (maxFractionDigits !== undefined && fractionPart.length > maxFractionDigits) {
     shownFraction = fractionPart.slice(0, maxFractionDigits);
     truncated = true;
+
+    // A small positive value must not be shortened into something that reads as zero.
+    // "0.0000001" at two fraction digits would display as "0.00", which is the same
+    // thing on screen as a computed zero — and those are different findings. When the
+    // kept digits are all zero but the value is not, keep slicing until two significant
+    // digits are in view.
+    if (/^0*$/.test(integerPart) && /^0*$/.test(shownFraction)) {
+      const firstSignificant = fractionPart.search(/[1-9]/);
+      if (firstSignificant !== -1) {
+        shownFraction = fractionPart.slice(0, firstSignificant + SIGNIFICANT_DIGITS);
+        truncated = shownFraction.length < fractionPart.length;
+      }
+    }
   }
 
   const shownInteger = group ? groupIntegerDigits(integerPart) : integerPart;
