@@ -47,8 +47,72 @@ curl -sI -H 'Origin: http://localhost:3000' \
 | `pnpm check:contract-upstream` | fail if the vendored contract differs from the backend's copy (local only) |
 | `pnpm check:no-float-math` | fail on `parseFloat`, `Number(`, or browser storage outside the geometry allowlist |
 | `pnpm smoke:api` | send one request per endpoint through the typed client and print what came back |
+| `pnpm mock` | Prism, static mode, on port 4010 |
+| `pnpm check:mock-states` | assert the mock still serves every display state the UI handles |
 
 `pnpm check` is what CI runs, plus the build. See `.github/workflows/keel-web.yml`.
+
+## The contract mock
+
+The dashboard is developed against a mock generated from the same
+`keel-openapi.yaml` that the Go mocks come from, so there is one source of truth and
+no frontend fixture that can drift from the contract.
+
+```bash
+pnpm mock     # terminal 1, http://localhost:4010
+pnpm dev      # terminal 2, http://localhost:5173
+```
+
+Static mode is deliberate. **Do not run Prism with `-d`.** Dynamic mode invents values
+from the schema, and for a decimal-string field it produces garbage that validates but
+means nothing.
+
+Select a named example with the `Prefer` header. The wire values are the keys of the
+`examples:` map in the contract, which are written in Indonesian — **not** the names of
+the schemas under `components/examples` that they point at. Prism answers 404 for the
+latter.
+
+| State | English name in code | `Prefer: example=` | Endpoint |
+|---|---|---|---|
+| Healthy | `healthy` | `asetSehat` | `/asset/{id}/depth` |
+| Pool only | `poolOnly` | `hanyaPool` | `/asset/{id}/depth` |
+| No executable price | `noPrice` | `tanpaHarga` | `/asset/{id}/depth` |
+| Broken book | `brokenBook` | `bukuRusak` | `/asset/{id}/depth` |
+| Reconstructed | `historical` | `replayHistoris` | `/asset/{id}/depth` |
+| Asset list | `assetList` | `campuran` | `/assets` |
+| History with a gap | `history` | `deretUstry` | `/asset/{id}/history` |
+
+`KEEL_EXAMPLES` in `lib/api/client.ts` is the one place that translation lives; call
+sites use the English names. Selection is gated on `NODE_ENV`, so a URL cannot change
+what a reader is shown in production.
+
+```bash
+curl -H 'Prefer: example=bukuRusak' localhost:4010/asset/XLM/depth
+```
+
+`pnpm check:mock-states` asserts that each state still has the shape the UI depends
+on — 35 assertions covering, among others, that the no-price case answers 200 rather
+than an error, and that the broken book carries both a `cost: "0"` that **is**
+reachable and rungs that are not.
+
+## Three wire states, not two
+
+Fourteen fields on `AssetRisk` are both optional and nullable, including the headline
+`maxSafeCollateral` and the two terms behind it. A field therefore has three states on
+the wire, and the display must keep them apart:
+
+| Wire | Meaning |
+|---|---|
+| key absent | the API did not send the field |
+| `null` | sent, and the engine could not compute it |
+| a decimal string | sent and computed, including a computed `"0"` |
+
+`unevaluatedFlags` adds the fourth case at the flag level: a flag that could not be
+measured is not a flag that came back clear. An empty `flags` array is never a pass.
+
+Confirmed in the mock: the no-price example sends `maxSafeCollateral: null`, while the
+broken-book example sends `"0.0000000"`. Those are different findings and must not look
+alike.
 
 ## Open blocker: CORS origin for the deployed dashboard
 
@@ -158,7 +222,14 @@ kickoff document.
 | Historical replay | unavailable; `historicalAvailable: false` |
 
 The `bandConfidence: full` state does not occur in live data at all. It is reachable
-only from the contract mock, so it must not be treated as the design default.
+only from the contract mock, so it must not be treated as the design default. The
+reverse is also true: every mock depth example except the broken book carries `full`,
+so a component tested only against the mock would never meet `partial`.
+
+Not covered by any mock example: `dataSource: "trades-implied"`, where depth is a lower
+bound rather than a measurement and needs a distinguishing marker. The enum value exists
+in the contract but no example uses it, so that display state cannot currently be
+exercised from the mock.
 
 ## Scope
 

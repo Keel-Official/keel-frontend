@@ -20,28 +20,36 @@ export const STALENESS_SECONDS_HEADER = 'x-keel-staleness-seconds';
 /**
  * Named examples carried by `docs/api/keel-openapi.yaml`. Prism serves these
  * verbatim in static mode, which is how the display states that do not occur in
- * live data are exercised. `AssetHealthy` is the clearest case: no live asset has
- * `bandConfidence: "full"`, so the healthy state is reachable only from the mock.
+ * live data are exercised. The healthy state is the clearest case: no live asset has
+ * `bandConfidence: "full"`, so it is reachable only from the mock.
+ *
+ * The wire values are the keys of the `examples:` map in the contract, which are
+ * written in Indonesian, and NOT the names of the schemas under
+ * `components/examples` that they point at. Prism answers 404 for the latter. This
+ * map is the one place that translation lives; call sites use the English names.
  */
-export type KeelExample =
-  | 'AssetHealthy'
-  | 'AssetNoPrice'
-  | 'AssetBrokenBook'
-  | 'AssetPoolOnly'
-  | 'AssetHistorical'
-  | 'AssetListMixed';
+export const KEEL_EXAMPLES = {
+  /** `/asset/{id}/depth` — price present, both sides of the book, confidence full. */
+  healthy: 'asetSehat',
+  /** `/asset/{id}/depth` — AMM only, no order book. */
+  poolOnly: 'hanyaPool',
+  /** `/asset/{id}/depth` — `priceSource: "none"`, HTTP 200, band CRITICAL. */
+  noPrice: 'tanpaHarga',
+  /** `/asset/{id}/depth` — one ask, one bid, far apart; the midpoint means nothing. */
+  brokenBook: 'bukuRusak',
+  /** `/asset/{id}/depth` — a reconstructed reading rather than a measurement. */
+  historical: 'replayHistoris',
+  /** `/assets` — a set spanning every band. */
+  assetList: 'campuran',
+  /** `/asset/{id}/history` — the USTRY series. */
+  history: 'deretUstry',
+} as const;
 
-export const KEEL_EXAMPLES: readonly KeelExample[] = [
-  'AssetHealthy',
-  'AssetNoPrice',
-  'AssetBrokenBook',
-  'AssetPoolOnly',
-  'AssetHistorical',
-  'AssetListMixed',
-] as const;
+export type KeelExampleName = keyof typeof KEEL_EXAMPLES;
+export type KeelExample = (typeof KEEL_EXAMPLES)[KeelExampleName];
 
-export function isKeelExample(value: string | undefined): value is KeelExample {
-  return value !== undefined && (KEEL_EXAMPLES as readonly string[]).includes(value);
+export function isKeelExampleName(value: string | undefined): value is KeelExampleName {
+  return value !== undefined && Object.hasOwn(KEEL_EXAMPLES, value);
 }
 
 /**
@@ -88,7 +96,7 @@ export interface KeelClientOptions {
   /** Defaults to `NEXT_PUBLIC_KEEL_API_URL`. */
   baseUrl?: string;
   /** Ignored in production builds. See {@link mockSelectionAllowed}. */
-  example?: KeelExample;
+  example?: KeelExampleName;
   /** Injection point for tests. */
   fetch?: typeof globalThis.fetch;
 }
@@ -102,7 +110,7 @@ export function createKeelClient(options: KeelClientOptions = {}) {
   });
 
   if (options.example && mockSelectionAllowed()) {
-    client.use(preferExampleMiddleware(options.example));
+    client.use(preferExampleMiddleware(KEEL_EXAMPLES[options.example]));
   }
 
   return client;
