@@ -1,6 +1,10 @@
 import Link from 'next/link';
 
 import { BandSegments } from '@/components/keel/band-segments';
+import {
+  CalibrationNote,
+  ConfidenceMeaning,
+} from '@/components/keel/calibration-note';
 import { CollateralCeilingPanel } from '@/components/keel/collateral-ceiling';
 import { DepthLadder } from '@/components/keel/depth-ladder';
 import { EngineWarnings } from '@/components/keel/engine-warnings';
@@ -15,7 +19,23 @@ import {
   mockSelectionAllowed,
   type KeelExampleName,
 } from '@/lib/api/client';
-import { fetchDepth, fetchHealth } from '@/lib/api/server';
+import { BandTimeline } from '@/components/keel/band-timeline';
+import { TrendChart } from '@/components/keel/trend-chart';
+import {
+  fetchDepth,
+  fetchHealth,
+  fetchHistory,
+  fetchMethodology,
+} from '@/lib/api/server';
+import type { HistoryResponse } from '@/lib/api/types';
+import { SEQUENTIAL_RAMP } from '@/lib/design/tokens';
+import {
+  DEFAULT_RANGE,
+  HISTORY_RANGES,
+  ledgerWindow,
+  parseHistoryRange,
+  type HistoryRangeKey,
+} from '@/lib/assets/history-range';
 import type { AssetRisk } from '@/lib/api/types';
 import { readCollateralCeiling } from '@/lib/format/collateral';
 import { truncateIssuer } from '@/lib/format/decimal';
@@ -40,7 +60,22 @@ export default async function AssetDetailPage({
   const { assetId } = await params;
   const example = readMockExample(await searchParams);
 
-  const [health, depth] = await Promise.all([fetchHealth(), fetchDepth(assetId, example)]);
+  const range = parseHistoryRange((await searchParams).range);
+
+  const [health, depth, methodology] = await Promise.all([
+    fetchHealth(),
+    fetchDepth(assetId, example),
+    // A band is shown on this page, so the calibration caveat travels with it.
+    fetchMethodology(),
+  ]);
+
+  // The series is a separate endpoint from the replay path that health turns off, and
+  // it needs the latest ledger to size its window, so it is fetched after health.
+  const latestLedger = health.data?.latestScanLedgerSeq ?? depth.data?.ledgerSeq ?? null;
+  const history =
+    latestLedger === null
+      ? null
+      : await fetchHistory(assetId, ledgerWindow(latestLedger, range));
   const risk = depth.data;
 
   return (
@@ -116,7 +151,15 @@ export default async function AssetDetailPage({
       ) : risk === null ? (
         <Notice tone="empty" title="The engine returned no result for this asset" />
       ) : (
-        <AssetRiskView risk={risk} historicalAvailable={health.data?.historicalAvailable} />
+        <AssetRiskView
+          risk={risk}
+          calibrated={methodology.data?.calibrated}
+          calibrationNote={methodology.data?.calibrationNote}
+          history={history?.data ?? null}
+          historyFailed={history?.failure?.message ?? null}
+          range={range}
+          assetId={assetId}
+        />
       )}
     </AppShell>
   );
@@ -124,10 +167,20 @@ export default async function AssetDetailPage({
 
 function AssetRiskView({
   risk,
-  historicalAvailable,
+  calibrated,
+  calibrationNote,
+  history,
+  historyFailed,
+  range,
+  assetId,
 }: {
   risk: AssetRisk;
-  historicalAvailable: boolean | undefined;
+  calibrated: boolean | undefined;
+  calibrationNote: string | undefined;
+  history: HistoryResponse | null;
+  historyFailed: string | null;
+  range: HistoryRangeKey;
+  assetId: string;
 }) {
   const quoteCode = risk.quote.code;
   const ceiling = readCollateralCeiling(risk, quoteCode);
@@ -147,6 +200,7 @@ function AssetRiskView({
         <div className="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
           <div>
             <BandSegments band={risk.band} confidence={risk.bandConfidence} />
+            <ConfidenceMeaning className="mt-2" />
             {risk.priceSource === 'none' ? (
               <p className="mt-3 text-sm text-[var(--band-critical-ink)]">
                 This asset has no executable price at all. The band is a result the
@@ -158,6 +212,14 @@ function AssetRiskView({
 
           <CollateralCeilingPanel ceiling={ceiling} />
         </div>
+
+        {/* Full width, below the two columns. Inside the left one it stretched that
+            column and left the right half of the section empty. */}
+        <CalibrationNote
+          className="mt-6"
+          calibrated={calibrated}
+          note={calibrationNote}
+        />
 
         <MethodologyBlock source="GET /asset/{assetId}/depth → maxSafeCollateral, maxSafeCollateralLiquidation, maxSafeCollateralManipulation" />
       </Section>
@@ -198,6 +260,15 @@ function AssetRiskView({
         title="What would it cost to move the price?"
         standfirst="Read cost together with reachability: a figure on an unreachable rung says how far the book goes, not what the move costs."
       >
+        {spreadExtreme ? (
+          <Notice
+            className="mb-4"
+            tone="problem"
+            title="Every target price below is measured from the same unreliable mid"
+            detail="SPREAD_EXTREME is triggered. A target price is the mid price moved by the delta, so when the mid sits between quotes that are far apart, the targets describe a market that is not there. Reachability and the furthest price the book reaches are the readings that still mean something here."
+          />
+        ) : null}
+
         <ManipulationTable
           combined={risk.manipulationCostCombined}
           orderbookOnly={risk.manipulationCostOrderbookOnly}
@@ -210,6 +281,19 @@ function AssetRiskView({
           The order-book-only column is the one that answers whether a target is
           attainable, and it is the one Keel itself uses.
         </p>
+
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+            How far the book actually goes
+          </h3>
+          {/*
+            The ceiling of the ladder above. When the order book runs out before any of
+            the four deltas is reached, these two say where it ran out and what getting
+            there costs — which is the only figure on the page that describes the end of
+            the book rather than a target.
+          */}
+          <FigureList className="mt-3" rows={reachRows(risk, quoteCode)} />
+        </div>
 
         <div className="mt-6">
           <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
@@ -249,21 +333,16 @@ function AssetRiskView({
 
       <Section
         title="How has this moved over time?"
-        standfirst="A single reading cannot separate a thin asset from one that just got thin."
+        standfirst="A single reading cannot separate a thin asset from one that just got thin. This is a stored series, not the historical replay that health reports as unavailable — those are different endpoints."
       >
-        {historicalAvailable === false ? (
-          <Notice
-            tone="empty"
-            title="Historical replay is unavailable on this deployment"
-            detail="GET /health reports historicalAvailable: false, so there is no series to draw. The series is not empty and it is not zero — it was never stored."
-          />
-        ) : (
-          <Notice
-            tone="empty"
-            title="Not built yet"
-            detail="The series from GET /asset/{assetId}/history, with its reported gaps drawn as gaps rather than interpolated across."
-          />
-        )}
+        <HistoryView
+          assetId={assetId}
+          history={history}
+          failed={historyFailed}
+          quoteCode={risk.quote.code}
+          range={range}
+        />
+        <MethodologyBlock source="GET /asset/{assetId}/history → points[], gaps[], dataSource" />
       </Section>
 
       <Section title="What was this computed from?">
@@ -290,6 +369,150 @@ function readMockExample(
   const raw = searchParams.mock;
   const value = Array.isArray(raw) ? raw[0] : raw;
   return isKeelExampleName(value) ? value : undefined;
+}
+
+/**
+ * The stored series, and the range control that drives it.
+ *
+ * The chart labels itself from the first and last point that CAME BACK, never from the
+ * range that was asked for. Coverage is as old as the deployment, so a window of seven
+ * days may hold five, and an axis implying more than the data covers reads as broken
+ * data rather than as young data.
+ *
+ * Two charts, not one with two axes. Depth and the collateral ceiling are different
+ * measures on different scales, and a second axis invites a reader to compare two lines
+ * that were never comparable.
+ */
+function HistoryView({
+  assetId,
+  history,
+  failed,
+  quoteCode,
+  range,
+}: {
+  assetId: string;
+  history: HistoryResponse | null;
+  failed: string | null;
+  quoteCode: string;
+  range: HistoryRangeKey;
+}) {
+  const points = history?.points ?? [];
+  const gaps = history?.gaps ?? [];
+  const first = points[0];
+  const last = points[points.length - 1];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <nav aria-label="Time range" className="flex flex-wrap gap-2">
+        {(Object.keys(HISTORY_RANGES) as HistoryRangeKey[]).map((key) => (
+          <Link
+            key={key}
+            href={
+              key === DEFAULT_RANGE
+                ? `/asset/${encodeURIComponent(assetId)}`
+                : `/asset/${encodeURIComponent(assetId)}?range=${key}`
+            }
+            aria-current={key === range ? 'true' : undefined}
+            className={
+              key === range
+                ? 'rounded-md border border-[var(--keel-brand)] bg-[var(--keel-brand)] px-2.5 py-1 text-sm text-white'
+                : 'rounded-md border border-[var(--keel-border-strong)] px-2.5 py-1 text-sm text-[var(--keel-ink)] hover:bg-[var(--keel-surface-subtle)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]'
+            }
+          >
+            {HISTORY_RANGES[key].label}
+          </Link>
+        ))}
+      </nav>
+
+      {failed !== null ? (
+        <Notice tone="problem" title="The series could not be read" detail={failed} />
+      ) : points.length === 0 ? (
+        <Notice
+          tone="empty"
+          title="No readings were stored in this range"
+          detail="The series is as old as the deployment, so a window can reach back further than anything that was recorded. It is not empty because the figures were zero."
+        />
+      ) : (
+        <>
+          <p className="text-xs text-[var(--keel-muted)]">
+            {points.length} reading{points.length === 1 ? '' : 's'} from{' '}
+            <span className="tabular">{history?.dataSource}</span>
+            {gaps.length > 0
+              ? `, with ${gaps.length} gap${gaps.length === 1 ? '' : 's'} drawn as breaks in the line`
+              : ', with no gaps reported'}
+            . One source per chart.
+          </p>
+
+          <div>
+            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+              Band at each reading
+            </h3>
+            <BandTimeline className="mt-2" points={points} />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+              Buy-side depth
+            </h3>
+            {/* Buy side answers oracle manipulation risk. It is never "the depth". */}
+            <p className="mt-1 text-xs text-[var(--keel-muted)]">
+              What an order can absorb before the price moves against a buyer. The rungs
+              are nested, so one scale covers all three, and the lines darken as the rung
+              widens.
+            </p>
+            <TrendChart
+              className="mt-3"
+              unit={quoteCode}
+              gaps={gaps}
+              fromLabel={first.ledgerClosedAt}
+              toLabel={last.ledgerClosedAt}
+              series={[
+                {
+                  key: 'd2',
+                  label: '2% from mid',
+                  colour: SEQUENTIAL_RAMP[4],
+                  points: points.map((p) => ({ at: p.ledgerSeq, value: p.depth2PctBuySide })),
+                },
+                {
+                  key: 'd5',
+                  label: '5% from mid',
+                  colour: SEQUENTIAL_RAMP[8],
+                  points: points.map((p) => ({ at: p.ledgerSeq, value: p.depth5PctBuySide })),
+                },
+                {
+                  key: 'd10',
+                  label: '10% from mid',
+                  colour: SEQUENTIAL_RAMP[12],
+                  points: points.map((p) => ({ at: p.ledgerSeq, value: p.depth10PctBuySide })),
+                },
+              ]}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+              Collateral ceiling
+            </h3>
+            <TrendChart
+              className="mt-3"
+              unit={quoteCode}
+              gaps={gaps}
+              fromLabel={first.ledgerClosedAt}
+              toLabel={last.ledgerClosedAt}
+              series={[
+                {
+                  key: 'ceiling',
+                  label: 'Max safe collateral',
+                  colour: SEQUENTIAL_RAMP[9],
+                  points: points.map((p) => ({ at: p.ledgerSeq, value: p.maxSafeCollateral })),
+                },
+              ]}
+            />
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 const PRICE_SOURCE_WORDS: Readonly<Record<AssetRisk['priceSource'], string>> = {
@@ -335,6 +558,47 @@ function priceRows(
       note: priceConflict
         ? 'PRICE_SOURCE_CONFLICT is triggered: the two sources disagree past the threshold and the pool was taken'
         : 'Null means there is no pool to diverge from, not that the sources agree',
+    },
+  ];
+}
+
+/**
+ * The furthest the order book reaches, and what reaching it costs.
+ *
+ * Both are null for a structural reason whenever an active pool exists: under a
+ * constant product curve the price tends to infinity as the base reserve tends to
+ * zero, so every target is reachable and a highest price has no meaning. The engine
+ * says exactly that in `warnings`, which is rendered above. That null is therefore not
+ * a gap in the measurement, and the note says so rather than leaving "not computed" to
+ * be read as a failure.
+ *
+ * They carry real figures in the case they were built for: a book with one ask and one
+ * bid far apart, where the deltas are unreachable and the only honest answer to "how
+ * far can this be pushed" is the top of the book.
+ */
+function reachRows(risk: AssetRisk, quoteCode: string): FigureRow[] {
+  const pooled = risk.poolSpotPrice !== null && risk.poolSpotPrice !== undefined;
+
+  const structuralNote = pooled
+    ? 'Null by structure, not by failure: an active pool means every target is reachable and a highest price has no meaning'
+    : 'The highest price the order book can be walked to';
+
+  return [
+    {
+      key: 'maxReachablePrice',
+      label: 'Furthest price the book reaches',
+      value: classify(risk.maxReachablePrice, quoteCode),
+      maxFractionDigits: 8,
+      note: structuralNote,
+    },
+    {
+      key: 'costToMaxReachablePrice',
+      label: 'Cost to walk it that far',
+      value: classify(risk.costToMaxReachablePrice, quoteCode),
+      maxFractionDigits: 2,
+      note: pooled
+        ? 'Null for the same reason as the price above'
+        : 'What it costs to consume the book up to that price',
     },
   ];
 }

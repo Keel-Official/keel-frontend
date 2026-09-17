@@ -68,3 +68,32 @@ describe('Value', () => {
     expect(container.textContent).toBe('not reported');
   });
 });
+
+describe('Value truncation marker', () => {
+  /** What a sighted reader sees, without the screen-reader note. */
+  function visible(container: HTMLElement): string {
+    for (const node of container.querySelectorAll('.sr-only')) node.remove();
+    return container.textContent ?? '';
+  }
+
+  it('marks the number as shortened, not the unit', () => {
+    // "42,121.11 USDC…" reads as though USDC were cut off. The marker belongs against
+    // the digits it describes.
+    const { container } = render(
+      <Value value={classify('42121.1123456', 'USDC')} maxFractionDigits={2} />,
+    );
+    expect(visible(container)).toBe('42,121.11… USDC');
+  });
+
+  it('places nothing after the number when it was shown whole', () => {
+    const { container } = render(<Value value={classify('5', 'USDC')} />);
+    expect(visible(container)).toBe('5 USDC');
+  });
+
+  it('still omits the unit when asked to', () => {
+    const { container } = render(
+      <Value value={classify('1.23456', 'USDC')} maxFractionDigits={2} showUnit={false} />,
+    );
+    expect(visible(container)).toBe('1.23…');
+  });
+});

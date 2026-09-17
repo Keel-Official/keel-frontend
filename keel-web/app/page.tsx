@@ -1,9 +1,13 @@
 import { AssetFilters } from '@/components/keel/asset-filters';
+import {
+  CalibrationNote,
+  ConfidenceMeaning,
+} from '@/components/keel/calibration-note';
 import { AssetTable } from '@/components/keel/asset-table';
 import { KpiStrip, type KpiItem } from '@/components/keel/kpi-strip';
 import { Notice } from '@/components/keel/notice';
 import { AppShell, PageHeader } from '@/components/layout/app-shell';
-import { fetchAssets, fetchHealth } from '@/lib/api/server';
+import { fetchAssets, fetchHealth, fetchMethodology } from '@/lib/api/server';
 import { filterByText, sortAssets } from '@/lib/assets/list';
 import { classifyCount } from '@/lib/format/value';
 import { assetHref, isFiltered, parseAssetQuery } from '@/lib/url/asset-query';
@@ -19,9 +23,11 @@ export const dynamic = 'force-dynamic';
 export default async function AssetsPage({ searchParams }: PageProps<'/'>) {
   const query = parseAssetQuery(await searchParams);
 
-  const [health, assets] = await Promise.all([
+  const [health, assets, methodology] = await Promise.all([
     fetchHealth(),
     fetchAssets({ band: query.band, hasFlag: query.hasFlag }),
+    // Every screen that shows a band shows the engine's own words on calibration.
+    fetchMethodology(),
   ]);
 
   const returned = assets.data?.items ?? [];
@@ -56,10 +62,19 @@ export default async function AssetsPage({ searchParams }: PageProps<'/'>) {
       key: 'status',
       label: 'Engine',
       text: health.data?.status ?? null,
+      // `degraded` merges three conditions, and one of them is bookkeeping rather than
+      // data: a scan whose finish was never recorded, while the ledger is fresh and
+      // every asset carries current metrics. Painting that red would report an outage
+      // that is not happening, so the word is qualified and freshness is read from the
+      // staleness header instead.
       note:
-        health.data?.historicalAvailable === false
-          ? 'Historical replay unavailable on this deployment'
-          : undefined,
+        health.data?.status === 'degraded'
+          ? health.data.latestScanAt === null
+            ? 'Scan bookkeeping incomplete; the figures themselves are current'
+            : 'A scan finished with failures; some assets may be stale'
+          : health.data?.historicalAvailable === false
+            ? 'Historical replay unavailable; the stored series still works'
+            : undefined,
     },
   ];
 
@@ -107,6 +122,13 @@ export default async function AssetsPage({ searchParams }: PageProps<'/'>) {
 
           <section className="mt-8">
             <h2 className="sr-only">The monitored set</h2>
+
+            <CalibrationNote
+              className="mb-4"
+              calibrated={methodology.data?.calibrated}
+              note={methodology.data?.calibrationNote}
+            />
+
             <AssetFilters query={query} />
 
             {partialPage ? (
@@ -133,7 +155,8 @@ export default async function AssetsPage({ searchParams }: PageProps<'/'>) {
             ) : (
               <>
                 <AssetTable items={rows} query={query} />
-                <p className="mt-3 text-xs text-[var(--keel-muted)]">
+                <ConfidenceMeaning className="mt-3" />
+                <p className="mt-2 text-xs text-[var(--keel-muted)]">
                   Figures are denominated in each row&apos;s quote asset. &ldquo;Flags
                   fired&rdquo; counts triggered flags only: the list endpoint does not
                   report which checks could not be evaluated, so a zero here is not a
