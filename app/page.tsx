@@ -5,6 +5,7 @@ import { SiteHeader, BrandMark } from '../components/marketing/site-header';
 import { HeroProductPreview } from '../components/marketing/hero-product-preview';
 import { PriceLiquidityComparison } from '../components/marketing/price-liquidity-comparison';
 import { MarketSnapshot } from '../components/marketing/market-snapshot';
+import { dashboardCopy, dashboardLinks } from '../lib/dashboard';
 import { MetricBento } from '../components/marketing/metric-bento';
 import { ArchitectureFlow } from '../components/marketing/architecture-flow';
 import { ExplainableRiskDemo } from '../components/marketing/explainable-risk-demo';
@@ -36,11 +37,14 @@ export default function Home() {
                 support.
               </p>
               <div className="hero-actions">
-                <a className="button" href="#markets">
-                  Explore assets <ArrowUpRight size={18} />
+                {/* Points at the live dashboard when one is configured, and at the
+                    sample on this page when it is not, so the call to action is never
+                    a dead link. */}
+                <a className="button" href={dashboardLinks.assets}>
+                  {dashboardCopy.assets} <ArrowUpRight size={18} />
                 </a>
-                <a className="hero-secondary" href="#methodology">
-                  Read methodology <ArrowRight size={16} />
+                <a className="hero-secondary" href={dashboardLinks.methodology}>
+                  {dashboardCopy.methodology} <ArrowRight size={16} />
                 </a>
               </div>
             </div>
@@ -65,11 +69,11 @@ export default function Home() {
               </h2>
             </div>
             <div>
-              <a className="button" href="#markets">
-                Explore assets <ArrowUpRight size={18} />
+              <a className="button" href={dashboardLinks.assets}>
+                {dashboardCopy.assets} <ArrowUpRight size={18} />
               </a>
-              <a className="text-link" href="#methodology">
-                Read methodology <ArrowRight size={16} />
+              <a className="text-link" href={dashboardLinks.methodology}>
+                {dashboardCopy.methodology} <ArrowRight size={16} />
               </a>
             </div>
           </div>

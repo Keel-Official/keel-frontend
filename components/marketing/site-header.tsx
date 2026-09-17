@@ -3,6 +3,7 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { dashboardCopy, dashboardLinks } from '../../lib/dashboard';
 
 export function BrandMark() {
   return (
@@ -54,8 +55,11 @@ export function SiteHeader() {
             </a>
           ))}
         </nav>
-        <a className="button button-small header-action" href="#markets">
-          Explore assets <ArrowUpRight size={16} />
+        <a
+          className="button button-small header-action"
+          href={dashboardLinks.assets}
+        >
+          {dashboardCopy.assets} <ArrowUpRight size={16} />
         </a>
         <button
           ref={button}

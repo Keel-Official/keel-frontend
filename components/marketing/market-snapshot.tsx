@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUpRight, ListFilter } from 'lucide-react';
 import { market } from '../../lib/api/fixtures';
+import { dashboardIsLive, dashboardLinks } from '../../lib/dashboard';
 import { AssetIdentity, MetricValue, RiskBadge } from '../keel/result';
 
 export function MarketSnapshot() {
@@ -142,9 +143,18 @@ export function MarketSnapshot() {
             <span>
               Ledger {market.items[0].ledgerSeq} · {market.methodologyVersion}
             </span>
-            <a href="/evidence/asset-list-mixed.json">
-              Inspect all sample rows <ArrowUpRight size={14} />
-            </a>
+            {/* The rows above are a recorded sample. When a live dashboard exists,
+                the more useful next step is the real set rather than the JSON the
+                sample came from; both are offered when it does. */}
+            {dashboardIsLive ? (
+              <a href={dashboardLinks.assets}>
+                See every monitored asset, live <ArrowUpRight size={14} />
+              </a>
+            ) : (
+              <a href="/evidence/asset-list-mixed.json">
+                Inspect all sample rows <ArrowUpRight size={14} />
+              </a>
+            )}
           </div>
         </div>
       </div>
