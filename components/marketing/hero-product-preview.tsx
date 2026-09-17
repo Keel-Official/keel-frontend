@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ArrowUpRight, ScanLine } from 'lucide-react';
 import { healthy } from '../../lib/api/fixtures';
 import {
@@ -50,9 +51,9 @@ export function HeroProductPreview() {
         </div>
       </div>
       <ProvenanceStrip result={healthy} />
-      <a className="product-response-link" href="/evidence/asset-healthy.json">
-        Raw sample response, JSON <ArrowUpRight size={14} />
-      </a>
+      <Link className="product-response-link" href="/evidence/asset-healthy">
+        See the full response <ArrowUpRight size={14} />
+      </Link>
     </div>
   );
 }

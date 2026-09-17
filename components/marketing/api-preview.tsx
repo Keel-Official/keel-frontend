@@ -84,7 +84,7 @@ export function ApiPreview() {
             </code>
           </pre>
           <a className="code-footer" href="/evidence/asset-healthy.json">
-            View complete sample response <ArrowUpRight size={14} />
+            The complete response, JSON <ArrowUpRight size={14} />
           </a>
         </div>
       </div>
