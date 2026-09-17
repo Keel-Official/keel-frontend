@@ -201,11 +201,6 @@ function AssetRiskView({
           <div>
             <BandSegments band={risk.band} confidence={risk.bandConfidence} />
             <ConfidenceMeaning className="mt-2" />
-            <CalibrationNote
-              className="mt-3"
-              calibrated={calibrated}
-              note={calibrationNote}
-            />
             {risk.priceSource === 'none' ? (
               <p className="mt-3 text-sm text-[var(--band-critical-ink)]">
                 This asset has no executable price at all. The band is a result the
@@ -217,6 +212,14 @@ function AssetRiskView({
 
           <CollateralCeilingPanel ceiling={ceiling} />
         </div>
+
+        {/* Full width, below the two columns. Inside the left one it stretched that
+            column and left the right half of the section empty. */}
+        <CalibrationNote
+          className="mt-6"
+          calibrated={calibrated}
+          note={calibrationNote}
+        />
 
         <MethodologyBlock source="GET /asset/{assetId}/depth → maxSafeCollateral, maxSafeCollateralLiquidation, maxSafeCollateralManipulation" />
       </Section>
@@ -454,7 +457,8 @@ function HistoryView({
             {/* Buy side answers oracle manipulation risk. It is never "the depth". */}
             <p className="mt-1 text-xs text-[var(--keel-muted)]">
               What an order can absorb before the price moves against a buyer. The rungs
-              are nested, so one scale covers all three.
+              are nested, so one scale covers all three, and the lines darken as the rung
+              widens.
             </p>
             <TrendChart
               className="mt-3"
@@ -466,19 +470,19 @@ function HistoryView({
                 {
                   key: 'd2',
                   label: '2% from mid',
-                  colour: SEQUENTIAL_RAMP[2],
+                  colour: SEQUENTIAL_RAMP[4],
                   points: points.map((p) => ({ at: p.ledgerSeq, value: p.depth2PctBuySide })),
                 },
                 {
                   key: 'd5',
                   label: '5% from mid',
-                  colour: SEQUENTIAL_RAMP[6],
+                  colour: SEQUENTIAL_RAMP[8],
                   points: points.map((p) => ({ at: p.ledgerSeq, value: p.depth5PctBuySide })),
                 },
                 {
                   key: 'd10',
                   label: '10% from mid',
-                  colour: SEQUENTIAL_RAMP[10],
+                  colour: SEQUENTIAL_RAMP[12],
                   points: points.map((p) => ({ at: p.ledgerSeq, value: p.depth10PctBuySide })),
                 },
               ]}
@@ -499,7 +503,7 @@ function HistoryView({
                 {
                   key: 'ceiling',
                   label: 'Max safe collateral',
-                  colour: SEQUENTIAL_RAMP[8],
+                  colour: SEQUENTIAL_RAMP[9],
                   points: points.map((p) => ({ at: p.ledgerSeq, value: p.maxSafeCollateral })),
                 },
               ]}

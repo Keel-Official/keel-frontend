@@ -43,7 +43,7 @@ export function Value({
   }
 
   const formatted = formatDecimal(value.exact, { maxFractionDigits });
-  const body = showUnit ? withUnit(formatted.display, value.unit) : formatted.display;
+  const unit = showUnit ? value.unit : null;
   const exactWithUnit = showUnit ? withUnit(value.exact, value.unit) : value.exact;
 
   return (
@@ -54,12 +54,15 @@ export function Value({
       data-exact={value.exact}
       data-state={value.state}
     >
-      {body}
+      {/* The ellipsis marks the NUMBER as shortened, so it sits against the digits.
+          After the unit it reads as though the unit itself were cut off. */}
+      {formatted.display}
       {formatted.truncated ? (
         <span aria-hidden="true" className="text-[var(--keel-muted)]">
           …
         </span>
       ) : null}
+      {unit === null ? null : ` ${unit}`}
       {formatted.truncated ? (
         <span className="sr-only">{` (shortened; full value ${exactWithUnit})`}</span>
       ) : null}

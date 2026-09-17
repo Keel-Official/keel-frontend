@@ -1,4 +1,5 @@
 import { plotSeries, sharedExtent, type Gap, type SeriesPoint } from '@/lib/chart/geometry';
+import { compareDecimalStrings } from '@/lib/format/compare';
 import { classify } from '@/lib/format/value';
 import { cn } from '@/lib/utils';
 
@@ -68,6 +69,10 @@ export function TrendChart({
   const toX = (x: number): number => PAD + x * (WIDTH - PAD * 2);
   const toY = (y: number): number => HEIGHT - PAD - y * (HEIGHT - PAD * 2);
 
+  // The axis labels are the SERVED strings at the extremes, found by comparing digits.
+  // The geometry module's min and max are converted numbers and may never be printed.
+  const bounds = axisBounds(series);
+
   return (
     <figure className={cn('m-0', className)}>
       <svg
@@ -119,6 +124,23 @@ export function TrendChart({
         )}
       </svg>
 
+      {bounds === null ? null : (
+        <dl className="mt-1 flex justify-between text-xs text-[var(--keel-muted)]">
+          <div className="flex items-baseline gap-1.5">
+            <dt>Lowest</dt>
+            <dd>
+              <Value value={classify(bounds.min, unit)} maxFractionDigits={2} />
+            </dd>
+          </div>
+          <div className="flex items-baseline gap-1.5">
+            <dt>Highest</dt>
+            <dd>
+              <Value value={classify(bounds.max, unit)} maxFractionDigits={2} />
+            </dd>
+          </div>
+        </dl>
+      )}
+
       <figcaption className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]">
         <span className="tabular">
           {fromLabel} — {toLabel}
@@ -148,4 +170,28 @@ export function TrendChart({
       </dl>
     </figure>
   );
+}
+
+/**
+ * The smallest and largest served values across every series on the chart, as the
+ * strings the engine sent. Found by digit comparison rather than by reading the
+ * geometry module's extent, because that extent is a converted number and nothing
+ * converted is ever shown to a reader.
+ */
+function axisBounds(
+  series: readonly TrendSeries[],
+): { min: string; max: string } | null {
+  let min: string | null = null;
+  let max: string | null = null;
+
+  for (const s of series) {
+    for (const point of s.points) {
+      const value = point.value;
+      if (typeof value !== 'string') continue;
+      if (min === null || compareDecimalStrings(value, min) < 0) min = value;
+      if (max === null || compareDecimalStrings(value, max) > 0) max = value;
+    }
+  }
+
+  return min === null || max === null ? null : { min, max };
 }
