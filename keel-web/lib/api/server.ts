@@ -16,7 +16,7 @@ import type {
   KeelError,
   Methodology,
 } from './types';
-import type { Band, Flag } from '../format/flags';
+import type { Band, DataSource, Flag } from '../format/flags';
 
 /**
  * Server-side reads.
@@ -280,6 +280,8 @@ async function readMethodology(): Promise<Fetched<Methodology>> {
 export async function fetchHistory(
   assetId: string,
   range: { from: number; to: number; resolution: 'hour' | 'day' },
+  /** One request is one source; the response names it back in `dataSource`. */
+  source?: DataSource,
 ): Promise<Fetched<HistoryResponse>> {
   try {
     const client = createKeelClient();
@@ -287,7 +289,12 @@ export async function fetchHistory(
       ...NO_CACHE,
       params: {
         path: { assetId },
-        query: { from: range.from, to: range.to, resolution: range.resolution },
+        query: {
+          from: range.from,
+          to: range.to,
+          resolution: range.resolution,
+          ...(source ? { source } : {}),
+        },
       },
     });
     return {

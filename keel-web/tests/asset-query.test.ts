@@ -195,3 +195,67 @@ describe('assetKey', () => {
     ).toBe('XLM');
   });
 });
+
+describe('history query', () => {
+  it('opens on the window that holds the whole stored series', async () => {
+    const { DEFAULT_HISTORY, parseHistoryQuery } = await import(
+      '@/lib/assets/history-range'
+    );
+    expect(parseHistoryQuery({})).toEqual(DEFAULT_HISTORY);
+    expect(DEFAULT_HISTORY.source).toBe('horizon');
+  });
+
+  it('drops a source or resolution the contract does not define', async () => {
+    const { parseHistoryQuery, DEFAULT_HISTORY } = await import(
+      '@/lib/assets/history-range'
+    );
+    const parsed = parseHistoryQuery({
+      source: 'made-up',
+      resolution: 'minute',
+      range: '5y',
+    });
+    expect(parsed).toEqual(DEFAULT_HISTORY);
+  });
+
+  it('keeps the rest of the view when one control changes', async () => {
+    const { historyHref } = await import('@/lib/assets/history-range');
+    const href = historyHref(
+      'XLM',
+      { range: '24h', resolution: 'day', source: 'hubble' },
+      { source: 'horizon' },
+    );
+    expect(href).toContain('range=24h');
+    expect(href).toContain('resolution=day');
+    // horizon is the default, so it is left out rather than written.
+    expect(href).not.toContain('source=');
+    // And it returns the reader to the section they were looking at.
+    expect(href).toContain('#history');
+  });
+
+  it('marks trades-implied as a lower bound and nothing else', async () => {
+    const { isLowerBoundSource } = await import('@/lib/assets/history-range');
+    expect(isLowerBoundSource('trades-implied')).toBe(true);
+    for (const s of ['horizon', 'hubble', 'offers-implied'] as const) {
+      expect(isLowerBoundSource(s), s).toBe(false);
+    }
+  });
+
+  it('sizes the ledger window from the latest ledger', async () => {
+    const { ledgerWindow, HISTORY_RANGES } = await import('@/lib/assets/history-range');
+    const w = ledgerWindow(64_460_000, {
+      range: '24h',
+      resolution: 'hour',
+      source: 'horizon',
+    });
+    expect(w.to).toBe(64_460_000);
+    expect(w.from).toBe(64_460_000 - HISTORY_RANGES['24h'].ledgers);
+    expect(w.resolution).toBe('hour');
+  });
+
+  it('never asks for a ledger below one', async () => {
+    const { ledgerWindow } = await import('@/lib/assets/history-range');
+    expect(
+      ledgerWindow(100, { range: '30d', resolution: 'day', source: 'horizon' }).from,
+    ).toBe(1);
+  });
+});

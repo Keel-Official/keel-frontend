@@ -35,6 +35,12 @@ export interface TrendChartProps {
   /** Taken from the first and last point that came back, never from the range asked for. */
   fromLabel: string;
   toLabel: string;
+  /**
+   * Fraction digits for the figures beside the chart. A price needs more than a money
+   * amount: at two digits a series that moved from 1.0701 to 1.0794 prints its lowest
+   * and its highest as the same number, which says the opposite of what the line shows.
+   */
+  maxFractionDigits?: number;
   className?: string;
 }
 
@@ -48,6 +54,7 @@ export function TrendChart({
   unit,
   fromLabel,
   toLabel,
+  maxFractionDigits = 2,
   className,
 }: TrendChartProps) {
   // One extent across every series on the chart, so the lines are comparable.
@@ -129,13 +136,13 @@ export function TrendChart({
           <div className="flex items-baseline gap-1.5">
             <dt>Lowest</dt>
             <dd>
-              <Value value={classify(bounds.min, unit)} maxFractionDigits={2} />
+              <Value value={classify(bounds.min, unit)} maxFractionDigits={maxFractionDigits} />
             </dd>
           </div>
           <div className="flex items-baseline gap-1.5">
             <dt>Highest</dt>
             <dd>
-              <Value value={classify(bounds.max, unit)} maxFractionDigits={2} />
+              <Value value={classify(bounds.max, unit)} maxFractionDigits={maxFractionDigits} />
             </dd>
           </div>
         </dl>
@@ -163,7 +170,7 @@ export function TrendChart({
               {s.label}
             </dt>
             <dd>
-              <Value value={classify(s.latest?.value, unit)} maxFractionDigits={2} />
+              <Value value={classify(s.latest?.value, unit)} maxFractionDigits={maxFractionDigits} />
             </dd>
           </div>
         ))}
