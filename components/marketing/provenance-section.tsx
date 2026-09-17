@@ -60,7 +60,7 @@ export function ProvenanceSection() {
             ? 'Calibrated'
             : 'Thresholds are chosen, not empirically calibrated.'}{' '}
           <a href="/evidence/methodology.json">
-            Inspect methodology parameters.
+            Raw methodology parameters, JSON.
           </a>
         </p>
         <div className="faq-layout">

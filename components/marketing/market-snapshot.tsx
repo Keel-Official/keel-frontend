@@ -151,8 +151,10 @@ export function MarketSnapshot() {
                 See every monitored asset, live <ArrowUpRight size={14} />
               </a>
             ) : (
+              // Says what it gives you. "Inspect all sample rows" promises a table and
+              // delivers a file, which is a worse answer than the file honestly named.
               <a href="/evidence/asset-list-mixed.json">
-                Inspect all sample rows <ArrowUpRight size={14} />
+                Raw sample response, JSON <ArrowUpRight size={14} />
               </a>
             )}
           </div>

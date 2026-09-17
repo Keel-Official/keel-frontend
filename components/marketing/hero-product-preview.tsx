@@ -51,7 +51,7 @@ export function HeroProductPreview() {
       </div>
       <ProvenanceStrip result={healthy} />
       <a className="product-response-link" href="/evidence/asset-healthy.json">
-        Inspect the sample response <ArrowUpRight size={14} />
+        Raw sample response, JSON <ArrowUpRight size={14} />
       </a>
     </div>
   );

@@ -68,7 +68,7 @@ export function ExplainableRiskDemo() {
                 makes the target unreachable.
               </p>
               <a className="text-link" href="/evidence/asset-broken-book.json">
-                Inspect full finding <ArrowUpRight size={14} />
+                Raw finding, JSON <ArrowUpRight size={14} />
               </a>
             </aside>
           </div>
