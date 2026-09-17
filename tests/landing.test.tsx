@@ -4,6 +4,7 @@ import { expect, it } from 'vitest';
 import Home from '../app/page';
 import { healthy, brokenBook, history, market } from '../lib/api/fixtures';
 import { februaryPoints, observationSegments } from '../lib/format/history';
+import { EVIDENCE } from '../lib/evidence';
 
 it('leads with a real result and keeps evidence accessible without live API calls', () => {
   render(<Home />);
@@ -21,14 +22,30 @@ it('leads with a real result and keeps evidence accessible without live API call
   ).toBeVisible();
 });
 
-it('every local navigation link resolves to a section or a real artifact', () => {
+it('every local navigation link resolves to a section, a page, or a real artifact', () => {
   const { container } = render(<Home />);
+  const evidenceSlugs = new Set(EVIDENCE.map((item) => item.slug));
+
   for (const link of container.querySelectorAll('a[href]')) {
     const href = link.getAttribute('href')!;
-    if (href.startsWith('#'))
+    if (href.startsWith('#')) {
       expect(container.querySelector(href), href).not.toBeNull();
-    else if (href.startsWith('/') && href !== '/')
+    } else if (href.startsWith('/evidence/') && !href.includes('.')) {
+      // A rendered evidence page rather than the file it renders. It resolves when
+      // the registry has the slug, because that is what generates the route.
+      expect(evidenceSlugs.has(href.slice('/evidence/'.length)), href).toBe(true);
+    } else if (href.startsWith('/') && href !== '/') {
       expect(existsSync(`public${href}`), href).toBe(true);
+    }
+  }
+});
+
+it('every rendered evidence page has the file it claims to render', () => {
+  // The page offers "the file this page renders" in its footer. If that path is
+  // wrong the offer is a dead link, and the whole point of the page is that the
+  // artefact behind it can be checked.
+  for (const item of EVIDENCE) {
+    expect(existsSync(`public${item.rawPath}`), item.rawPath).toBe(true);
   }
 });
 

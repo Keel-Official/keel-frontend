@@ -2,6 +2,7 @@ import { ArrowDown, ArrowUpRight, ListFilter } from 'lucide-react';
 import { market } from '../../lib/api/fixtures';
 import { dashboardIsLive, dashboardLinks } from '../../lib/dashboard';
 import { AssetIdentity, MetricValue, RiskBadge } from '../keel/result';
+import Link from 'next/link';
 
 export function MarketSnapshot() {
   return (
@@ -153,9 +154,9 @@ export function MarketSnapshot() {
             ) : (
               // Says what it gives you. "Inspect all sample rows" promises a table and
               // delivers a file, which is a worse answer than the file honestly named.
-              <a href="/evidence/asset-list-mixed.json">
-                Raw sample response, JSON <ArrowUpRight size={14} />
-              </a>
+              <Link href="/evidence/asset-list-mixed">
+                See the whole sample set <ArrowUpRight size={14} />
+              </Link>
             )}
           </div>
         </div>

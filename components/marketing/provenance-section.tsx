@@ -1,6 +1,7 @@
 import { ArrowUpRight, Fingerprint } from 'lucide-react';
 import { healthy, methodology } from '../../lib/api/fixtures';
 import { ProvenanceStrip } from '../keel/result';
+import Link from 'next/link';
 
 const questions = [
   [
@@ -59,9 +60,9 @@ export function ProvenanceSection() {
           {methodology.calibrated
             ? 'Calibrated'
             : 'Thresholds are chosen, not empirically calibrated.'}{' '}
-          <a href="/evidence/methodology.json">
-            Raw methodology parameters, JSON.
-          </a>
+          <Link href="/evidence/methodology">
+            See every threshold the engine applies.
+          </Link>
         </p>
         <div className="faq-layout">
           <h3>Questions about Keel</h3>

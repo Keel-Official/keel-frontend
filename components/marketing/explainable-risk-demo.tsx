@@ -8,6 +8,7 @@ import {
   RiskBadge,
 } from '../keel/result';
 import { formatAmount } from '../../lib/format/keel';
+import Link from 'next/link';
 
 export function ExplainableRiskDemo() {
   return (
@@ -67,9 +68,9 @@ export function ExplainableRiskDemo() {
                 An exhausted book does not make a target expensive to reach. It
                 makes the target unreachable.
               </p>
-              <a className="text-link" href="/evidence/asset-broken-book.json">
-                Raw finding, JSON <ArrowUpRight size={14} />
-              </a>
+              <Link className="text-link" href="/evidence/asset-broken-book">
+                See the full finding <ArrowUpRight size={14} />
+              </Link>
             </aside>
           </div>
           <ProvenanceStrip result={brokenBook} />
