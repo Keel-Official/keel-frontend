@@ -1,43 +1,34 @@
-/**
- * Where the live dashboard lives, and what this page should link to when it does not
- * live anywhere yet.
- *
- * The marketing site and the dashboard are two applications. They may end up on a
- * subdomain, on a path behind a proxy, or on separate hosts entirely, so the location
- * is configuration rather than something written in here.
- *
- * WHEN IT IS NOT CONFIGURED the links fall back to the on-page sections. That matters:
- * a build that forgot the variable would otherwise ship a homepage whose primary call
- * to action points at `http://localhost:5173`, which is dead for every visitor and
- * looks like a broken product rather than a missing setting. The anchor always works.
- */
-
-const configured = process.env.NEXT_PUBLIC_DASHBOARD_URL?.trim();
-
-/** True when a real dashboard exists to send people to. */
-export const dashboardIsLive = Boolean(configured);
-
-function join(path: string): string {
-  if (!configured) return path;
-  return `${configured.replace(/\/+$/, '')}${path}`;
-}
+import { DASHBOARD_BASE, DASHBOARD_METHODOLOGY } from './keel/routes';
 
 /**
- * Destinations the landing page offers. Each has the live URL when one is configured
- * and the on-page section to scroll to when it is not.
+ * Where the landing page sends someone who wants the product.
+ *
+ * The dashboard used to be a second application on a second host, so this module read
+ * `NEXT_PUBLIC_DASHBOARD_URL` and fell back to anchors on the landing page when nothing
+ * was configured — a build that forgot the variable would otherwise have shipped a
+ * primary call to action pointing at `http://localhost:5173`.
+ *
+ * It is now mounted in this application under `/dashboard`, so there is nothing to
+ * configure and nothing to fall back to. The link is a path in the same deployment and
+ * is live wherever this site is.
  */
+
+/** Destinations the landing page offers. */
 export const dashboardLinks = {
   /** The monitored set. */
-  assets: configured ? join('/') : '#markets',
+  assets: DASHBOARD_BASE,
   /** Every threshold, as the engine serves it. */
-  methodology: configured ? join('/methodology') : '#methodology',
+  methodology: DASHBOARD_METHODOLOGY,
 } as const;
 
 /**
- * Wording that stays true either way. "Explore assets" promises a product; without a
- * dashboard behind it, the honest version says it is a preview on this page.
+ * Wording. These used to soften to "See a sample of the set" when no dashboard existed
+ * to link to; the link now reaches sixty-one live assets, so it says so plainly.
  */
 export const dashboardCopy = {
-  assets: dashboardIsLive ? 'Explore assets' : 'See a sample of the set',
-  methodology: dashboardIsLive ? 'Read methodology' : 'How Keel measures',
+  /** The header button, where the bar is narrow and the destination is the label. */
+  nav: 'Dashboard',
+  /** The hero and closing calls to action, which have room to say what is there. */
+  assets: 'Open the dashboard',
+  methodology: 'Read methodology',
 } as const;

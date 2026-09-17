@@ -1,71 +1,52 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+
+import { dashboardCopy, dashboardLinks } from '../lib/dashboard';
+import {
+  DASHBOARD_BASE,
+  dashboardAssetPath,
+  dashboardPath,
+} from '../lib/keel/routes';
 
 /**
- * The resolver reads the environment once, when the module loads, so each case has to
- * load it again with a different environment.
+ * These links used to be resolved from `NEXT_PUBLIC_DASHBOARD_URL`, with a fallback to
+ * anchors on the landing page for the case where no dashboard was deployed. The
+ * dashboard is now mounted in this application, so there is no environment to read and
+ * no fallback to take: what is left to protect is that every call to action reaches a
+ * route that exists, and that none of them regress to an on-page anchor.
  */
-async function load(url: string | undefined) {
-  vi.resetModules();
-  if (url === undefined) delete process.env.NEXT_PUBLIC_DASHBOARD_URL;
-  else process.env.NEXT_PUBLIC_DASHBOARD_URL = url;
-  return import('../lib/dashboard');
-}
-
-afterEach(() => {
-  delete process.env.NEXT_PUBLIC_DASHBOARD_URL;
-  vi.resetModules();
-});
-
-describe('when no dashboard is configured', () => {
-  it('falls back to sections on this page rather than a dead link', async () => {
-    // A build that forgot the variable would otherwise ship a homepage whose primary
-    // call to action points at localhost, which is dead for every visitor.
-    const { dashboardLinks, dashboardIsLive } = await load(undefined);
-    expect(dashboardIsLive).toBe(false);
-    expect(dashboardLinks.assets).toBe('#markets');
-    expect(dashboardLinks.methodology).toBe('#methodology');
+describe('landing calls to action', () => {
+  it('sends the reader to routes this application serves', () => {
+    expect(dashboardLinks.assets).toBe('/dashboard');
+    expect(dashboardLinks.methodology).toBe('/dashboard/methodology');
   });
 
-  it('promises a preview rather than a product', async () => {
-    const { dashboardCopy } = await load(undefined);
-    expect(dashboardCopy.assets).not.toContain('Explore');
-    expect(dashboardCopy.assets.toLowerCase()).toContain('sample');
+  it('never degrades to an anchor on the landing page', () => {
+    for (const href of Object.values(dashboardLinks)) {
+      expect(href.startsWith('#')).toBe(false);
+      expect(href.startsWith(DASHBOARD_BASE)).toBe(true);
+    }
   });
 
-  it('treats an empty or blank value as not configured', async () => {
-    expect((await load('')).dashboardIsLive).toBe(false);
-    expect((await load('   ')).dashboardIsLive).toBe(false);
-  });
-});
-
-describe('when a dashboard is configured', () => {
-  it('links to its routes', async () => {
-    const { dashboardLinks, dashboardIsLive } = await load('https://dashboard.keels.app');
-    expect(dashboardIsLive).toBe(true);
-    expect(dashboardLinks.assets).toBe('https://dashboard.keels.app/');
-    expect(dashboardLinks.methodology).toBe('https://dashboard.keels.app/methodology');
-  });
-
-  it('does not double the slash when the value has a trailing one', async () => {
-    const { dashboardLinks } = await load('https://dashboard.keels.app/');
-    expect(dashboardLinks.methodology).toBe('https://dashboard.keels.app/methodology');
-    expect(dashboardLinks.assets).toBe('https://dashboard.keels.app/');
-  });
-
-  it('works when the dashboard sits on a path rather than a subdomain', async () => {
-    const { dashboardLinks } = await load('https://keels.app/app');
-    expect(dashboardLinks.assets).toBe('https://keels.app/app/');
-    expect(dashboardLinks.methodology).toBe('https://keels.app/app/methodology');
-  });
-
-  it('works against a local dashboard during development', async () => {
-    const { dashboardLinks } = await load('http://localhost:5173');
-    expect(dashboardLinks.assets).toBe('http://localhost:5173/');
-  });
-
-  it('promises the product once there is one', async () => {
-    const { dashboardCopy } = await load('https://dashboard.keels.app');
-    expect(dashboardCopy.assets).toBe('Explore assets');
+  it('promises the product rather than a preview of it', () => {
+    expect(dashboardCopy.nav).toBe('Dashboard');
+    expect(dashboardCopy.assets.toLowerCase()).not.toContain('sample');
     expect(dashboardCopy.methodology).toBe('Read methodology');
+  });
+});
+
+describe('dashboard route builder', () => {
+  it('returns the bare path when nothing is filtered', () => {
+    expect(dashboardPath()).toBe('/dashboard');
+    expect(dashboardPath('')).toBe('/dashboard');
+  });
+
+  it('appends a query string that is already built', () => {
+    expect(dashboardPath('band=CRITICAL')).toBe('/dashboard?band=CRITICAL');
+  });
+
+  it('escapes an asset id, which carries a colon and an issuer', () => {
+    expect(dashboardAssetPath('USDC:GA5Z')).toBe(
+      '/dashboard/asset/USDC%3AGA5Z',
+    );
   });
 });

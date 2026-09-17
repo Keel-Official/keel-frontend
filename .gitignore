@@ -47,3 +47,6 @@ next-env.d.ts
 
 # skills
 .agents/skills
+
+# vitest JSON reporter output
+.vitest/

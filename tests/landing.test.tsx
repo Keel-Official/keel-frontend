@@ -1,10 +1,11 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, it } from 'vitest';
-import Home from '../app/page';
+import Home from '../app/(marketing)/page';
 import { healthy, brokenBook, history, market } from '../lib/api/fixtures';
 import { februaryPoints, observationSegments } from '../lib/format/history';
 import { EVIDENCE } from '../lib/evidence';
+import { DASHBOARD_BASE } from '../lib/keel/routes';
 
 it('leads with a real result and keeps evidence accessible without live API calls', () => {
   render(<Home />);
@@ -34,6 +35,13 @@ it('every local navigation link resolves to a section, a page, or a real artifac
       // A rendered evidence page rather than the file it renders. It resolves when
       // the registry has the slug, because that is what generates the route.
       expect(evidenceSlugs.has(href.slice('/evidence/'.length)), href).toBe(true);
+    } else if (href === DASHBOARD_BASE || href.startsWith(`${DASHBOARD_BASE}/`)) {
+      // The dashboard is rendered by this application rather than served from
+      // `public`, so it resolves when the route segment exists on disk. Its pages read
+      // the live API, which is why this checks the route and not the response.
+      const segment = href.slice(DASHBOARD_BASE.length).replace(/^\//, '');
+      const route = `app/(dashboard)/dashboard/${segment}`.replace(/\/$/, '');
+      expect(existsSync(`${route}/page.tsx`), href).toBe(true);
     } else if (href.startsWith('/') && href !== '/') {
       expect(existsSync(`public${href}`), href).toBe(true);
     }

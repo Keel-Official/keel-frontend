@@ -59,7 +59,7 @@ export function SiteHeader() {
           className="button button-small header-action"
           href={dashboardLinks.assets}
         >
-          {dashboardCopy.assets} <ArrowUpRight size={16} />
+          {dashboardCopy.nav} <ArrowUpRight size={16} />
         </a>
         <button
           ref={button}
@@ -85,7 +85,11 @@ export function SiteHeader() {
             <ArrowUpRight size={16} />
           </a>
         ))}
-        <a href="#methodology" onClick={() => setOpen(false)}>
+        <a href={dashboardLinks.assets} onClick={() => setOpen(false)}>
+          {dashboardCopy.nav}
+          <ArrowUpRight size={16} />
+        </a>
+        <a href={dashboardLinks.methodology} onClick={() => setOpen(false)}>
           Methodology
           <ArrowUpRight size={16} />
         </a>

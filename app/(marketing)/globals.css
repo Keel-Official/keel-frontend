@@ -1,4 +1,16 @@
-@import 'tailwindcss';
+/*
+ * Tailwind scans only this surface's own files.
+ *
+ * Left to its default, it walks the whole project and both surfaces end up carrying
+ * utilities generated from the other's markup — the dashboard's arbitrary-value classes
+ * were appearing here, referring to `--band-*` tokens that this sheet does not define.
+ * Harmless to render and pure weight, but the two surfaces are kept apart on purpose,
+ * and that is easier to hold when the stylesheets cannot see each other's classes.
+ */
+@import 'tailwindcss' source(none);
+@source './';
+@source '../../components/marketing';
+@source '../../components/keel';
 
 :root {
   --bg: #fbfcfc;

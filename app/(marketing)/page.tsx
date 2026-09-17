@@ -1,17 +1,17 @@
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
-import { LandingMotion } from '../components/marketing/landing-motion';
-import { SiteHeader, BrandMark } from '../components/marketing/site-header';
-import { HeroProductPreview } from '../components/marketing/hero-product-preview';
-import { PriceLiquidityComparison } from '../components/marketing/price-liquidity-comparison';
-import { MarketSnapshot } from '../components/marketing/market-snapshot';
-import { dashboardCopy, dashboardLinks } from '../lib/dashboard';
-import { MetricBento } from '../components/marketing/metric-bento';
-import { ArchitectureFlow } from '../components/marketing/architecture-flow';
-import { ExplainableRiskDemo } from '../components/marketing/explainable-risk-demo';
-import { ApiPreview } from '../components/marketing/api-preview';
-import { BlendCasePreview } from '../components/marketing/blend-case-preview';
-import { ProvenanceSection } from '../components/marketing/provenance-section';
+import { LandingMotion } from '@/components/marketing/landing-motion';
+import { SiteHeader, BrandMark } from '@/components/marketing/site-header';
+import { HeroProductPreview } from '@/components/marketing/hero-product-preview';
+import { PriceLiquidityComparison } from '@/components/marketing/price-liquidity-comparison';
+import { MarketSnapshot } from '@/components/marketing/market-snapshot';
+import { dashboardCopy, dashboardLinks } from '@/lib/dashboard';
+import { MetricBento } from '@/components/marketing/metric-bento';
+import { ArchitectureFlow } from '@/components/marketing/architecture-flow';
+import { ExplainableRiskDemo } from '@/components/marketing/explainable-risk-demo';
+import { ApiPreview } from '@/components/marketing/api-preview';
+import { BlendCasePreview } from '@/components/marketing/blend-case-preview';
+import { ProvenanceSection } from '@/components/marketing/provenance-section';
 
 export default function Home() {
   return (

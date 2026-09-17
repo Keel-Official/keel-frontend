@@ -109,9 +109,21 @@ test('API response copy, social image, and branded missing page', async ({
     '/v1/asset/USDC:',
   );
   expect(await page.locator('.api-request').innerText()).toContain('quote=XLM');
-  const image = await request.get('/opengraph-image');
+  // The URL is read off the page rather than written here. Next generates the social
+  // image route with a content hash, so a hardcoded path passes until the file moves
+  // and then reports a broken card that is not broken.
+  const ogUrl = await page
+    .locator('meta[property="og:image"]')
+    .getAttribute('content');
+  expect(ogUrl).toBeTruthy();
+  const image = await request.get(ogUrl!);
   expect(image.status()).toBe(200);
   expect(image.headers()['content-type']).toContain('image/png');
+  // Both cards are served, and neither is left pointing at a route that does not exist.
+  const twitterUrl = await page
+    .locator('meta[name="twitter:image"]')
+    .getAttribute('content');
+  expect((await request.get(twitterUrl!)).status()).toBe(200);
   const missing = await page.goto('/missing-surface');
   expect(missing?.status()).toBe(404);
   await page.getByRole('link', { name: 'Return to Keel' }).click();

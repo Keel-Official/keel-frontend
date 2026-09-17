@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowUpRight, ListFilter } from 'lucide-react';
 import { market } from '../../lib/api/fixtures';
-import { dashboardIsLive, dashboardLinks } from '../../lib/dashboard';
+import { dashboardLinks } from '../../lib/dashboard';
 import { AssetIdentity, MetricValue, RiskBadge } from '../keel/result';
 import Link from 'next/link';
 
@@ -144,20 +144,18 @@ export function MarketSnapshot() {
             <span>
               Ledger {market.items[0].ledgerSeq} · {market.methodologyVersion}
             </span>
-            {/* The rows above are a recorded sample. When a live dashboard exists,
-                the more useful next step is the real set rather than the JSON the
-                sample came from; both are offered when it does. */}
-            {dashboardIsLive ? (
-              <a href={dashboardLinks.assets}>
-                See every monitored asset, live <ArrowUpRight size={14} />
-              </a>
-            ) : (
-              // Says what it gives you. "Inspect all sample rows" promises a table and
-              // delivers a file, which is a worse answer than the file honestly named.
-              <Link href="/evidence/asset-list-mixed">
-                See the whole sample set <ArrowUpRight size={14} />
-              </Link>
-            )}
+            {/* The rows above are a recorded sample, and the dashboard now ships with
+                the site, so the live set is the more useful next step. The recording
+                stays alongside it: it is what a claim on this page is checked against,
+                and the live set cannot serve that purpose because it moves. */}
+            <a href={dashboardLinks.assets}>
+              See every monitored asset, live <ArrowUpRight size={14} />
+            </a>
+            {/* Says what it gives you. "Inspect all sample rows" promises a table and
+                delivers a file, which is a worse answer than the file honestly named. */}
+            <Link href="/evidence/asset-list-mixed">
+              See the whole sample set <ArrowUpRight size={14} />
+            </Link>
           </div>
         </div>
       </div>

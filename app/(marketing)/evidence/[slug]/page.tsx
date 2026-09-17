@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight, FileJson } from 'lucide-react';
 
-import type { components } from '../../../lib/api/schema';
-import { EVIDENCE, findEvidence, type EvidenceItem } from '../../../lib/evidence';
-import { dashboardIsLive, dashboardLinks } from '../../../lib/dashboard';
+import type { components } from '@/lib/api/schema';
+import { EVIDENCE, findEvidence, type EvidenceItem } from '@/lib/evidence';
+import { dashboardLinks } from '@/lib/dashboard';
 import {
   AssetIdentity,
   DepthLadder,
@@ -15,8 +15,8 @@ import {
   MetricValue,
   ProvenanceStrip,
   RiskBadge,
-} from '../../../components/keel/result';
-import { SiteHeader } from '../../../components/marketing/site-header';
+} from '@/components/keel/result';
+import { SiteHeader } from '@/components/marketing/site-header';
 
 type AssetRisk = components['schemas']['AssetRisk'];
 type AssetList = components['schemas']['AssetListResponse'];
@@ -272,11 +272,15 @@ function EvidenceFooter({ item }: { item: EvidenceItem }) {
         <a href={item.rawPath}>
           <FileJson size={16} /> The file this page renders
         </a>
-        {dashboardIsLive ? (
-          <a href={item.kind === 'methodology' ? dashboardLinks.methodology : dashboardLinks.assets}>
-            See the same thing live <ArrowUpRight size={16} />
-          </a>
-        ) : null}
+        <a
+          href={
+            item.kind === 'methodology'
+              ? dashboardLinks.methodology
+              : dashboardLinks.assets
+          }
+        >
+          See the same thing live <ArrowUpRight size={16} />
+        </a>
       </div>
     </footer>
   );

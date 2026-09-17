@@ -3,13 +3,13 @@ import localFont from 'next/font/local';
 import './globals.css';
 
 const manrope = localFont({
-  src: '../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2',
+  src: '../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2',
   variable: '--font-manrope',
   display: 'swap',
   weight: '200 800',
 });
 const mono = localFont({
-  src: '../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2',
+  src: '../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2',
   variable: '--font-mono',
   display: 'swap',
   weight: '100 800',
@@ -32,12 +32,15 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Keel | See the market behind the price',
-    images: ['/opengraph-image'],
+    // No `images` here. `opengraph-image.tsx` supplies both cards, and Next generates
+    // its URL with a content hash; writing the path by hand pinned it to a route that
+    // only existed while the file sat at the app root, and it 404'd the moment the
+    // file moved.
   },
   icons: { icon: '/icon.svg' },
 };
 
-export default function RootLayout({ children }: LayoutProps<'/'>) {
+export default function MarketingLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${manrope.variable} ${mono.variable}`}>
       <body>{children}</body>
