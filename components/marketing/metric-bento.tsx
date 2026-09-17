@@ -8,6 +8,7 @@ import {
 import { healthy } from '../../lib/api/fixtures';
 import { DepthLadder, MetricValue, RiskBadge } from '../keel/result';
 import { percent } from '../../lib/format/keel';
+import { dashboardLinks } from '../../lib/dashboard';
 
 export function MetricBento() {
   const rung = healthy.manipulationCostCombined[0];
@@ -99,7 +100,7 @@ export function MetricBento() {
               A conservative recommendation constrained by liquidation depth and
               manipulation resistance.
             </p>
-            <a className="text-link" href="#methodology">
+            <a className="text-link" href={dashboardLinks.methodology}>
               Inspect the methodology <ArrowUpRight size={16} />
             </a>
           </article>

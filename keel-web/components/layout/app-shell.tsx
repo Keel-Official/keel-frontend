@@ -117,11 +117,14 @@ export function PageHeader({
  * goes missing.
  */
 export function Section({
+  id,
   title,
   standfirst,
   children,
   className,
 }: {
+  /** Anchor target, so a control inside the section can link back to it. */
+  id?: string;
   title: string;
   standfirst?: React.ReactNode;
   children: React.ReactNode;
@@ -132,7 +135,7 @@ export function Section({
     // the page's flex column, where min-width defaults to auto and refuses to shrink
     // below the widest thing inside it. Without this the manipulation table widens the
     // whole page at 360px instead of scrolling inside its own wrapper.
-    <section className={cn('min-w-0', className)}>
+    <section id={id} className={cn('min-w-0 scroll-mt-20', className)}>
       <h2 className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]">
         {title}
       </h2>

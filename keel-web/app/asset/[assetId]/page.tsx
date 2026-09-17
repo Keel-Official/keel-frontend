@@ -30,12 +30,16 @@ import {
 import type { HistoryResponse } from '@/lib/api/types';
 import { SEQUENTIAL_RAMP } from '@/lib/design/tokens';
 import {
-  DEFAULT_RANGE,
   HISTORY_RANGES,
+  HISTORY_RESOLUTIONS,
+  HISTORY_SOURCES,
+  historyHref,
+  isLowerBoundSource,
   ledgerWindow,
-  parseHistoryRange,
-  type HistoryRangeKey,
+  parseHistoryQuery,
+  type HistoryQuery,
 } from '@/lib/assets/history-range';
+import { FlagTimeline } from '@/components/keel/flag-timeline';
 import type { AssetRisk } from '@/lib/api/types';
 import { readCollateralCeiling } from '@/lib/format/collateral';
 import { truncateIssuer } from '@/lib/format/decimal';
@@ -60,7 +64,7 @@ export default async function AssetDetailPage({
   const { assetId } = await params;
   const example = readMockExample(await searchParams);
 
-  const range = parseHistoryRange((await searchParams).range);
+  const historyQuery = parseHistoryQuery(await searchParams);
 
   const [health, depth, methodology] = await Promise.all([
     fetchHealth(),
@@ -75,7 +79,7 @@ export default async function AssetDetailPage({
   const history =
     latestLedger === null
       ? null
-      : await fetchHistory(assetId, ledgerWindow(latestLedger, range));
+      : await fetchHistory(assetId, ledgerWindow(latestLedger, historyQuery), historyQuery.source);
   const risk = depth.data;
 
   return (
@@ -157,7 +161,7 @@ export default async function AssetDetailPage({
           calibrationNote={methodology.data?.calibrationNote}
           history={history?.data ?? null}
           historyFailed={history?.failure?.message ?? null}
-          range={range}
+          historyQuery={historyQuery}
           assetId={assetId}
         />
       )}
@@ -171,7 +175,7 @@ function AssetRiskView({
   calibrationNote,
   history,
   historyFailed,
-  range,
+  historyQuery,
   assetId,
 }: {
   risk: AssetRisk;
@@ -179,7 +183,7 @@ function AssetRiskView({
   calibrationNote: string | undefined;
   history: HistoryResponse | null;
   historyFailed: string | null;
-  range: HistoryRangeKey;
+  historyQuery: HistoryQuery;
   assetId: string;
 }) {
   const quoteCode = risk.quote.code;
@@ -332,6 +336,7 @@ function AssetRiskView({
       </Section>
 
       <Section
+        id="history"
         title="How has this moved over time?"
         standfirst="A single reading cannot separate a thin asset from one that just got thin. This is a stored series, not the historical replay that health reports as unavailable — those are different endpoints."
       >
@@ -340,7 +345,7 @@ function AssetRiskView({
           history={history}
           failed={historyFailed}
           quoteCode={risk.quote.code}
-          range={range}
+          historyQuery={historyQuery}
         />
         <MethodologyBlock source="GET /asset/{assetId}/history → points[], gaps[], dataSource" />
       </Section>
@@ -372,73 +377,108 @@ function readMockExample(
 }
 
 /**
- * The stored series, and the range control that drives it.
+ * The stored series, and the controls that drive it.
+ *
+ * Everything the reader chooses — window, resolution, source — is in the URL, so the
+ * exact chart in front of them is a link they can send.
  *
  * The chart labels itself from the first and last point that CAME BACK, never from the
  * range that was asked for. Coverage is as old as the deployment, so a window of seven
  * days may hold five, and an axis implying more than the data covers reads as broken
  * data rather than as young data.
  *
- * Two charts, not one with two axes. Depth and the collateral ceiling are different
- * measures on different scales, and a second axis invites a reader to compare two lines
- * that were never comparable.
+ * One request is one source. Selecting another reloads every chart together rather than
+ * overlaying two, because `horizon` is a direct reading and the rest are
+ * reconstructions — and `trades-implied` is a lower bound, so a line from it is a floor
+ * and not a measurement.
  */
 function HistoryView({
   assetId,
   history,
   failed,
   quoteCode,
-  range,
+  historyQuery,
 }: {
   assetId: string;
   history: HistoryResponse | null;
   failed: string | null;
   quoteCode: string;
-  range: HistoryRangeKey;
+  historyQuery: HistoryQuery;
 }) {
   const points = history?.points ?? [];
   const gaps = history?.gaps ?? [];
   const first = points[0];
   const last = points[points.length - 1];
+  const lowerBound = isLowerBoundSource(historyQuery.source);
+
+  const axis = first && last
+    ? { fromLabel: first.ledgerClosedAt, toLabel: last.ledgerClosedAt }
+    : null;
 
   return (
     <div className="flex flex-col gap-6">
-      <nav aria-label="Time range" className="flex flex-wrap gap-2">
-        {(Object.keys(HISTORY_RANGES) as HistoryRangeKey[]).map((key) => (
-          <Link
-            key={key}
-            href={
-              key === DEFAULT_RANGE
-                ? `/asset/${encodeURIComponent(assetId)}`
-                : `/asset/${encodeURIComponent(assetId)}?range=${key}`
-            }
-            aria-current={key === range ? 'true' : undefined}
-            className={
-              key === range
-                ? 'rounded-md border border-[var(--keel-brand)] bg-[var(--keel-brand)] px-2.5 py-1 text-sm text-white'
-                : 'rounded-md border border-[var(--keel-border-strong)] px-2.5 py-1 text-sm text-[var(--keel-ink)] hover:bg-[var(--keel-surface-subtle)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]'
-            }
-          >
-            {HISTORY_RANGES[key].label}
-          </Link>
-        ))}
-      </nav>
+      <div className="flex flex-col gap-3">
+        <Picker
+          label="Window"
+          options={Object.entries(HISTORY_RANGES).map(([key, v]) => ({
+            key,
+            label: v.label,
+          }))}
+          active={historyQuery.range}
+          href={(key) =>
+            historyHref(assetId, historyQuery, { range: key as HistoryQuery['range'] })
+          }
+        />
+        <Picker
+          label="Resolution"
+          options={Object.entries(HISTORY_RESOLUTIONS).map(([key, label]) => ({
+            key,
+            label,
+          }))}
+          active={historyQuery.resolution}
+          href={(key) =>
+            historyHref(assetId, historyQuery, {
+              resolution: key as HistoryQuery['resolution'],
+            })
+          }
+        />
+        <Picker
+          label="Source"
+          options={Object.entries(HISTORY_SOURCES).map(([key, v]) => ({
+            key,
+            label: v.label,
+            note: v.note,
+          }))}
+          active={historyQuery.source}
+          href={(key) =>
+            historyHref(assetId, historyQuery, { source: key as HistoryQuery['source'] })
+          }
+        />
+      </div>
+
+      {lowerBound ? (
+        <Notice
+          tone="problem"
+          title="This source is a lower bound, not a measurement"
+          detail="Trades-implied rebuilds the book from trades that happened, so every figure below is a floor: the real value is at least this, and may be more. It is not comparable with a direct reading."
+        />
+      ) : null}
 
       {failed !== null ? (
         <Notice tone="problem" title="The series could not be read" detail={failed} />
       ) : points.length === 0 ? (
         <Notice
           tone="empty"
-          title="No readings were stored in this range"
-          detail="The series is as old as the deployment, so a window can reach back further than anything that was recorded. It is not empty because the figures were zero."
+          title="No readings were stored in this range from this source"
+          detail={`The engine accepted the request and returned nothing for ${HISTORY_SOURCES[historyQuery.source].label}. The series is as old as the deployment, and the reconstruction sources are not populated in production, so a window can reach back further than anything that was recorded. It is not empty because the figures were zero.`}
         />
-      ) : (
+      ) : axis === null ? null : (
         <>
           <p className="text-xs text-[var(--keel-muted)]">
-            {points.length} reading{points.length === 1 ? '' : 's'} from{' '}
+            {`${points.length} ${points.length === 1 ? 'reading' : 'readings'} from `}
             <span className="tabular">{history?.dataSource}</span>
             {gaps.length > 0
-              ? `, with ${gaps.length} gap${gaps.length === 1 ? '' : 's'} drawn as breaks in the line`
+              ? `, with ${gaps.length} ${gaps.length === 1 ? 'gap' : 'gaps'} drawn as breaks in the line`
               : ', with no gaps reported'}
             . One source per chart.
           </p>
@@ -448,6 +488,37 @@ function HistoryView({
               Band at each reading
             </h3>
             <BandTimeline className="mt-2" points={points} />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+              Which checks were firing
+            </h3>
+            <p className="mt-1 text-xs text-[var(--keel-muted)]">
+              Whether a finding has been there all along or started recently. Only checks
+              that fired at least once appear.
+            </p>
+            <FlagTimeline className="mt-3" points={points} />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">Price</h3>
+            <TrendChart
+              className="mt-3"
+              unit={quoteCode}
+              gaps={gaps}
+              {...axis}
+              // A price moves in the digits a money amount rounds away.
+              maxFractionDigits={8}
+              series={[
+                {
+                  key: 'mid',
+                  label: 'Mid price',
+                  colour: SEQUENTIAL_RAMP[10],
+                  points: points.map((p) => ({ at: p.ledgerSeq, value: p.midPrice })),
+                },
+              ]}
+            />
           </div>
 
           <div>
@@ -464,8 +535,7 @@ function HistoryView({
               className="mt-3"
               unit={quoteCode}
               gaps={gaps}
-              fromLabel={first.ledgerClosedAt}
-              toLabel={last.ledgerClosedAt}
+              {...axis}
               series={[
                 {
                   key: 'd2',
@@ -491,14 +561,41 @@ function HistoryView({
 
           <div>
             <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
+              Cost to move the price by half
+            </h3>
+            <p className="mt-1 text-xs text-[var(--keel-muted)]">
+              The series carries one manipulation rung, at the half per cent delta the
+              engine treats as critical. A reading the engine could not produce breaks
+              the line rather than sitting at zero.
+            </p>
+            <TrendChart
+              className="mt-3"
+              unit={quoteCode}
+              gaps={gaps}
+              {...axis}
+              series={[
+                {
+                  key: 'manip50',
+                  label: 'Manipulation cost, 0.5%',
+                  colour: SEQUENTIAL_RAMP[6],
+                  points: points.map((p) => ({
+                    at: p.ledgerSeq,
+                    value: p.manipulationCost50Pct,
+                  })),
+                },
+              ]}
+            />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
               Collateral ceiling
             </h3>
             <TrendChart
               className="mt-3"
               unit={quoteCode}
               gaps={gaps}
-              fromLabel={first.ledgerClosedAt}
-              toLabel={last.ledgerClosedAt}
+              {...axis}
               series={[
                 {
                   key: 'ceiling',
@@ -511,6 +608,42 @@ function HistoryView({
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/** One row of view choices, each a real link so the view stays shareable. */
+function Picker({
+  label,
+  options,
+  active,
+  href,
+}: {
+  label: string;
+  options: { key: string; label: string; note?: string }[];
+  active: string;
+  href: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="w-20 shrink-0 text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
+        {label}
+      </span>
+      {options.map((option) => (
+        <Link
+          key={option.key}
+          href={href(option.key)}
+          aria-current={option.key === active ? 'true' : undefined}
+          title={option.note}
+          className={
+            option.key === active
+              ? 'rounded-md border border-[var(--keel-brand)] bg-[var(--keel-brand)] px-2.5 py-1 text-sm text-white'
+              : 'rounded-md border border-[var(--keel-border-strong)] px-2.5 py-1 text-sm text-[var(--keel-ink)] hover:bg-[var(--keel-surface-subtle)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]'
+          }
+        >
+          {option.label}
+        </Link>
+      ))}
     </div>
   );
 }
