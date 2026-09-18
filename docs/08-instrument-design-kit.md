@@ -39,6 +39,7 @@ clickable" from "this is a finding". That is the rule the rest of the system pro
 | `--muted-2` | `#8A96A0` | **Graphics only** — meter tracks, bar fills, connector glyphs |
 | `--on-ink` | `#E7EDF1` | Text on an ink panel — the closing panel, the engine node, a code block |
 | `--on-ink-muted` | `#AAB6BF` | The quiet level of that text, 8.5:1 on `--ink` |
+| `--brand` | `#155962` | The logo lockup — mark and wordmark. Never a control |
 | `--bg` | `#F7F8F9` | Page |
 | `--surface` | `#FFFFFF` | Cards and panels |
 | `--surface-2` | `#EEF1F3` | Panel heads, table heads, panel feet |
@@ -78,10 +79,16 @@ A band is never communicated by colour alone: `RiskBadge` prints the band word a
 four-segment meter beside it, and `bandConfidence` sits under both, because a partial
 band is a floor rather than a reading.
 
-### The one exception
+### The logo, which is neither
 
-`--brand-amber` (`#E49F37`) is the counter of the Keel mark. It belongs to neither
-scale, appears only inside the logo, and never says anything about a market.
+The mark and the wordmark are set in `--brand` (`#155962`), a deeper teal than the
+accent. They are kept apart on purpose: the accent means "this is interactive", and a
+logo is not a control. On an ink surface the lockup's colour is overridden where it is
+set — the dashboard's `--keel-logo` takes the brand ink in dark — rather than inside
+the mark, which draws in `currentColor`.
+
+`--brand-amber` (`#E49F37`) is the counter of that mark. It belongs to neither scale,
+appears only inside the logo, and never says anything about a market.
 
 ## Typography
 

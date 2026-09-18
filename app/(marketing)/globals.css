@@ -35,7 +35,14 @@
   --surface-subtle: #eef1f3;
   --border: #dce1e5;
   --border-strong: #c6cdd3;
+  /* The drafting sheet: a hairline a step quieter than --border, because a grid is
+     read as texture behind the page rather than as a line drawn on it. */
   --grid: #e8ecef;
+  --grid-cell: 60px;
+  /* Six whole cells, so the grid inside the column and the grid beyond it meet. */
+  --grid-bleed: 360px;
+  /* The same sheet on an ink panel. */
+  --grid-line-ink: rgb(255 255 255 / 0.15);
 
   /* Interaction only: links, focus rings, controls. Never a risk signal. */
   --accent: #1f6f73;
@@ -59,7 +66,10 @@
   /* The brand mark's counter. It is identity, not a risk reading, and it is the one
      colour on this page that belongs to neither scale. */
   --brand-amber: #e49f37;
-  --brand: var(--ink);
+  /* The mark and the wordmark, which are the brand's own teal rather than the page's
+     ink. It is NOT `--accent`: the accent is worn by controls, and a logo is not one,
+     so the two are deliberately different teals. 7.83:1 on white. */
+  --brand: #155962;
   /* Text on an ink panel. The ink surfaces carry their own pair, because the page
      tones are chosen against the light background and none of them reads on ink. */
   --on-ink: #e7edf1;
@@ -334,7 +344,9 @@ hr {
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--ink);
+  /* The mark takes `currentColor`, so this one declaration colours the lockup:
+     an ink surface overrides `--brand` rather than the mark itself. */
+  color: var(--brand);
 }
 .brand svg {
   /* The mark is 64x100, so only the height is set; a fixed width would squash it. */
@@ -400,11 +412,31 @@ hr {
 
 /* --- Hero ------------------------------------------------------------------ */
 
+/* The column rules. One overlay rather than a border on every section, so the two
+   hairlines are continuous and every section is measured from the same geometry. They
+   start faint under the header and reach full strength a screen down, so the page
+   opens on the hero rather than on two lines. */
+main {
+  position: relative;
+}
+main::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto;
+  left: 50%;
+  z-index: 2;
+  width: var(--column);
+  transform: translateX(-50%);
+  border-inline: 1px solid var(--border);
+  pointer-events: none;
+  mask-image: linear-gradient(transparent, #000 420px);
+}
 main > section {
   position: relative;
 }
 main > section > .container {
   position: relative;
+  z-index: 1;
 }
 #engine,
 #case-study {

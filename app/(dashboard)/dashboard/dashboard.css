@@ -139,6 +139,10 @@
    */
   --keel-brand-ink: #9fe3cd; /* 11.42:1 on surface, 7.09:1 on --keel-accent-soft */
 
+  /* The logo lockup, and only that. The brand's teal is a light-surface colour, so
+     dark takes the brand ink instead rather than a mark nobody can see. */
+  --keel-logo: var(--keel-brand-ink);
+
   /* --- shadcn contract, pointed at the Keel neutrals -------------------- */
   --background: var(--keel-bg);
   --foreground: var(--keel-ink);
@@ -275,6 +279,7 @@
   --keel-accent-soft: #e7f3ed;
   --keel-on-brand: #ffffff;
   --keel-brand-ink: #102e3c; /* 13.99:1 on surface; the surface hue reads as text here */
+  --keel-logo: #155962; /* 7.83:1 on white; the brand's own teal */
 
   --primary: var(--keel-brand);
   --primary-foreground: #ffffff;

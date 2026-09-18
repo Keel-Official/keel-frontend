@@ -56,7 +56,7 @@ export function AppShell({
               marketing home, and the set is one nav item away under Assets. */}
           <Link
             href="/"
-            className="flex items-center gap-2 rounded-md text-[var(--keel-brand-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
+            className="flex items-center gap-2 rounded-md text-[var(--keel-logo)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
           >
             <KeelMark className="h-7 w-auto" />
             <span className="text-lg font-semibold tracking-tight">Keel</span>
