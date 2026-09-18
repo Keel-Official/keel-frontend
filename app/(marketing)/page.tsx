@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { ArrowUpRight, ChevronRight, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { LandingMotion } from '@/components/marketing/landing-motion';
@@ -13,6 +14,10 @@ import {
 import { MarketSnapshot } from '@/components/marketing/market-snapshot';
 import { dashboardCopy, dashboardLinks } from '@/lib/dashboard';
 import { BACKTEST_REPORT_URL } from '@/lib/report';
+import {
+  EngineStatusLive,
+  EngineStatusPending,
+} from '@/components/marketing/engine-status';
 import { ArchitectureFlow } from '@/components/marketing/architecture-flow';
 import { ExplainableRiskDemo } from '@/components/marketing/explainable-risk-demo';
 import { BlendCasePreview } from '@/components/marketing/blend-case-preview';
@@ -61,6 +66,17 @@ export default function Home() {
                     See the full response <ChevronRight size={16} />
                   </Link>
                 </div>
+                {/* ONE LIVE READING, STREAMED. The rest of this page is a recorded
+                    sample by design, and a reader who meets "Sample data" first can
+                    reasonably conclude the engine is a mock. Suspense keeps the hero
+                    painting immediately: the strip arrives when the API answers, and
+                    the fallback is a neutral pending line, never the unreachable
+                    one: whatever sits here is in the first HTML the browser gets,
+                    and a failure sentence shown while the engine is up is the
+                    impression this strip exists to prevent. */}
+                <Suspense fallback={<EngineStatusPending />}>
+                  <EngineStatusLive />
+                </Suspense>
               </div>
               <div className="hero-visual">
                 <HeroProductPreview />
