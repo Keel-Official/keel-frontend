@@ -27,6 +27,7 @@ export default function Home() {
       <main id="main-content">
         <section className="hero-section" aria-labelledby="hero-title">
           <div className="container hero-shell">
+            <span className="hero-backdrop" aria-hidden="true" />
             <div className="hero-frame">
               <div className="hero-copy">
                 <a className="hero-pill" href="#case-study">

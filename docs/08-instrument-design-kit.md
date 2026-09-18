@@ -39,12 +39,16 @@ clickable" from "this is a finding". That is the rule the rest of the system pro
 | `--muted-2` | `#8A96A0` | **Graphics only** — meter tracks, bar fills, connector glyphs |
 | `--on-ink` | `#E7EDF1` | Text on an ink panel — the closing panel, the engine node, a code block |
 | `--on-ink-muted` | `#AAB6BF` | The quiet level of that text, 8.5:1 on `--ink` |
-| `--brand` | `#155962` | The logo lockup — mark and wordmark. Never a control |
+| `--brand` | `#155962` | The logo lockup, and the engine node's surface. Never a control |
+| `--on-brand` | `#FFFFFF` | Text on `--brand`, 7.96:1 |
+| `--on-brand-muted` | `#B8D0D2` | Its quiet level, 4.93:1 — the ink pair fails here |
 | `--bg` | `#F7F8F9` | Page |
 | `--surface` | `#FFFFFF` | Cards and panels |
 | `--surface-2` | `#EEF1F3` | Panel heads, table heads, panel feet |
 | `--border` | `#DCE1E5` | Hairline |
 | `--border-strong` | `#C6CDD3` | Ghost-control borders, marker ticks, unfilled meter segments |
+| `--grid` | `#E8ECEF` | The drafting sheet behind the page — a step quieter than `--border` |
+| `--grid-line-ink` | `rgb(255 255 255 / 0.15)` | The same sheet on an ink surface |
 
 `--muted-2` is 2.95:1 against `--bg`, so no text is set in it. The level below `--muted`
 is carried by size, weight and case instead. This is a deliberate departure from the
@@ -53,8 +57,9 @@ kit as first drawn, where quiet labels were set in it and failed AA.
 ### Interaction accent
 
 Every control wears it: buttons, links, focus rings, and the chosen rung of a
-selectable ladder. Nothing that is not interactive does, which is why the page's dark
-surfaces — the masthead, the closing panel, the engine node — stay `--ink`.
+selectable ladder. Nothing that is not interactive does, which is why the closing panel
+stays `--ink` and the engine node takes `--brand` — a filled panel is a surface, and
+neither of those two is something a reader can press.
 
 | Token | Value |
 | --- | --- |
@@ -81,8 +86,8 @@ band is a floor rather than a reading.
 
 ### The logo, which is neither
 
-The mark and the wordmark are set in `--brand` (`#155962`), a deeper teal than the
-accent. They are kept apart on purpose: the accent means "this is interactive", and a
+The mark, the wordmark and the engine node are set in `--brand` (`#155962`), a deeper
+teal than the accent. They are kept apart on purpose: the accent means "this is interactive", and a
 logo is not a control. On an ink surface the lockup's colour is overridden where it is
 set — the dashboard's `--keel-logo` takes the brand ink in dark — rather than inside
 the mark, which draws in `currentColor`.
@@ -117,6 +122,30 @@ rgb(15 26 36 / 0.05)`. No hard-offset poster shadows.
 
 Content width is `--maxw: 1120px`, with a 26px gutter, 20px below 720px and 16px below
 420px.
+
+### The page grid
+
+The page is drawn as a sheet on a bench rather than as a stack of blocks.
+
+`--column` (`min(1320px, calc(100% - 52px))`, `calc(100% - 24px)` below 720px) is the
+page column. Two hairlines run its full length from `main::before`, masked so they
+start faint under the header and reach full strength 420px down. Everything meant to
+meet them — the hero shell, the finding sheet — is drawn to `--column`, not to
+`--maxw`. Sections are separated by a full-width rule, and `#engine` and `#case-study`
+are banded in `--bg` so the rhythm alternates.
+
+The grid itself is `--grid-cell: 60px` square, one hairline per cell, and it appears
+in three places:
+
+| Where | Extent | Mask |
+| --- | --- | --- |
+| Hero, inside the column | 600px, anchored to the bottom, at 80% | fades in from above |
+| Hero, beyond the column | `--grid-bleed: 360px` — six whole cells — each side | fades out sideways |
+| The engine node | the panel | a linear and a radial gradient, `mask-composite: intersect` |
+
+A mask on an element also cuts its children, which is why the two hero layers are two
+elements rather than one. Both start their pattern on a column edge, and the bleed is a
+whole number of cells, so the lines meet across the boundary.
 
 ## Landing rhythm
 
