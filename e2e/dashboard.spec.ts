@@ -162,15 +162,15 @@ test('filtering returns to the first page', async ({ page }) => {
 
 test('the theme is served, not applied after paint', async ({ page }) => {
   // The palette is on the html element in the first byte of HTML. If this ever needs
-  // an inline script or an effect, a reader who chose light sees a dark frame first.
+  // an inline script or an effect, a reader who chose dark sees a light frame first.
   await page.goto('/dashboard');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+
+  await page.getByRole('button', { name: /Switch to the dark theme/ }).click();
   await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'light');
 
-  await page.getByRole('button', { name: /Switch to the light theme/ }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'light');
 });
 
 test('methodology is served, not hardcoded, and reachable from its evidence page', async ({
@@ -241,8 +241,8 @@ test('both palettes are accessible, not just the one that ships by default', asy
   page,
 }) => {
   await page.goto('/dashboard');
-  await page.getByRole('button', { name: /Switch to the light theme/ }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.getByRole('button', { name: /Switch to the dark theme/ }).click();
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'light');
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

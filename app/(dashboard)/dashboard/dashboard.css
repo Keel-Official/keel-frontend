@@ -86,9 +86,11 @@
  *   - band, a reserved STATUS palette, never reused for a data series
  *   - series and ramps, for charts
  *
- * TWO THEMES. Dark is the dashboard's default and is what `:root` carries; light is
- * reached by `data-theme="light"` on the html element and is the palette the marketing
- * site uses, kept whole rather than discarded.
+ * TWO THEMES. Light is the dashboard's served default — the palette the marketing site
+ * uses, so the two halves of the product read as one — and is reached by
+ * `data-theme="light"` on the html element, which the layout emits unless a reader has
+ * chosen otherwise. Dark is what `:root` carries and is what the absence of that
+ * attribute means, so it is a chosen palette rather than a discarded one.
  *
  * The dark set was selected against the dark surface rather than produced by inverting
  * the light one, and it is measurably the stronger of the two: all four band marks
@@ -98,9 +100,10 @@
  * 11.5 in light, both under the floor of 15, so the icon, the word, and in the risk map
  * the labelled band region are mandatory in both.
  *
- * `prefers-color-scheme` is deliberately NOT consulted. Dark is this product's chosen
- * surface, not a preference echo; a reader who wants light picks it, and that choice is
- * stored and re-applied before first paint by the script in the dashboard layout.
+ * `prefers-color-scheme` is deliberately NOT consulted. Light is this product's chosen
+ * surface, not a preference echo; a reader who wants dark picks it, and that choice
+ * travels in a cookie, so the server applies it before the first byte of HTML rather
+ * than a script applying it after paint.
  */
 
 :root {
@@ -250,9 +253,10 @@
 }
 
 /*
- * The light theme, inherited from the marketing site and kept whole. Every value here
- * is the one the original validator pass selected; nothing was re-derived from the dark
- * set. Applied by `data-theme="light"` on the html element, never by media query.
+ * The light theme, inherited from the marketing site and kept whole, and what a reader
+ * who has not chosen is served. Every value here is the one the original validator pass
+ * selected; nothing was re-derived from the dark set. Applied by `data-theme="light"` on
+ * the html element, never by media query.
  */
 :root[data-theme='light'] {
   color-scheme: light;
