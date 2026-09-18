@@ -100,17 +100,32 @@ it('charts real February dates and draws missing observations as gaps, not zeros
     februaryPoints.find((point) => point.day === '2026-02-11')?.movement,
   ).toBeNull();
 
-  // A day without an observation must not be drawn as a measured zero. The chart
-  // marks it instead, so the number of bars is the number of observations and the
-  // remaining days carry a cross at the baseline.
+  // A day without an observation must not be drawn as a measured zero, and the line
+  // must not bridge it. Every run of observed days is its own mark, every observed
+  // day is one vertex (or a lone point), and the missing days carry a cross instead.
   const missing = februaryPoints.filter((point) => point.movement === null);
   expect(missing).toHaveLength(9);
+  const runs = februaryPoints.filter(
+    (point, index) =>
+      point.movement !== null &&
+      (index === 0 || februaryPoints[index - 1].movement === null),
+  );
   const { container } = render(<BlendCasePreview />);
-  expect(container.querySelectorAll('.history-bar, .event-bar')).toHaveLength(
+  expect(container.querySelectorAll('.history-segment')).toHaveLength(
+    runs.length,
+  );
+  const vertices = Array.from(
+    container.querySelectorAll('.history-line'),
+  ).reduce(
+    (total, path) =>
+      total + (path.getAttribute('d')!.match(/[ML]/g) ?? []).length,
+    0,
+  );
+  expect(vertices + container.querySelectorAll('.history-dot').length).toBe(
     februaryPoints.length - missing.length,
   );
   expect(container.querySelectorAll('.missing-mark')).toHaveLength(
     missing.length,
   );
-  expect(container.querySelectorAll('.event-bar')).toHaveLength(1);
+  expect(container.querySelectorAll('.event-point')).toHaveLength(1);
 });

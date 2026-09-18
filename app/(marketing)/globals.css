@@ -1540,33 +1540,129 @@ hr {
   color: var(--muted);
   font-size: 12.5px;
 }
-.chart-desc {
-  max-width: 70ch;
-  margin: 12px 0 16px;
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.5;
-}
 .history-chart {
   display: block;
   width: 100%;
   height: auto;
 }
+.case-section h2 {
+  margin-bottom: 24px;
+}
+.history-plot {
+  position: relative;
+  margin-top: 20px;
+  border-radius: var(--radius-sm);
+  touch-action: pan-y;
+}
+.history-plot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
 .chart-grid {
-  stroke: var(--grid);
+  stroke: var(--border);
   stroke-width: 1;
+  stroke-dasharray: 5 5;
+}
+.chart-baseline {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+/* One series in ink, drawn thin, with a wash under it that fades to the baseline.
+   Each run of observed days is its own path, so a gap is never bridged. */
+.history-line {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.history-area {
+  fill: url(#history-area);
+}
+.history-area-top {
+  stop-color: var(--ink-2);
+  stop-opacity: 0.16;
+}
+.history-area-bottom {
+  stop-color: var(--ink-2);
+  stop-opacity: 0.01;
+}
+.history-dot {
+  fill: var(--ink-2);
+}
+.event-point circle {
+  fill: var(--critical);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.chart-crosshair line {
+  stroke: var(--muted-2);
+  stroke-width: 1;
+}
+.chart-crosshair circle {
+  fill: var(--ink);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  width: 208px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -8px rgba(15, 26, 36, 0.18);
+  pointer-events: none;
+}
+.chart-tooltip-date {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.chart-tooltip-row i {
+  width: 12px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ink-2);
+}
+.chart-tooltip-row i.is-incident {
+  height: 8px;
+  width: 8px;
+  border-radius: 50%;
+  background: var(--critical);
+}
+.chart-tooltip-row strong {
+  margin-left: auto;
+  padding-left: 16px;
+  color: var(--ink);
+  font:
+    700 13.5px/1 var(--font-mono),
+    monospace;
+  font-variant-numeric: tabular-nums;
+}
+.chart-tooltip-note {
+  padding: 0 14px 10px;
+  color: var(--critical);
+  font-size: 12.5px;
+  font-weight: 600;
 }
 .chart-label {
   fill: var(--muted);
+  pointer-events: none;
   font:
     400 11px var(--font-mono),
     monospace;
-}
-.history-bar {
-  fill: var(--ink);
-}
-.event-bar {
-  fill: var(--critical);
 }
 .missing-mark line {
   stroke: var(--muted-2);
@@ -1603,7 +1699,14 @@ hr {
   border-radius: 2px;
   background: var(--ink);
 }
+.legend-line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ink-2);
+}
 .event-dot {
+  border-radius: 50%;
   background: var(--critical);
 }
 .chart-values {
@@ -1656,24 +1759,11 @@ hr {
 .case-finding {
   margin-top: 26px;
 }
-.case-finding > p {
-  max-width: 72ch;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.55;
-}
 .case-links {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 20px;
-}
-.case-report-note {
-  margin-top: 14px;
-  max-width: 72ch;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
 }
 
 /* --- Notes / FAQ ----------------------------------------------------------- */
