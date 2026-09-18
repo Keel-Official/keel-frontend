@@ -37,6 +37,8 @@ clickable" from "this is a finding". That is the rule the rest of the system pro
 | `--ink-2` | `#33424E` | Secondary prose inside cards |
 | `--muted` | `#5F6E7A` | The quietest text tone on the page |
 | `--muted-2` | `#8A96A0` | **Graphics only** — meter tracks, bar fills, connector glyphs |
+| `--on-ink` | `#E7EDF1` | Text on an ink panel — the closing panel, the engine node, a code block |
+| `--on-ink-muted` | `#AAB6BF` | The quiet level of that text, 8.5:1 on `--ink` |
 | `--bg` | `#F7F8F9` | Page |
 | `--surface` | `#FFFFFF` | Cards and panels |
 | `--surface-2` | `#EEF1F3` | Panel heads, table heads, panel feet |
@@ -48,6 +50,10 @@ is carried by size, weight and case instead. This is a deliberate departure from
 kit as first drawn, where quiet labels were set in it and failed AA.
 
 ### Interaction accent
+
+Every control wears it: buttons, links, focus rings, and the chosen rung of a
+selectable ladder. Nothing that is not interactive does, which is why the page's dark
+surfaces — the masthead, the closing panel, the engine node — stay `--ink`.
 
 | Token | Value |
 | --- | --- |
