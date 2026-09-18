@@ -13,11 +13,10 @@ import { cn } from '@/lib/keel/utils';
 /**
  * Switches between the two validated palettes.
  *
- * Dark is the product's surface and is what the server renders; this exists so that a
- * reader who needs the light one — a bright room, a projector, a printed review — can
- * have it without losing the page. Both palettes were selected against their own
- * surface and both pass `scripts/check-token-contrast.mjs`, so neither is a degraded
- * copy of the other.
+ * Light is what the server renders; this exists so that a reader who wants the dark one
+ * — a dim room, a long session, a preference of their own — can have it without losing
+ * the page. Both palettes were selected against their own surface and both pass
+ * `scripts/check-token-contrast.mjs`, so neither is a degraded copy of the other.
  *
  * The cookie and the reasoning behind it are in `lib/keel/design/theme.ts`, which both
  * this control and the server layout import.
@@ -74,9 +73,9 @@ export function ThemeToggle({ className }: { className?: string }) {
 
     // Applied here rather than left to a reload: the palette is pure CSS variables, so
     // flipping the attribute repaints instantly, and the cookie only has to be right
-    // for the NEXT request. Dark is the default and is expressed by the ABSENCE of the
-    // attribute, which keeps the stylesheet's `:root` the dark case rather than a
-    // third state.
+    // for the NEXT request. The stylesheet's `:root` is the dark case, so dark is the
+    // absence of the attribute even though light is what an unchosen reader is served;
+    // the cookie is what carries that difference to the server.
     if (next === 'dark') delete root.dataset.theme;
     else root.dataset.theme = 'light';
 

@@ -29,12 +29,15 @@ export const THEME_COOKIE = 'keel-theme';
 export const THEME_COOKIE_MAX_AGE = 31_536_000;
 
 /**
- * Dark is the served default and is expressed by the ABSENCE of the attribute, which
- * keeps the stylesheet's `:root` the dark case rather than making it a third state. A
- * reader who has never chosen gets exactly what the server would have sent anyway.
+ * Light is the served default, and only an explicit `dark` takes the attribute away.
+ * The stylesheet is unchanged by that: `:root` still carries the dark set and light is
+ * still reached by `data-theme="light"`, so the default is expressed by the PRESENCE of
+ * the attribute rather than by re-deriving a palette. Absence stays the dark case, which
+ * keeps it two states rather than three — a reader who has never chosen gets light, the
+ * surface the marketing site hands them on the way in.
  */
 export function themeAttribute(
   cookieValue: string | undefined,
 ): 'light' | undefined {
-  return cookieValue === 'light' ? 'light' : undefined;
+  return cookieValue === 'dark' ? undefined : 'light';
 }
