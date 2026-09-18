@@ -53,13 +53,20 @@ export function KpiStrip({ items, className }: KpiStripProps) {
   return (
     <dl
       className={cn(
-        'grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[var(--keel-border)] bg-[var(--keel-border)]',
-        'sm:grid-cols-2 lg:grid-cols-4',
+        'grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-[var(--keel-border)] bg-[var(--keel-border)]',
+        'sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1.35fr)_repeat(3,minmax(0,1fr))]',
         className,
       )}
     >
       {items.map((item) => (
-        <div key={item.key} className="bg-[var(--keel-surface)] px-4 py-3">
+        <div
+          key={item.key}
+          className={cn(
+            'min-w-0 bg-[var(--keel-surface)] px-4 py-3',
+            item.key === 'assets' &&
+              'bg-[var(--keel-surface-subtle)] px-5 py-4',
+          )}
+        >
           <dt className="text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
             {item.label}
           </dt>

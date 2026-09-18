@@ -33,7 +33,7 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
   { key: 'band', label: 'Band' },
   { key: 'depth', label: 'Depth, 5% buy side', numeric: true },
   { key: 'collateral', label: 'Max safe collateral', numeric: true },
-  { key: 'flags', label: 'Flags fired', numeric: true },
+  { key: 'flags', label: 'Triggered flags', numeric: true },
 ];
 
 export interface AssetTableProps {
@@ -46,7 +46,10 @@ export function AssetTable({ items, query }: AssetTableProps) {
     <>
       {/* Desktop */}
       <div className="relative hidden overflow-x-auto rounded-lg border border-[var(--keel-border)] md:block">
-        <table className="w-full border-collapse text-sm">
+        <table
+          className="w-full border-collapse text-sm"
+          aria-describedby="flags-help"
+        >
           <thead>
             <tr className="border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)]">
               {COLUMNS.map((column) => (
@@ -99,7 +102,9 @@ export function AssetTable({ items, query }: AssetTableProps) {
                   />
                 </td>
                 <td className="px-3 py-2 text-right tabular">
-                  {item.flags.length}
+                  <span aria-label={`${item.flags.length} triggered flags`}>
+                    {item.flags.length}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -108,7 +113,10 @@ export function AssetTable({ items, query }: AssetTableProps) {
       </div>
 
       {/* Mobile */}
-      <ul className="flex flex-col gap-2 md:hidden">
+      <ul
+        className="flex flex-col gap-2 md:hidden"
+        aria-describedby="flags-help"
+      >
         {items.map((item) => (
           <li
             key={assetKey(item)}
@@ -133,8 +141,13 @@ export function AssetTable({ items, query }: AssetTableProps) {
                   maxFractionDigits={2}
                 />
               </dd>
-              <dt className="text-[var(--keel-muted)]">Flags fired</dt>
-              <dd className="text-right tabular">{item.flags.length}</dd>
+              <dt className="text-[var(--keel-muted)]">Triggered flags</dt>
+              <dd
+                className="text-right tabular"
+                aria-label={`${item.flags.length} triggered flags`}
+              >
+                {item.flags.length}
+              </dd>
             </dl>
           </li>
         ))}
