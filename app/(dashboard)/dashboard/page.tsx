@@ -125,12 +125,20 @@ export default async function AssetsPage({
           detail={failure.message}
         >
           {failure.kind === 'transport' ? (
-            <p>
-              Set <code className="tabular">NEXT_PUBLIC_KEEL_API_URL</code> to
-              the contract mock on{' '}
-              <code className="tabular">http://localhost:4010</code> or to the
-              live API, then reload.
-            </p>
+            <>
+              <p>
+                Set <code className="tabular">NEXT_PUBLIC_KEEL_API_URL</code>{' '}
+                to the contract mock on{' '}
+                <code className="tabular">http://localhost:4010</code> or to the
+                live API, then reload.
+              </p>
+              <a
+                href={assetHref(query)}
+                className="mt-3 inline-flex min-h-11 items-center rounded-md border border-[var(--keel-border-strong)] bg-[var(--keel-surface)] px-3 py-2 font-medium text-[var(--keel-ink-strong)] underline-offset-2 hover:border-[var(--keel-accent)] hover:text-[var(--keel-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
+              >
+                Try again
+              </a>
+            </>
           ) : null}
         </Notice>
       ) : (
@@ -182,14 +190,18 @@ export default async function AssetsPage({
               </Notice>
             ) : (
               <>
+                <p
+                  id="flags-help"
+                  className="mb-3 max-w-3xl text-xs text-[var(--keel-muted)]"
+                >
+                  Triggered flags are checks that fired. The list response does
+                  not include checks that could not be evaluated, so a zero is
+                  not a clean bill of health; open an asset for that detail.
+                </p>
                 <AssetTable items={rows} query={query} />
                 <ConfidenceMeaning className="mt-3" />
                 <p className="mt-2 text-xs text-[var(--keel-muted)]">
                   Figures are denominated in each row&apos;s quote asset.
-                  &ldquo;Flags fired&rdquo; counts triggered flags only: the
-                  list endpoint does not report which checks could not be
-                  evaluated, so a zero here is not a clean bill of health. Open
-                  an asset to see its unevaluated flags.
                 </p>
               </>
             )}

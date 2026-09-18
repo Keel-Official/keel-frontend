@@ -46,7 +46,10 @@ export function AssetTable({ items, query }: AssetTableProps) {
     <>
       {/* Desktop */}
       <div className="relative hidden overflow-x-auto rounded-lg border border-[var(--keel-border)] md:block">
-        <table className="w-full border-collapse text-sm">
+        <table
+          className="w-full border-collapse text-sm"
+          aria-describedby="flags-help"
+        >
           <thead>
             <tr className="border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)]">
               {COLUMNS.map((column) => (
@@ -110,7 +113,10 @@ export function AssetTable({ items, query }: AssetTableProps) {
       </div>
 
       {/* Mobile */}
-      <ul className="flex flex-col gap-2 md:hidden">
+      <ul
+        className="flex flex-col gap-2 md:hidden"
+        aria-describedby="flags-help"
+      >
         {items.map((item) => (
           <li
             key={assetKey(item)}

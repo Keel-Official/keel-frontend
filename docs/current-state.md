@@ -35,6 +35,8 @@ The active work is making the dashboard useful as a review surface: lead with fi
 - The overview keeps critical and high counts linked to the existing URL filter state and shows triggered-flag and partial-confidence counts without inventing risk scores.
 - The asset filter form submits to `/dashboard`; band links, search, flag filtering, sorting, and clear-filter links use the mounted route helpers.
 - Filter controls and band links have larger touch targets. The table calls the count `Triggered flags` so it does not imply that zero means a clean evaluation; the page still explains that unevaluated checks are exposed on the asset detail route.
+- The transport-error notice keeps the configuration guidance and now provides a same-view `Try again` action. The triggered-flag explanation sits directly above the table and is referenced by both desktop and mobile results.
+- The scan metadata rail gives the monitored-asset count more visual weight than the supporting ledger, methodology, and engine readings so the overview does not read as four equal dashboard tiles.
 - The dashboard stylesheet imports Tailwind directly and keeps its small class-name joiner local, so development does not depend on resolving unused `tw-animate-css`, `shadcn/tailwind.css`, or `cn` package entrypoints.
 - Existing untracked Impeccable critique artifacts under `.impeccable/` are preserved as review evidence.
 
@@ -43,7 +45,7 @@ The active work is making the dashboard useful as a review surface: lead with fi
 - Branch: `feat/dashboard-audit-fixes`.
 - Current `HEAD`: `fix: refine dashboard review surface` (the latest commit on this branch).
 - Relevant preceding commits include `389e1d4 Say what a link gives you, and send methodology to the dashboard` and the evidence-page merges immediately before the dashboard mount.
-- The working tree is clean after committing the dashboard audit fixes, critique evidence, and this handover snapshot.
+- The working tree is clean after committing the dashboard audit fixes, critique evidence, this UI refinement, and the updated handover snapshot.
 - No push or merge has been performed.
 
 ## Verification and limits
@@ -57,12 +59,14 @@ Verified on the current checkout:
 - A clean `npm.cmd exec -- next dev` run served `/dashboard` with HTTP 200 and the expected API-unavailable notice.
 - `pnpm install --frozen-lockfile --force` completed with pnpm 11.25.0 and restored the dependency tree after the package graph change.
 - The route helper tests continue to cover the mounted dashboard and asset-detail paths.
-- `git diff` review covers the dashboard hierarchy change, filter route fix, touch targets, triggered-flag wording, and the handover rewrite.
+- Impeccable's detector returned `[]` for the refined dashboard files.
+- A populated local preview at `http://localhost:3000/dashboard` returned HTTP 200 and rendered the finding summary, monitored-assets section, and flags explanation.
+- `git diff` review covers the dashboard hierarchy change, filter route fix, touch targets, triggered-flag wording, recovery action, KPI rail refinement, and the handover rewrite.
 
 Blocked or not yet verified:
 
 - The bundled fallback `pnpm` executable in this agent is 11.19.0 while the project declares pnpm 11.25.0; it may attempt a metadata refresh before running scripts. The project’s normal pnpm 11.25.0 install is verified above.
-- The API is not configured for a populated browser pass in this environment, so only the honest transport-error state has been exercised.
+- A mobile screenshot pass and a contract-mock error-state browser pass are not verified in this checkout.
 - The repository-wide Prettier check reports 65 existing files outside this change as unformatted; no broad formatting rewrite was applied.
 
 ## Open risks and next checks
@@ -70,5 +74,4 @@ Blocked or not yet verified:
 - Re-run formatting selectively if the repository adopts a formatting baseline, then complete populated desktop/mobile browser checks once the API or contract mock is configured.
 - Verify the Apply flow with `q` and `hasFlag` against a live or contract API, including preserved band, sort, and direction parameters.
 - Keep the list endpoint’s limitation visible: it exposes triggered flags but not `unevaluatedFlags`; the asset detail remains the source for that distinction.
-- Review whether a transport-error state should offer a reload action after the dashboard can be exercised in a working runtime.
 - Before deployment, audit all prominent links against the actual route tree and verify the API contract, provenance, and historical-gap states with non-happy-path fixtures.

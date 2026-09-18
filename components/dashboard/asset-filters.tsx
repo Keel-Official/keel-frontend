@@ -106,7 +106,7 @@ export function AssetFilters({ query }: { query: AssetQuery }) {
         {isFiltered(query) ? (
           <Link
             href={assetHref(query, { band: null, hasFlag: null, q: '' })}
-            className="text-sm text-[var(--keel-muted)] underline underline-offset-2 hover:text-[var(--keel-ink)]"
+            className="inline-flex min-h-11 items-center text-sm text-[var(--keel-muted)] underline underline-offset-2 hover:text-[var(--keel-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
           >
             Clear filters
           </Link>
