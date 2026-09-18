@@ -13,11 +13,12 @@ import { DASHBOARD_BASE, DASHBOARD_METHODOLOGY } from './keel/routes';
  * is live wherever this site is.
  */
 
-/** Destinations the landing page offers. */
+/** Destinations this site offers. */
 export const dashboardLinks = {
-  /** The monitored set. */
+  /** The monitored set, which is where the landing page sends its readers. */
   assets: DASHBOARD_BASE,
-  /** Every threshold, as the engine serves it. */
+  /** Every threshold, as the engine serves it. Offered from the evidence pages
+      only: the landing page carries no methodology. */
   methodology: DASHBOARD_METHODOLOGY,
 } as const;
 
@@ -30,5 +31,4 @@ export const dashboardCopy = {
   nav: 'Dashboard',
   /** The hero and closing calls to action, which have room to say what is there. */
   assets: 'Open the dashboard',
-  methodology: 'Read methodology',
 } as const;

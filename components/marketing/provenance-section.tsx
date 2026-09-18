@@ -1,7 +1,6 @@
-import { ArrowUpRight, Fingerprint } from 'lucide-react';
-import { healthy, methodology } from '../../lib/api/fixtures';
+import { Fingerprint } from 'lucide-react';
+import { healthy } from '../../lib/api/fixtures';
 import { ProvenanceStrip } from '../keel/result';
-import Link from 'next/link';
 
 const questions = [
   [
@@ -34,36 +33,24 @@ export function ProvenanceSection() {
   return (
     <section
       className="section provenance-section"
-      id="methodology"
+      id="provenance"
       aria-labelledby="provenance-title"
     >
       <div className="container">
         <div className="provenance-heading">
           <Fingerprint size={28} />
           <div>
-            <h2 id="provenance-title">Sources and methodology</h2>
+            <h2 id="provenance-title">Sources and provenance</h2>
             <p>
-              Each result records its ledger, data source, and methodology
-              version.
+              Each result records the ledger it was calculated on and the data
+              source behind it.
             </p>
           </div>
-          <a className="text-link" href="/evidence/flags-and-bands.md">
-            Read methodology <ArrowUpRight size={16} />
-          </a>
         </div>
         <div className="evidence-strip">
-          <ProvenanceStrip result={healthy} />
+          <ProvenanceStrip result={healthy} method={false} />
           <span className="sample-label">USDC / XLM sample</span>
         </div>
-        <p className="calibration-note">
-          Methodology {methodology.version} ·{' '}
-          {methodology.calibrated
-            ? 'Calibrated'
-            : 'Thresholds are chosen, not empirically calibrated.'}{' '}
-          <Link href="/evidence/methodology">
-            See every threshold the engine applies.
-          </Link>
-        </p>
         <div className="faq-layout">
           <h3>Questions about Keel</h3>
           <div className="faq-list">

@@ -50,7 +50,7 @@ export function HeroProductPreview() {
           </div>
         </div>
       </div>
-      <ProvenanceStrip result={healthy} />
+      <ProvenanceStrip result={healthy} method={false} />
       <Link className="product-response-link" href="/evidence/asset-healthy">
         See the full response <ArrowUpRight size={14} />
       </Link>

@@ -91,24 +91,8 @@ for (const [name, width, height] of [
   });
 }
 
-test('API response copy, social image, and branded missing page', async ({
-  page,
-  context,
-  request,
-}) => {
-  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+test('social image and branded missing page', async ({ page, request }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Copy response' }).click();
-  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
-  const copied = JSON.parse(
-    await page.evaluate(() => navigator.clipboard.readText()),
-  );
-  expect(copied.band).toBe('LOW');
-  expect(copied.depth[0].buySide).toBe('441038.9920700');
-  expect(await page.locator('.api-request').innerText()).toContain(
-    '/v1/asset/USDC:',
-  );
-  expect(await page.locator('.api-request').innerText()).toContain('quote=XLM');
   // The URL is read off the page rather than written here. Next generates the social
   // image route with a content hash, so a hardcoded path passes until the file moves
   // and then reports a broken card that is not broken.

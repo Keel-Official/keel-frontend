@@ -1,14 +1,7 @@
-import {
-  ArrowUpRight,
-  Check,
-  Layers,
-  MoveUpRight,
-  ShieldCheck,
-} from 'lucide-react';
+import { Check, Layers, MoveUpRight, ShieldCheck } from 'lucide-react';
 import { healthy } from '../../lib/api/fixtures';
 import { DepthLadder, MetricValue, RiskBadge } from '../keel/result';
 import { percent } from '../../lib/format/keel';
-import { dashboardLinks } from '../../lib/dashboard';
 
 export function MetricBento() {
   const rung = healthy.manipulationCostCombined[0];
@@ -100,9 +93,6 @@ export function MetricBento() {
               A conservative recommendation constrained by liquidation depth and
               manipulation resistance.
             </p>
-            <a className="text-link" href={dashboardLinks.methodology}>
-              Inspect the methodology <ArrowUpRight size={16} />
-            </a>
           </article>
         </div>
         <p className="section-footnote">

@@ -13,8 +13,12 @@ import {
  * dashboard is now mounted in this application, so there is no environment to read and
  * no fallback to take: what is left to protect is that every call to action reaches a
  * route that exists, and that none of them regress to an on-page anchor.
+ *
+ * The methodology link is no longer one of them. The landing page carries no
+ * methodology, so only the evidence pages offer it — but it is still a destination this
+ * site hands out, so it still has to resolve.
  */
-describe('landing calls to action', () => {
+describe('dashboard destinations', () => {
   it('sends the reader to routes this application serves', () => {
     expect(dashboardLinks.assets).toBe('/dashboard');
     expect(dashboardLinks.methodology).toBe('/dashboard/methodology');
@@ -30,7 +34,6 @@ describe('landing calls to action', () => {
   it('promises the product rather than a preview of it', () => {
     expect(dashboardCopy.nav).toBe('Dashboard');
     expect(dashboardCopy.assets.toLowerCase()).not.toContain('sample');
-    expect(dashboardCopy.methodology).toBe('Read methodology');
   });
 });
 
