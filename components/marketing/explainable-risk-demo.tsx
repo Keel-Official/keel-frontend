@@ -93,23 +93,6 @@ export function ExplainableRiskDemo() {
                 ))}
               </dl>
             </div>
-            <div className="risk-byline">
-              <span className="hero-avatar" aria-hidden="true">
-                {result.asset.code.slice(0, 1)}
-              </span>
-              <div>
-                <h3>
-                  {result.asset.code} / {result.quote.code}
-                </h3>
-                <p>
-                  Ledger {result.ledgerSeq} · {sourceLabels[result.dataSource]}
-                </p>
-                <p className="risk-caveat">
-                  <CircleHelp size={14} aria-hidden="true" />
-                  Unevaluated checks may conceal additional risk.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
