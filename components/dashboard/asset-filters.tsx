@@ -8,6 +8,7 @@ import {
   isFiltered,
   type AssetQuery,
 } from '@/lib/keel/url/asset-query';
+import { DASHBOARD_BASE } from '@/lib/keel/routes';
 import { cn } from '@/lib/keel/utils';
 
 /**
@@ -19,7 +20,7 @@ import { cn } from '@/lib/keel/utils';
  * all. Hidden inputs carry the rest of the state through the submit.
  *
  * Band and flag are applied by the engine, not here — both are query parameters on
- * `/assets`, so `total` describes the filtered set rather than a page of it.
+ * `/dashboard`, so `total` describes the filtered set rather than a page of it.
  */
 
 export function AssetFilters({ query }: { query: AssetQuery }) {
@@ -53,7 +54,11 @@ export function AssetFilters({ query }: { query: AssetQuery }) {
         </ul>
       </div>
 
-      <form action="/" method="get" className="flex flex-wrap items-end gap-3">
+      <form
+        action={DASHBOARD_BASE}
+        method="get"
+        className="flex flex-wrap items-end gap-3"
+      >
         {query.band === null ? null : (
           <input type="hidden" name="band" value={query.band} />
         )}
@@ -67,7 +72,7 @@ export function AssetFilters({ query }: { query: AssetQuery }) {
           <select
             name="hasFlag"
             defaultValue={query.hasFlag ?? ''}
-            className="min-w-56 rounded-md border border-[var(--keel-border-strong)] bg-[var(--keel-surface)] px-2 py-1.5 text-sm text-[var(--keel-ink)]"
+            className="min-h-11 min-w-56 rounded-md border border-[var(--keel-border-strong)] bg-[var(--keel-surface)] px-2 py-2 text-sm text-[var(--keel-ink)]"
           >
             <option value="">Any</option>
             {FLAGS.map((flag) => (
@@ -87,13 +92,13 @@ export function AssetFilters({ query }: { query: AssetQuery }) {
             name="q"
             defaultValue={query.q}
             placeholder="USTRY, or GCRY…"
-            className="min-w-48 rounded-md border border-[var(--keel-border-strong)] bg-[var(--keel-surface)] px-2 py-1.5 text-sm text-[var(--keel-ink)]"
+            className="min-h-11 min-w-48 rounded-md border border-[var(--keel-border-strong)] bg-[var(--keel-surface)] px-2 py-2 text-sm text-[var(--keel-ink)]"
           />
         </label>
 
         <button
           type="submit"
-          className="rounded-md bg-[var(--keel-brand)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--keel-brand-deep)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
+          className="min-h-11 rounded-md bg-[var(--keel-brand)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--keel-brand-deep)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
         >
           Apply
         </button>
@@ -128,7 +133,7 @@ function FilterLink({
         href={href}
         aria-current={active ? 'true' : undefined}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm transition-colors',
+          'inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
           active
             ? 'border-[var(--keel-brand)] bg-[var(--keel-brand)] text-white'

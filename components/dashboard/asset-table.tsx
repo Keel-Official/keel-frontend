@@ -33,7 +33,7 @@ const COLUMNS: { key: SortKey; label: string; numeric?: boolean }[] = [
   { key: 'band', label: 'Band' },
   { key: 'depth', label: 'Depth, 5% buy side', numeric: true },
   { key: 'collateral', label: 'Max safe collateral', numeric: true },
-  { key: 'flags', label: 'Flags fired', numeric: true },
+  { key: 'flags', label: 'Triggered flags', numeric: true },
 ];
 
 export interface AssetTableProps {
@@ -99,7 +99,9 @@ export function AssetTable({ items, query }: AssetTableProps) {
                   />
                 </td>
                 <td className="px-3 py-2 text-right tabular">
-                  {item.flags.length}
+                  <span aria-label={`${item.flags.length} triggered flags`}>
+                    {item.flags.length}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -133,8 +135,13 @@ export function AssetTable({ items, query }: AssetTableProps) {
                   maxFractionDigits={2}
                 />
               </dd>
-              <dt className="text-[var(--keel-muted)]">Flags fired</dt>
-              <dd className="text-right tabular">{item.flags.length}</dd>
+              <dt className="text-[var(--keel-muted)]">Triggered flags</dt>
+              <dd
+                className="text-right tabular"
+                aria-label={`${item.flags.length} triggered flags`}
+              >
+                {item.flags.length}
+              </dd>
             </dl>
           </li>
         ))}

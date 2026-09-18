@@ -2,53 +2,73 @@
 
 ## Purpose and current focus
 
-Keel is a Next.js frontend for a Stellar liquidity-risk engine. Its core product question is: a quoted price can exist without enough executable liquidity behind it. The current focus is the Phase 1 public landing page at `/`, which explains that distinction and points visitors toward evidence surfaces.
+Keel is a Next.js frontend for a read-only Stellar liquidity-risk engine. Its product question is whether a quoted price is backed by executable volume, and what it would cost to move that market.
 
-The landing-page design and implementation decisions are recorded in:
+The current application has two connected surfaces:
 
-- `docs/superpowers/specs/2026-09-03-keel-landing-page-design.md`
-- `docs/superpowers/plans/2026-09-03-keel-landing-page.md`
-- `PRODUCT.md`
+- `/` is the marketing and evidence entry point.
+- `/dashboard` is the live monitored-asset overview, with `/dashboard/asset/[assetId]` for an asset result and `/dashboard/methodology` for the engine methodology.
 
-## Workflow and business rules
+The active work is making the dashboard useful as a review surface: lead with findings, preserve the engine’s confidence and provenance, and keep filters shareable under the mounted `/dashboard` route.
 
-- Keel is read-only. Do not add authentication, wallet connection, transaction signing, blockchain write flows, or frontend database behavior.
-- The landing page is intentionally mostly static and remains useful when the Keel API is unavailable.
-- Product communication favors evidence, exact units, visible uncertainty, provenance, accessible text states, and restrained motion. Avoid speculative-crypto styling, hype, production-SLA claims, or guaranteed-prevention claims.
-- The backend is a separate source of truth. Before building data UI, read `docs/05-frontend-data-contract.md` and use the backend OpenAPI/methodology semantics. Preserve decimal strings, null versus zero, triggered versus unevaluated flags, partial confidence, reachability, source labels, historical gaps, and provenance.
+## Workflow and product rules
 
-## Repository, runtime, and deployment boundaries
+- The backend is a separate source of truth. Do not modify backend code from this repository.
+- Before changing data UI or data-like previews, use `docs/05-frontend-data-contract.md` and the backend OpenAPI semantics.
+- Preserve exact decimal strings, `null` versus zero, no executable price, triggered versus unevaluated flags, band plus band confidence, manipulation cost plus reachability, reconstructed or lower-bound sources, quote units, historical gaps, and provenance.
+- Keel remains read-only. Do not add authentication, wallet connection, transaction signing, blockchain writes, or a frontend database.
+- Risk must be communicated with text and structure as well as color. Keep visible focus, readable product text, reduced-motion behavior, touch-sized controls, and chart text equivalents.
+- Follow `docs/03-design-system.md` and `docs/04-landing-page-spec.md`; the product object should appear before generic marketing explanation.
 
-- Stack: Next.js 16.3.4 App Router, React 19.2.8, TypeScript, Tailwind CSS 4.3.3, and pnpm 11.25.0.
-- Current landing implementation lives in `app/page.tsx`, `app/layout.tsx`, `app/globals.css`, and `components/marketing/`.
-- The route tree currently contains only the static `/` page and Next's `/_not-found` route. No API client, live dashboard, frontend database, or backend code is present in this repository.
-- `/assets`, `/case-study/ustry`, and `/methodology` are planned destinations linked from the landing page but are not implemented yet.
-- No `.openai/hosting.json` is present; deployment configuration and a public preview have not been verified.
+## Repository and runtime
+
+- Stack: Next.js 16.3.4 App Router, React 19.2.8, TypeScript, Tailwind CSS 4.3.3, and pnpm.
+- Root route groups are `app/(marketing)/` and `app/(dashboard)/`.
+- Dashboard server pages read health, assets, and methodology through `lib/keel/api/server.ts`. `app/(dashboard)/dashboard/page.tsx` is dynamic so scan freshness is not frozen at build time.
+- `NEXT_PUBLIC_KEEL_API_URL` selects the API transport. If it is unset or unreachable, the dashboard renders an explicit transport error; the landing page remains useful without live data.
+- The frontend has no database and no write path. Deployment and a production preview are not verified in this checkout.
+- The numbered docs in `docs/00-README.md` through `docs/07-implementation-roadmap.md` are present. `docs/architecture.md`, `docs/workshop-work-order.md`, and `docs/decisions.md` are absent.
+
+## Current implementation state
+
+- The dashboard overview renders a finding-led summary derived from the visible asset rows, followed by operational metadata and the monitored asset table.
+- The overview keeps critical and high counts linked to the existing URL filter state and shows triggered-flag and partial-confidence counts without inventing risk scores.
+- The asset filter form submits to `/dashboard`; band links, search, flag filtering, sorting, and clear-filter links use the mounted route helpers.
+- Filter controls and band links have larger touch targets. The table calls the count `Triggered flags` so it does not imply that zero means a clean evaluation; the page still explains that unevaluated checks are exposed on the asset detail route.
+- The dashboard stylesheet imports Tailwind directly and keeps its small class-name joiner local, so development does not depend on resolving unused `tw-animate-css`, `shadcn/tailwind.css`, or `cn` package entrypoints.
+- Existing untracked Impeccable critique artifacts under `.impeccable/` are preserved as review evidence.
 
 ## Branch and workspace
 
-- Current branch: `master`.
-- `HEAD`: `625fde0 Add skills directory to gitignore`.
-- Landing-page implementation is in `4d9b4b9 Implement Keel design system and landing page`, with supporting product/docs work in the preceding commits.
-- The application tree was clean before this handover edit; `docs/current-state.md` is now the only uncommitted file. No uncommitted application changes are pending.
-- The handover-specific files `docs/architecture.md`, `docs/workshop-work-order.md`, and `docs/decisions.md` are absent; the numbered Keel docs are the available project context.
+- Branch: `feat/dashboard-audit-fixes`.
+- Current `HEAD`: `fix: refine dashboard review surface` (the latest commit on this branch).
+- Relevant preceding commits include `389e1d4 Say what a link gives you, and send methodology to the dashboard` and the evidence-page merges immediately before the dashboard mount.
+- The working tree is clean after committing the dashboard audit fixes, critique evidence, and this handover snapshot.
+- No push or merge has been performed.
 
-## Verification
+## Verification and limits
 
 Verified on the current checkout:
 
-- `pnpm lint` — passed.
-- `node --test tests/landing-page-content.test.mjs` — 4 tests passed.
-- `pnpm build` — passed; Next generated static `/` and `/_not-found` routes with no TypeScript or build errors.
-- Earlier in-app browser QA at a narrow viewport verified readable hero/content/footer, no visible horizontal overflow, working native mobile navigation, keyboard focus movement, and readable chart/comparison/CTA states.
+- `npm.cmd run typecheck` passed.
+- `npm.cmd run lint` passed.
+- `npm.cmd test` passed: 4 test files and 28 tests.
+- `npm.cmd run build` passed; Next compiled the dashboard and generated `/dashboard`, `/dashboard/asset/[assetId]`, and `/dashboard/methodology`.
+- A clean `npm.cmd exec -- next dev` run served `/dashboard` with HTTP 200 and the expected API-unavailable notice.
+- `pnpm install --frozen-lockfile --force` completed with pnpm 11.25.0 and restored the dependency tree after the package graph change.
+- The route helper tests continue to cover the mounted dashboard and asset-detail paths.
+- `git diff` review covers the dashboard hierarchy change, filter route fix, touch targets, triggered-flag wording, and the handover rewrite.
 
-Not yet verified: Playwright/axe coverage, a wide desktop browser pass, deployment, and the planned destination routes. The browser console showed expected 404s for those not-yet-implemented links during the landing-page QA.
+Blocked or not yet verified:
+
+- The bundled fallback `pnpm` executable in this agent is 11.19.0 while the project declares pnpm 11.25.0; it may attempt a metadata refresh before running scripts. The project’s normal pnpm 11.25.0 install is verified above.
+- The API is not configured for a populated browser pass in this environment, so only the honest transport-error state has been exercised.
+- The repository-wide Prettier check reports 65 existing files outside this change as unformatted; no broad formatting rewrite was applied.
 
 ## Open risks and next checks
 
-- Add the planned `/assets`, `/case-study/ustry`, and `/methodology` routes, then replace the currently expected 404s with real evidence flows.
-- `app/layout.tsx` references `/og-image.png` for social metadata, but no matching public asset is currently present.
-- Before API/data UI work, reconcile the frontend with the backend OpenAPI contract and methodology documents; do not hand-author or simplify risk semantics.
-- Add a normal test script and Playwright/axe coverage when interactive/data surfaces are introduced. Re-run wide responsive QA and verify all landing links before public deployment.
-
-No active blocker is known for the static landing page. Deployment and the evidence routes remain future work.
+- Re-run formatting selectively if the repository adopts a formatting baseline, then complete populated desktop/mobile browser checks once the API or contract mock is configured.
+- Verify the Apply flow with `q` and `hasFlag` against a live or contract API, including preserved band, sort, and direction parameters.
+- Keep the list endpoint’s limitation visible: it exposes triggered flags but not `unevaluatedFlags`; the asset detail remains the source for that distinction.
+- Review whether a transport-error state should offer a reload action after the dashboard can be exercised in a working runtime.
+- Before deployment, audit all prominent links against the actual route tree and verify the API contract, provenance, and historical-gap states with non-happy-path fixtures.

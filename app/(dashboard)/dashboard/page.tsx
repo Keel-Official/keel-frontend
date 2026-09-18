@@ -4,6 +4,7 @@ import {
   ConfidenceMeaning,
 } from '@/components/dashboard/calibration-note';
 import { AssetTable } from '@/components/dashboard/asset-table';
+import { FindingSummary } from '@/components/dashboard/finding-summary';
 import { KpiStrip, type KpiItem } from '@/components/dashboard/kpi-strip';
 import { Notice } from '@/components/dashboard/notice';
 import { AppShell, PageHeader } from '@/components/dashboard/layout/app-shell';
@@ -134,13 +135,20 @@ export default async function AssetsPage({
         </Notice>
       ) : (
         <>
+          <FindingSummary rows={rows} query={query} />
           <KpiStrip items={items} />
 
           <section className="mt-8">
-            <h2 className="sr-only">The monitored set</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]">
+              Monitored assets
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm text-[var(--keel-muted)]">
+              Start with the highest-risk bands, then open an asset for the
+              depth, collateral, flags, and provenance behind its result.
+            </p>
 
             <CalibrationNote
-              className="mb-4"
+              className="mt-4 mb-4"
               calibrated={methodology.data?.calibrated}
               note={methodology.data?.calibrationNote}
             />
