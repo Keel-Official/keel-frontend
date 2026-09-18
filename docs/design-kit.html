@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keel Design Kit · Instrument system</title>
+<!--
+  A repository reference, not a published page.
+
+  This file is checked in so the visual system can be read and reviewed offline; it is
+  not routed, not served from `public/`, and nothing links to it. Open it directly from
+  a checkout. The values here are the ones `app/(marketing)/globals.css` actually ships,
+  so a change in one belongs in the other.
+-->
+<style>
+  :root{
+    --ink:#0F1A24;--ink-2:#33424E;--muted:#5F6E7A;--muted-2:#8A96A0;
+    --bg:#F7F8F9;--surface:#FFFFFF;--surface-2:#EEF1F3;
+    --line:#DCE1E5;--line-2:#C6CDD3;--grid:#E8ECEF;
+    --teal:#1F6F73;--teal-strong:#195C60;--teal-tint:#E6F0F0;
+    --low:#5A6B7C;--low-bg:#EDF0F2;--med:#8C5E12;--med-bg:#F7EFDD;
+    --high:#A8451A;--high-bg:#F8E9DF;--crit:#B3202C;--crit-bg:#F7E1E2;
+    --radius:8px;--radius-sm:5px;--maxw:1080px;
+    --sans:"Manrope",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+    --shadow:0 1px 0 rgba(15,26,36,.02),0 1px 3px rgba(15,26,36,.05);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.5;letter-spacing:-0.005em;padding-bottom:60px;font-size:15.5px}
+  a{color:var(--teal);text-decoration:none}a:hover{text-decoration:underline;text-underline-offset:3px}
+  .mono{font-family:var(--mono);letter-spacing:0}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+  h1,h2,h3{letter-spacing:-0.025em;line-height:1.12;font-weight:700}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  .masthead{background:var(--ink);color:#cdd6dd}
+  .masthead .wrap{display:flex;align-items:center;justify-content:space-between;height:34px;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em}
+  .masthead b{color:#fff}.masthead .r{color:#93a2ad}
+
+  .head{border-bottom:1px solid var(--line);padding:52px 0 40px}
+  .head .marker{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:11px;margin-bottom:16px}
+  .head .marker::before{content:"";width:26px;height:1px;background:var(--line-2)}
+  .head h1{font-size:clamp(2.2rem,4.5vw,3rem);font-weight:700;letter-spacing:-0.035em;margin-bottom:14px}
+  .head p{font-size:1.08rem;color:var(--muted);max-width:62ch;line-height:1.5}
+  .head .links{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--sans);font-weight:600;font-size:14px;border-radius:var(--radius-sm);padding:9px 16px;cursor:pointer;border:1px solid transparent;transition:background .16s,border-color .16s;text-decoration:none}
+  .btn-primary{background:var(--teal);color:#fff}.btn-primary:hover{background:var(--teal-strong);text-decoration:none}
+  .btn-ghost{background:transparent;color:var(--ink);border-color:var(--line-2)}.btn-ghost:hover{background:var(--surface);text-decoration:none}
+  .btn-lg{padding:12px 20px;font-size:15px}
+
+  .toc{position:sticky;top:0;z-index:10;background:rgba(247,248,249,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:16px 0}
+  .toc .wrap{display:flex;gap:8px;flex-wrap:wrap}
+  .toc a{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);padding:5px 11px;border-radius:4px;border:1px solid var(--line)}
+  .toc a:hover{color:var(--ink);background:var(--surface);text-decoration:none}
+
+  section.blk{padding:52px 0;border-bottom:1px solid var(--line)}
+  .marker{font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:11px;margin-bottom:14px}
+  .marker::before{content:"";width:26px;height:1px;background:var(--line-2)}
+  section.blk h2{font-size:1.6rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:8px}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:30px;max-width:64ch;line-height:1.55}
+  .grp{font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:26px 0 14px}
+  .grp:first-of-type{margin-top:0}
+
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:14px}
+  .sw{border:1px solid var(--line);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface)}
+  .sw .chip{height:76px}
+  .sw .m{padding:11px 13px}
+  .sw .m b{display:block;font-size:13px;font-weight:700;margin-bottom:3px}
+  .sw .m .hex{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);text-transform:uppercase}
+  .sw .m .v{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+  .brd{box-shadow:inset 0 0 0 1px var(--line)}
+
+  .rule{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--teal);border-radius:var(--radius-sm);padding:14px 16px;font-size:13.5px;color:var(--ink-2);line-height:1.55;max-width:80ch;margin-top:8px}
+  .rule.warn{border-left-color:var(--crit)}
+  code.inl{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:2px 6px;border-radius:4px}
+
+  .trow{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:16px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .trow:last-child{border-bottom:none}
+  .spec{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .t-h1{font-size:clamp(2rem,3.6vw,3rem);font-weight:700;letter-spacing:-0.035em}
+  .t-h2{font-size:1.6rem;font-weight:700;letter-spacing:-0.03em}
+  .t-h3{font-size:16px;font-weight:700}
+  .t-lead{font-size:1.1rem;color:var(--muted)}
+  .t-body{font-size:15.5px}
+  .t-small{font-size:13px;color:var(--muted)}
+  .t-eye{font-family:var(--mono);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}
+  .t-mono{font-family:var(--mono);font-size:20px;font-weight:700}
+
+  .tok{width:100%;border-collapse:collapse;font-size:14px}
+  .tok th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700;padding:0 0 12px;border-bottom:1px solid var(--line)}
+  .tok td{padding:13px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+  .tok td:first-child{font-family:var(--mono);font-size:12.5px;font-weight:700;width:170px}
+  .tok td .val{font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+  .demo-box{display:inline-block;background:var(--surface-2);border:1px solid var(--line)}
+
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+  .demo{border:1px solid var(--line);border-radius:var(--radius);padding:22px;background:var(--surface)}
+  .demo h4{font-family:var(--mono);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:15px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .stack{display:flex;flex-direction:column;gap:12px}
+
+  .rtag{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:4px;border:1px solid}
+  .rtag .sw2{width:8px;height:8px;border-radius:2px}
+  .rtag.low{background:var(--low-bg);color:var(--low);border-color:#cdd5db}.rtag.low .sw2{background:var(--low)}
+  .rtag.med{background:var(--med-bg);color:var(--med);border-color:#e6d3a6}.rtag.med .sw2{background:var(--med)}
+  .rtag.high{background:var(--high-bg);color:var(--high);border-color:#eccbb6}.rtag.high .sw2{background:var(--high)}
+  .rtag.crit{background:var(--crit-bg);color:var(--crit);border-color:#e6bcc0}.rtag.crit .sw2{background:var(--crit)}
+  .sev{display:inline-flex;gap:2px;vertical-align:middle}
+  .sev i{width:5px;height:12px;border-radius:1px;background:var(--line-2)}
+  .sev.low i:nth-child(-n+1){background:var(--low)}
+  .sev.med i:nth-child(-n+2){background:var(--med)}
+  .sev.high i:nth-child(-n+3){background:var(--high)}
+  .sev.crit i:nth-child(-n+4){background:var(--crit)}
+  .ramp{display:flex;flex-direction:column;gap:12px}
+  .ramp .r{display:flex;align-items:center;gap:14px}
+  .ramp .r .lbl{width:90px;display:flex;align-items:center;gap:8px}
+
+  .pill{display:inline-flex;align-items:center;gap:7px;background:var(--surface-2);border:1px solid var(--line);padding:6px 13px;border-radius:4px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-2)}
+
+  .ro-k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+  .ro-v{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-0.02em}
+  .ro-v u{text-decoration:none;font-size:13px;color:var(--muted)}
+  .track{height:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:3px;overflow:hidden}
+  .track>span{display:block;height:100%;background:var(--ink)}
+  .dtop{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12.5px;margin-bottom:5px}
+  .dtop .amt{font-weight:700}
+  .prov{display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:11px}
+  .prov span{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-right:6px}
+  .prov b{font-weight:700}
+  .frow{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px}
+  .frow code{font-family:var(--mono);font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--crit-bg);color:var(--crit)}
+  .frow.ne code{background:var(--surface-2);color:var(--muted)}
+  .node{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:13px 15px}
+  .node .n-k{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px}
+  .node b{display:block;font-size:14px}.node span{font-size:12px;color:var(--muted)}
+  details.faq{border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 17px}
+  details.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;font-weight:600;font-size:15px}
+  details.faq summary::-webkit-details-marker{display:none}
+  details.faq summary .pm{font-family:var(--mono);color:var(--teal)}
+  details.faq p{color:var(--muted);font-size:14px;margin-top:11px;line-height:1.55}
+  .linkdemo{font-family:var(--sans);font-size:15px}
+
+  @media print{.toc{position:static}section.blk{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="wrap"><span><b>KEEL</b> · design kit</span><span class="r">instrument system · v2 · repo reference</span></div>
+</div>
+
+<header class="head">
+  <div class="wrap">
+    <div class="marker">Design system</div>
+    <h1>Keel Design Kit</h1>
+    <p>The visual system for a read-only measurement instrument — not a marketing site. Near-black blue ink on a cool light surface, one teal accent locked to interaction, and a directional risk ramp that never borrows the accent color.</p>
+    <div class="links">
+      <a href="#colors" class="btn btn-primary">Jump to colors</a>
+      <a href="08-instrument-design-kit.md" class="btn btn-ghost">Read the written spec →</a>
+    </div>
+  </div>
+</header>
+
+<nav class="toc"><div class="wrap">
+  <a href="#colors">Colors</a><a href="#risk">Risk ramp</a><a href="#type">Type</a><a href="#tokens">Tokens</a>
+  <a href="#buttons">Controls</a><a href="#badges">Badges</a><a href="#data">Data</a><a href="#cards">Cards</a><a href="#usage">Usage</a>
+</div></nav>
+
+<!-- COLORS -->
+<section class="blk" id="colors">
+  <div class="wrap">
+    <div class="marker">01 · Foundation</div>
+    <h2>Color palette</h2>
+    <p class="lead">Base is near-black blue on cool off-white. One accent — muted teal — carries all interaction. Risk lives on a separate, directional ramp so status never gets confused with "clickable."</p>
+
+    <p class="grp">Base &amp; text</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#0F1A24"></div><div class="m"><b>Ink / base</b><div class="hex">#0F1A24</div><div class="v">--ink</div></div></div>
+      <div class="sw"><div class="chip" style="background:#33424E"></div><div class="m"><b>Ink 2</b><div class="hex">#33424E</div><div class="v">--ink-2</div></div></div>
+      <div class="sw"><div class="chip" style="background:#5F6E7A"></div><div class="m"><b>Muted</b><div class="hex">#5F6E7A</div><div class="v">--muted · quietest text tone</div></div></div>
+      <div class="sw"><div class="chip" style="background:#8A96A0"></div><div class="m"><b>Muted light</b><div class="hex">#8A96A0</div><div class="v">--muted-2 · graphics only</div></div></div>
+    </div>
+    <div class="rule warn"><span>⚠</span><span><b>Rule:</b> <code class="inl">--muted-2</code> is 2.95:1 on the page background, so no text is set in it. It draws meter tracks, bar fills and connector glyphs. Quiet text uses <code class="inl">--muted</code>, and the level below that is carried by size, weight and case — never by a colour a reader cannot resolve.</span></div>
+
+    <p class="grp">Surfaces &amp; lines</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip brd" style="background:#F7F8F9"></div><div class="m"><b>Background</b><div class="hex">#F7F8F9</div><div class="v">--bg</div></div></div>
+      <div class="sw"><div class="chip brd" style="background:#FFFFFF"></div><div class="m"><b>Surface</b><div class="hex">#FFFFFF</div><div class="v">--surface</div></div></div>
+      <div class="sw"><div class="chip brd" style="background:#EEF1F3"></div><div class="m"><b>Surface 2</b><div class="hex">#EEF1F3</div><div class="v">--surface-2</div></div></div>
+      <div class="sw"><div class="chip brd" style="background:#DCE1E5"></div><div class="m"><b>Line</b><div class="hex">#DCE1E5</div><div class="v">--border</div></div></div>
+      <div class="sw"><div class="chip brd" style="background:#C6CDD3"></div><div class="m"><b>Line strong</b><div class="hex">#C6CDD3</div><div class="v">--border-strong</div></div></div>
+    </div>
+
+    <p class="grp">Interaction accent · teal only</p>
+    <div class="swatches">
+      <div class="sw"><div class="chip" style="background:#1F6F73"></div><div class="m"><b>Teal</b><div class="hex">#1F6F73</div><div class="v">--accent</div></div></div>
+      <div class="sw"><div class="chip" style="background:#195C60"></div><div class="m"><b>Teal strong</b><div class="hex">#195C60</div><div class="v">--accent-strong</div></div></div>
+      <div class="sw"><div class="chip brd" style="background:#E6F0F0"></div><div class="m"><b>Teal tint</b><div class="hex">#E6F0F0</div><div class="v">--accent-tint</div></div></div>
+    </div>
+    <div class="rule warn"><span>⚠</span><span><b>Rule:</b> teal is locked to links, focus rings, and controls (buttons, toggles). It must never carry risk meaning. The moment the accent also speaks about risk, users can no longer tell "this is clickable" from "this is a finding."</span></div>
+    <div class="rule"><span>▹</span><span><b>One exception:</b> <code class="inl">--brand-amber</code> (#E49F37) is the counter of the Keel mark. It belongs to neither scale, appears only inside the logo, and is never used to say anything about a market.</span></div>
+  </div>
+</section>
+
+<!-- RISK RAMP -->
+<section class="blk" id="risk">
+  <div class="wrap">
+    <div class="marker">02 · Foundation</div>
+    <h2>Risk ramp</h2>
+    <p class="lead">A one-directional severity ramp — not a red/green traffic light. Low is a calm bluish stone, escalating through amber and burnt orange to a deep red. Each band pairs a text color with a tint, plus a 4-segment severity meter.</p>
+    <div class="ramp">
+      <div class="r"><span class="lbl"><span class="sev low"><i></i><i></i><i></i><i></i></span></span><span class="rtag low"><span class="sw2"></span>Low</span><span class="mono" style="font-size:12px;color:var(--muted)">#5A6B7C · stone blue · severity 1/4</span></div>
+      <div class="r"><span class="lbl"><span class="sev med"><i></i><i></i><i></i><i></i></span></span><span class="rtag med"><span class="sw2"></span>Medium</span><span class="mono" style="font-size:12px;color:var(--muted)">#8C5E12 · deep amber · severity 2/4</span></div>
+      <div class="r"><span class="lbl"><span class="sev high"><i></i><i></i><i></i><i></i></span></span><span class="rtag high"><span class="sw2"></span>High</span><span class="mono" style="font-size:12px;color:var(--muted)">#A8451A · burnt orange · severity 3/4</span></div>
+      <div class="r"><span class="lbl"><span class="sev crit"><i></i><i></i><i></i><i></i></span></span><span class="rtag crit"><span class="sw2"></span>Critical</span><span class="mono" style="font-size:12px;color:var(--muted)">#B3202C · deep red · severity 4/4</span></div>
+    </div>
+    <div class="swatches" style="margin-top:26px">
+      <div class="sw"><div class="chip" style="background:#5A6B7C"></div><div class="m"><b>Low</b><div class="hex">#5A6B7C</div><div class="v">--low · --low-bg #EDF0F2</div></div></div>
+      <div class="sw"><div class="chip" style="background:#8C5E12"></div><div class="m"><b>Medium</b><div class="hex">#8C5E12</div><div class="v">--medium · --medium-bg #F7EFDD</div></div></div>
+      <div class="sw"><div class="chip" style="background:#A8451A"></div><div class="m"><b>High</b><div class="hex">#A8451A</div><div class="v">--high · --high-bg #F8E9DF</div></div></div>
+      <div class="sw"><div class="chip" style="background:#B3202C"></div><div class="m"><b>Critical</b><div class="hex">#B3202C</div><div class="v">--critical · --critical-bg #F7E1E2</div></div></div>
+    </div>
+    <div class="rule warn"><span>⚠</span><span><b>Rule:</b> a band is never communicated by colour alone. The tag always carries the band word, and the meter beside it always carries the same reading as length. Medium and high were darkened from the original ramp so an 11px band label clears 4.5:1 against its own tint.</span></div>
+    <div class="rule"><span>ℹ</span><span><b>Confidence travels with the band.</b> <code class="inl">bandConfidence: "partial"</code> means required checks could not be evaluated and the band is a floor, so the badge prints it next to the band rather than hiding it in a tooltip.</span></div>
+  </div>
+</section>
+
+<!-- TYPE -->
+<section class="blk" id="type">
+  <div class="wrap">
+    <div class="marker">03 · Foundation</div>
+    <h2>Typography</h2>
+    <p class="lead">Manrope for prose; JetBrains Mono for every label, figure, and meta line — the instrument reads in tabular numbers. Headings are 700, not marketing-heavy. Both are loaded through <code class="inl">next/font</code>, so the CSS variables name the fonts actually served.</p>
+    <div class="rule"><span>ℹ</span><span><b>Sans:</b> <code class="inl">var(--font-manrope), sans-serif</code><br><b>Mono:</b> <code class="inl">var(--font-mono), monospace</code><br>This page falls back to system stacks because it is opened from disk without the app's font files.</span></div>
+    <div style="margin-top:24px">
+      <div class="trow"><span class="t-h1">Know how much a price supports</span><span class="spec">H1 · 700 · clamp(2–3rem) · -0.035em</span></div>
+      <div class="trow"><span class="t-h2">Section heading</span><span class="spec">H2 · 700 · clamp(1.5–2rem)</span></div>
+      <div class="trow"><span class="t-h3">Component title</span><span class="spec">H3 · 700 · 16px</span></div>
+      <div class="trow"><span class="t-lead">Lead paragraph, calm and muted.</span><span class="spec">Lead · 400 · 1.08rem · --muted</span></div>
+      <div class="trow"><span class="t-body">Body copy sits at ~15.5px.</span><span class="spec">Body · 400 · 15.5px</span></div>
+      <div class="trow"><span class="t-eye">00 — Section marker</span><span class="spec">Marker · mono · 700 · UPPER · 0.14em</span></div>
+      <div class="trow"><span class="t-mono">441,038.99 XLM</span><span class="spec">Figure · mono · 700 · tabular-nums</span></div>
+    </div>
+    <div class="rule"><span>▹</span><span><b>Rule:</b> a heading never grows at the expense of the figures under it. Product evidence is the thing on the page; the headline only points at it.</span></div>
+  </div>
+</section>
+
+<!-- TOKENS -->
+<section class="blk" id="tokens">
+  <div class="wrap">
+    <div class="marker">04 · Foundation</div>
+    <h2>Radius, shadow &amp; layout</h2>
+    <p class="lead">Squared and precise. Small radii, near-flat elevation (instruments aren't glossy), one content width.</p>
+    <table class="tok">
+      <thead><tr><th>Token</th><th>Value</th><th>Preview</th></tr></thead>
+      <tbody>
+        <tr><td>--radius</td><td><span class="val">8px</span></td><td><span class="demo-box" style="width:56px;height:34px;border-radius:8px"></span></td></tr>
+        <tr><td>--radius-sm</td><td><span class="val">5px</span></td><td><span class="demo-box" style="width:56px;height:34px;border-radius:5px"></span></td></tr>
+        <tr><td>--shadow</td><td><span class="val">0 1px 0 /.02, 0 1px 3px /.05</span></td><td><span style="display:inline-block;width:56px;height:34px;border-radius:6px;background:#fff;box-shadow:var(--shadow)"></span></td></tr>
+        <tr><td>--maxw</td><td><span class="val">1120px</span></td><td><span class="val">gutter 26px, 20px ≤720, 16px ≤420</span></td></tr>
+      </tbody>
+    </table>
+    <div class="rule"><span>▹</span><span><b>No poster shadows.</b> Elevation is a hairline plus one diffuse pixel. A card that casts a hard offset shadow reads as a sticker, and nothing here is a sticker.</span></div>
+  </div>
+</section>
+
+<!-- CONTROLS -->
+<section class="blk" id="buttons">
+  <div class="wrap">
+    <div class="marker">05 · UI Kit</div>
+    <h2>Controls &amp; links</h2>
+    <p class="lead">Primary control is solid teal — the single accent. Secondary is a bordered ghost. Links are teal with a hover underline. Focus is a 2px teal ring at 2px offset.</p>
+    <div class="gallery">
+      <div class="demo"><h4>Buttons</h4><div class="row"><a class="btn btn-primary btn-lg">Open the dashboard</a><a class="btn btn-ghost btn-lg">See the full response →</a></div></div>
+      <div class="demo"><h4>Links &amp; focus</h4><div class="stack"><span class="linkdemo">Inline <a href="#buttons">teal link</a> in body text.</span><button class="btn btn-ghost" style="width:max-content">Tab to me for focus ring</button></div></div>
+      <div class="demo" style="background:#0F1A24"><h4 style="color:#8b98a2">On ink</h4><div class="row"><a class="btn btn-primary btn-lg">Open the dashboard</a><a class="btn btn-ghost btn-lg" style="color:#fff;border-color:rgba(255,255,255,.24)">Read the evidence →</a></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- BADGES -->
+<section class="blk" id="badges">
+  <div class="wrap">
+    <div class="marker">06 · UI Kit</div>
+    <h2>Badges &amp; flags</h2>
+    <p class="lead">Risk tags carry a color square, band name, and severity meter. Flag codes are monospace chips — filled tint when triggered, gray when not evaluated.</p>
+    <div class="gallery">
+      <div class="demo"><h4>Risk tag + severity</h4><div class="stack">
+        <div class="row"><span class="sev low"><i></i><i></i><i></i><i></i></span><span class="rtag low"><span class="sw2"></span>Low</span></div>
+        <div class="row"><span class="sev high"><i></i><i></i><i></i><i></i></span><span class="rtag high"><span class="sw2"></span>High</span></div>
+        <div class="row"><span class="sev crit"><i></i><i></i><i></i><i></i></span><span class="rtag crit"><span class="sw2"></span>Critical</span></div>
+      </div></div>
+      <div class="demo"><h4>Sample label</h4><div class="row"><span class="pill">sample data · not live</span></div><p class="t-small" style="margin-top:12px">Recorded data is labelled wherever it is shown. It must never be able to pass for a live reading.</p></div>
+      <div class="demo"><h4>Flag chips</h4><div class="stack"><div class="frow"><code>ZERO_DEPTH_2PCT</code></div><div class="frow ne"><code>NO_GENUINE_TRADE_7D</code></div></div><p class="t-small" style="margin-top:12px">Grey is "not evaluated", not "passed".</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA -->
+<section class="blk" id="data">
+  <div class="wrap">
+    <div class="marker">07 · UI Kit</div>
+    <h2>Data components</h2>
+    <p class="lead">Readouts, meters, and provenance — the instrument's working parts.</p>
+    <div class="gallery">
+      <div class="demo"><h4>Readout</h4><div class="ro-k">Executable buy depth · +5%</div><div class="ro-v">441,038.99 <u>XLM</u></div></div>
+      <div class="demo"><h4>Range meter</h4><div class="stack">
+        <div><div class="dtop"><span style="color:var(--muted)">±2%</span><span class="amt">184,220.42</span></div><div class="track"><span style="width:21.6%"></span></div></div>
+        <div><div class="dtop"><span style="color:var(--muted)">±5%</span><span class="amt">441,038.99</span></div><div class="track"><span style="width:51.8%"></span></div></div>
+        <div><div class="dtop"><span style="color:var(--muted)">±10%</span><span class="amt">852,119.77</span></div><div class="track"><span style="width:100%"></span></div></div>
+      </div></div>
+      <div class="demo"><h4>Provenance</h4><div class="prov"><div><span>Ledger</span><b>61234567</b></div><div><span>Source</span><b>Horizon</b></div><div><span>Conf.</span><b>Full</b></div></div><p class="t-small" style="margin-top:12px">Every result says which ledger it was taken at and what produced it.</p></div>
+    </div>
+    <div class="rule warn"><span>⚠</span><span><b>Rule:</b> figures are rendered from exact decimal strings and rounded only for display; <code class="inl">null</code> renders as "Not available" and never as <code class="inl">0</code>. A measured zero and an absent value are opposite findings.</span></div>
+  </div>
+</section>
+
+<!-- CARDS -->
+<section class="blk" id="cards">
+  <div class="wrap">
+    <div class="marker">08 · UI Kit</div>
+    <h2>Panels, nodes &amp; findings</h2>
+    <p class="lead">One recipe: white fill, 1px hairline, small radius, near-flat shadow. Findings add a colored left rule matching the risk band.</p>
+    <div class="gallery">
+      <div class="demo" style="border-left:3px solid var(--crit)"><h4>Finding card</h4>
+        <div class="row" style="margin-bottom:12px"><span class="sev crit"><i></i><i></i><i></i><i></i></span><span class="rtag crit"><span class="sw2"></span>Critical</span></div>
+        <p class="t-small" style="margin:0">The reference price is unreliable. A 196.08% spread separates the bid and ask.</p>
+      </div>
+      <div class="demo"><h4>Flow node</h4><div class="stack"><div class="node"><div class="n-k">Input</div><b>SDEX</b><span>Orderbook liquidity</span></div><div class="node" style="background:var(--ink);border-color:var(--ink)"><div class="n-k" style="color:#8b98a2">Process</div><b style="color:#fff">Keel engine</b><span style="color:#aab6bf">Depth &amp; risk rules</span></div></div></div>
+      <div class="demo"><h4>Accordion</h4><details class="faq" open><summary>Does Keel need a wallet?<span class="pm">−</span></summary><p>No. Keel is read-only and never signs a transaction.</p></details></div>
+    </div>
+  </div>
+</section>
+
+<!-- USAGE -->
+<section class="blk" id="usage" style="border-bottom:none">
+  <div class="wrap">
+    <div class="marker">09 · Handoff</div>
+    <h2>Using this kit</h2>
+    <p class="lead">Everything is driven by CSS variables. The shipping definitions live in <code class="inl">app/(marketing)/globals.css</code>; the components that consume them are in <code class="inl">components/keel/</code> and <code class="inl">components/marketing/</code>.</p>
+    <div class="rule"><span>▹</span><span><b>Where it applies:</b> the marketing surface and the evidence pages. The dashboard keeps its own stylesheet (<code class="inl">app/(dashboard)/dashboard/dashboard.css</code>) and its own light/dark themes; the two surfaces are deliberately not wired together.</span></div>
+    <div class="rule" style="margin-top:12px"><span>▹</span><span><b>Three hard rules:</b> (1) teal is for interaction only — links, focus, controls. (2) risk uses the ramp only, never teal, never a green/red traffic light, and never colour without the band word beside it. (3) recorded data is labelled wherever it appears.</span></div>
+    <div class="rule" style="margin-top:12px"><span>▹</span><span><b>This file is not published.</b> It is a repository reference, opened from a checkout. It is not routed and is not served from <code class="inl">public/</code>.</span></div>
+  </div>
+</section>
+
+</body>
+</html>

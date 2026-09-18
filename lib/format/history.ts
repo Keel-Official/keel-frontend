@@ -9,16 +9,3 @@ export const februaryPoints = daily.map((row) => ({
       ? null
       : new Decimal(row.max_delta_within_leg).times(100).toFixed(),
 }));
-
-export function observationSegments(points: typeof februaryPoints) {
-  const segments: (typeof februaryPoints)[] = [];
-  let current: typeof februaryPoints = [];
-  for (const point of points) {
-    if (point.movement === null) {
-      if (current.length) segments.push(current);
-      current = [];
-    } else current.push(point);
-  }
-  if (current.length) segments.push(current);
-  return segments;
-}

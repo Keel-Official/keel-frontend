@@ -1,13 +1,4 @@
-import {
-  ArrowDown,
-  ArrowRight,
-  Braces,
-  Database,
-  Layers,
-  Network,
-  Radio,
-  ScanLine,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export function ArchitectureFlow() {
   return (
@@ -17,80 +8,54 @@ export function ArchitectureFlow() {
       aria-labelledby="engine-title"
     >
       <div className="container">
-        <div className="engine-heading">
-          <div>
-            <h2 id="engine-title">
-              From Stellar liquidity
-              <br />
-              to risk calculations.
-            </h2>
-          </div>
-          <p>
-            Keel combines orderbook offers and pool reserves, then calculates
-            depth, price targets, and collateral limits.
-          </p>
-        </div>
+        <h2 id="engine-title">From Stellar liquidity to risk calculations.</h2>
+        <p className="intro">
+          Keel combines orderbook offers and pool reserves, then calculates
+          depth, price targets, and collateral limits.
+        </p>
         <div
           className="architecture-flow"
           aria-label="Stellar market sources feed the Keel engine, producing depth, manipulation, collateral and flag outputs for dashboards, APIs and backtests"
         >
           <div className="flow-inputs">
-            <div>
-              <Layers size={20} />
-              <span>
-                <strong>SDEX</strong>
-                <small>Orderbook liquidity</small>
-              </span>
+            <div className="node">
+              <span className="n-k">Input</span>
+              <strong>SDEX</strong>
+              <small>Orderbook liquidity</small>
             </div>
-            <div>
-              <Network size={20} />
-              <span>
-                <strong>AMM pools</strong>
-                <small>Pool reserves</small>
-              </span>
+            <div className="node">
+              <span className="n-k">Input</span>
+              <strong>AMM pools</strong>
+              <small>Pool reserves</small>
             </div>
-            <div>
-              <Radio size={20} />
-              <span>
-                <strong>Market observations</strong>
-                <small>Trades & supporting data</small>
-              </span>
+            <div className="node">
+              <span className="n-k">Input</span>
+              <strong>Market observations</strong>
+              <small>Trades &amp; supporting data</small>
             </div>
           </div>
           <div className="flow-connector" aria-hidden="true">
-            <ArrowRight />
+            <ArrowRight size={16} />
           </div>
-          <div className="engine-core">
-            <div className="engine-symbol">
-              <ScanLine size={40} />
-            </div>
+          <div className="engine-core node">
+            <span className="n-k">Process</span>
             <strong>Keel engine</strong>
-            <span>Depth simulation & risk rules</span>
+            <small>Depth simulation &amp; risk rules</small>
           </div>
           <div className="flow-connector" aria-hidden="true">
-            <ArrowRight />
+            <ArrowRight size={16} />
           </div>
           <div className="flow-outputs">
             <span>Executable depth</span>
             <span>Manipulation cost</span>
             <span>Safe collateral</span>
-            <span>Flags & confidence</span>
+            <span>Flags &amp; confidence</span>
           </div>
         </div>
         <div className="flow-destinations">
-          <ArrowDown size={16} />
-          <span>
-            <ScanLine size={16} />
-            Dashboard
-          </span>
-          <span>
-            <Braces size={16} />
-            API
-          </span>
-          <span>
-            <Database size={16} />
-            Historical backtest
-          </span>
+          <span>Dashboard</span>
+          <span>API</span>
+          <span>Historical backtest</span>
         </div>
       </div>
     </section>

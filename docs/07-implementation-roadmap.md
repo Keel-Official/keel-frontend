@@ -199,10 +199,10 @@ For the current repository, where the old landing page already exists:
 3. Build typed landing fixtures from backend mocks.
 4. Build HeroProductPreview.
 5. Build MarketSnapshot.
-6. Replace equal metric grid with MetricBento.
+6. Replace equal metric grid with MetricBento. *(Superseded: no metric grid ships; see `08-instrument-design-kit.md`.)*
 7. Replace numbered process columns with ArchitectureFlow.
 8. Expand ExplainableRiskDemo using real semantics.
-9. Add ApiPreview.
+9. Add ApiPreview. *(Superseded: removed from the landing page in `086b593`.)*
 10. Replace text-only case-study timeline with historical chart preview.
 11. Replace generic proof columns with ProvenanceStrip.
 12. Unify CTA/footer color with brand palette.

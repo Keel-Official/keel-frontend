@@ -1,10 +1,3 @@
-import {
-  Check,
-  CircleAlert,
-  CircleHelp,
-  Layers,
-  ShieldCheck,
-} from 'lucide-react';
 import type { components } from '../../lib/api/schema';
 import {
   formatAmount,
@@ -17,15 +10,35 @@ import {
 
 export type AssetRisk = components['schemas']['AssetRisk'];
 
+/**
+ * The risk ramp is directional and four steps long, so the meter has four segments
+ * and fills as many as the band is worth. It is drawn next to the band name rather
+ * than instead of it: colour and length are the fast read, the word is the real one.
+ */
+const severity: Record<AssetRisk['band'], number> = {
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+  CRITICAL: 4,
+};
+
 export function RiskBadge({
   band,
   bandConfidence,
 }: Pick<AssetRisk, 'band' | 'bandConfidence'>) {
+  const level = severity[band];
   return (
     <span className={`risk-status risk-${band.toLowerCase()}`}>
-      <span className="risk-band">
-        {band === 'LOW' ? <ShieldCheck size={14} /> : <CircleAlert size={14} />}
-        {band}
+      <span className="risk-line">
+        <span className="sev" aria-hidden="true">
+          {[1, 2, 3, 4].map((step) => (
+            <i key={step} className={step <= level ? 'on' : ''} />
+          ))}
+        </span>
+        <span className="risk-band">
+          <span className="sw" aria-hidden="true" />
+          {band}
+        </span>
       </span>
       <span className={`confidence ${bandConfidence}`}>
         {bandConfidence === 'partial'
@@ -84,17 +97,10 @@ export function AssetIdentity({
   );
 }
 
-export function DepthLadder({
-  result,
-  compact = false,
-}: {
-  result: AssetRisk;
-  compact?: boolean;
-}) {
+function depthUnavailable(result: AssetRisk) {
   if (result.flags.includes('SPREAD_EXTREME'))
     return (
       <div className="finding-notice">
-        <CircleAlert size={18} />
         <p>
           The reference price is unreliable. Depth derived from this midpoint is
           not meaningful.
@@ -104,19 +110,59 @@ export function DepthLadder({
   if (result.priceSource === 'none')
     return (
       <div className="finding-notice">
-        <CircleAlert size={18} />
         <p>
           No executable price. Measured depth is zero; this is a risk finding.
         </p>
       </div>
     );
+  return null;
+}
+
+export function DepthLadder({
+  result,
+  compact = false,
+}: {
+  result: AssetRisk;
+  compact?: boolean;
+}) {
+  const unavailable = depthUnavailable(result);
+  if (unavailable) return unavailable;
   const max = result.depth.at(-1)?.buySide ?? '0';
+
+  // The instrument panel reads top to bottom: a labelled amount with the bar that
+  // scales it underneath. The full ladder keeps both sides side by side, because a
+  // reader comparing buy and sell depth needs them on one line.
+  if (compact)
+    return (
+      <div className="depth-ladder compact">
+        {result.depth.map((row) => (
+          <div className="drow" key={row.delta}>
+            <div className="dtop">
+              <span className="rng">±{percent(row.delta)}%</span>
+              <span className="amt" title={formatAmount(row.buySide)}>
+                {formatAmount(row.buySide, 2)}
+              </span>
+            </div>
+            <span className="track">
+              <span
+                className="depth-bar"
+                style={{ width: `${geometryRatio(row.buySide, max)}%` }}
+              />
+            </span>
+          </div>
+        ))}
+        <p className="table-note">
+          Rounded to 2 decimals. Exact amounts in the sample response.
+        </p>
+      </div>
+    );
+
   return (
-    <div className={`depth-ladder ${compact ? 'compact' : ''}`}>
+    <div className="depth-ladder">
       <div className="ladder-head">
         <span>Price range</span>
         <span>Buy depth · {result.quote.code}</span>
-        {!compact && <span>Sell depth · {result.quote.code}</span>}
+        <span>Sell depth · {result.quote.code}</span>
       </div>
       {result.depth.map((row) => (
         <div
@@ -133,11 +179,9 @@ export function DepthLadder({
               {formatAmount(row.buySide, 2)}
             </span>
           </div>
-          {!compact && (
-            <span className="sell-value" title={formatAmount(row.sellSide)}>
-              {formatAmount(row.sellSide, 2)}
-            </span>
-          )}
+          <span className="sell-value" title={formatAmount(row.sellSide)}>
+            {formatAmount(row.sellSide, 2)}
+          </span>
         </div>
       ))}
       <p className="table-note">
@@ -154,9 +198,7 @@ export function LiquiditySourceBreakdown({ result }: { result: AssetRisk }) {
   return (
     <div className="source-breakdown">
       <div className="inline-heading">
-        <span>
-          <Layers size={14} /> Buy-side sources at +{percent(row.delta)}%
-        </span>
+        <span>Buy-side sources · +{percent(row.delta)}%</span>
         <span>{result.quote.code}</span>
       </div>
       {shares ? (
@@ -226,7 +268,7 @@ export function ManipulationRungs({ result }: { result: AssetRisk }) {
           <span className="delta">+{percent(rung.delta)}%</span>
           <div>
             <MetricValue value={rung.cost} unit={result.quote.code} />
-            <span className="rung-status">
+            <span className={`rung-status ${rung.reachable ? 'ok' : 'no'}`}>
               {manipulationLabel(rung.cost, rung.reachable)}
             </span>
           </div>
@@ -249,32 +291,27 @@ export function FlagList({ result }: { result: AssetRisk }) {
   return (
     <div className="flag-groups">
       <div>
-        <h3>
-          <CircleAlert size={16} />
-          Triggered <span>{result.flags.length}</span>
+        <h3 className="flag-label">
+          Triggered <span className="ct">{result.flags.length}</span>
         </h3>
         {result.flags.length ? (
           result.flags.map((flag) => (
             <div className="flag-item" key={flag}>
-              <Check size={14} />
-              <div>
-                <code>{flag}</code>
-                {flagDescriptions[flag] && <p>{flagDescriptions[flag]}</p>}
-              </div>
+              <code>{flag}</code>
+              {flagDescriptions[flag] && <p>{flagDescriptions[flag]}</p>}
             </div>
           ))
         ) : (
-          <p>No flags triggered.</p>
+          <p className="muted">No flags triggered.</p>
         )}
       </div>
       <div className="unevaluated-group">
-        <h3>
-          <CircleHelp size={16} />
-          Not evaluated <span>{result.unevaluatedFlags.length}</span>
+        <h3 className="flag-label">
+          Not evaluated{' '}
+          <span className="ct">{result.unevaluatedFlags.length}</span>
         </h3>
         {result.unevaluatedFlags.map((flag) => (
           <div className="flag-item" key={flag}>
-            <span aria-hidden="true">○</span>
             <code>{flag}</code>
           </div>
         ))}

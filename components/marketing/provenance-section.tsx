@@ -1,4 +1,3 @@
-import { Fingerprint } from 'lucide-react';
 import { healthy } from '../../lib/api/fixtures';
 import { ProvenanceStrip } from '../keel/result';
 
@@ -37,33 +36,27 @@ export function ProvenanceSection() {
       aria-labelledby="provenance-title"
     >
       <div className="container">
-        <div className="provenance-heading">
-          <Fingerprint size={28} />
-          <div>
-            <h2 id="provenance-title">Sources and provenance</h2>
-            <p>
-              Each result records the ledger it was calculated on and the data
-              source behind it.
-            </p>
-          </div>
-        </div>
+        <h2 id="provenance-title">Questions about Keel.</h2>
+        <p className="intro">
+          What the instrument does, what it deliberately does not claim, and
+          where each result on this page came from.
+        </p>
         <div className="evidence-strip">
           <ProvenanceStrip result={healthy} method={false} />
           <span className="sample-label">USDC / XLM sample</span>
         </div>
-        <div className="faq-layout">
-          <h3>Questions about Keel</h3>
-          <div className="faq-list">
-            {questions.map(([question, answer]) => (
-              <details key={question}>
-                <summary>
-                  {question}
-                  <span aria-hidden="true">+</span>
-                </summary>
-                <p>{answer}</p>
-              </details>
-            ))}
-          </div>
+        <div className="faq-list">
+          {questions.map(([question, answer], index) => (
+            <details key={question} open={index === 0}>
+              <summary>
+                <span className="qn" aria-hidden="true">
+                  Q{index + 1}
+                </span>
+                <span className="qt">{question}</span>
+              </summary>
+              <p>{answer}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>

@@ -79,6 +79,8 @@ Do not imitate brand colors, logos, or exact layouts from these references.
 - `05-frontend-data-contract.md` — rules for consuming Keel API data safely.
 - `06-component-inventory.md` — reusable component boundaries for product and marketing surfaces.
 - `07-implementation-roadmap.md` — build order that prioritizes tangible product surfaces before explanatory polish.
+- `08-instrument-design-kit.md` — **the shipping visual system (instrument system v2)**. Current source of truth for colour, typography, shape and landing rhythm; supersedes the named sections of `03` and the section list of `04`.
+- `design-kit.html` — the rendered kit. A repository reference, not a published page: it is not routed and is not served from `public/`. Open it from a checkout.
 
 ## Product-design principles
 

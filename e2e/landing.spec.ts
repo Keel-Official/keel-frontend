@@ -45,7 +45,7 @@ for (const [name, width, height] of [
       await menu.click();
       await page
         .getByRole('navigation', { name: 'Mobile navigation' })
-        .getByRole('link', { name: 'Markets' })
+        .getByRole('link', { name: 'markets' })
         .click();
       await expect(menu).toHaveAttribute('aria-expanded', 'false');
       await expect(page).toHaveURL(/#markets$/);
@@ -83,7 +83,7 @@ for (const [name, width, height] of [
       fullPage: true,
     });
     await page.screenshot({ path: `.artifacts/landing-${name}-hero.png` });
-    for (const id of ['markets', 'metrics', 'risk', 'case-study'])
+    for (const id of ['markets', 'engine', 'risk', 'case-study'])
       await page
         .locator(`#${id}`)
         .screenshot({ path: `.artifacts/landing-${name}-${id}.png` });

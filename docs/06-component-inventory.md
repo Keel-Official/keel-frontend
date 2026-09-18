@@ -217,19 +217,12 @@ Fields:
 - safe collateral;
 - key flags/count.
 
-### `MetricBento`
+### `MetricBento` — removed
 
-Purpose:
-- demonstrate core Keel capabilities with asymmetric hierarchy.
-
-Modules:
-- dominant depth module;
-- manipulation module;
-- safe collateral module;
-- risk module;
-- optional supporting-signal strip.
-
-Avoid four equal feature cards.
+Not built. Depth and collateral are read in `HeroProductPreview` and `MarketSnapshot`;
+manipulation cost and reachability are read in `ExplainableRiskDemo`. A second
+explanatory grid of the same four numbers repeated the page rather than adding to it.
+See `08-instrument-design-kit.md`.
 
 ### `ArchitectureFlow`
 
@@ -245,16 +238,11 @@ Purpose:
 
 Should be visually substantial, not a tiny supporting card.
 
-### `ApiPreview`
+### `ApiPreview` — removed
 
-Purpose:
-- establish developer/infrastructure credibility.
-
-Contains:
-- current request path;
-- contract-compatible response subset;
-- read-only note;
-- OpenAPI CTA.
+Taken off the landing page in `086b593`, along with methodology and the depth
+comparison. The contract is still reachable: the footer links `keel-openapi.yaml`, and
+every product object on the page links the recorded response it was rendered from.
 
 ### `BlendCasePreview`
 

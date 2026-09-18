@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { KeelMark } from '../brand/keel-mark';
@@ -15,10 +15,32 @@ export function BrandMark() {
   );
 }
 
+/**
+ * The instrument bar. It states what this is and what data is on screen before the
+ * page says anything else, so a recorded sample cannot be mistaken for a live feed
+ * by a reader who only glances at the top of the window.
+ */
+export function Masthead() {
+  return (
+    <div className="masthead">
+      <div className="container">
+        <span className="masthead-left">
+          <strong>KEEL</strong> · liquidity instrument · Stellar
+        </span>
+        <span className="masthead-right">
+          <i aria-hidden="true" />
+          read-only · sample data
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const links = [
-  { href: '#markets', label: 'Markets' },
-  { href: '#metrics', label: 'Product' },
-  { href: '#case-study', label: 'Case study' },
+  { href: '#markets', label: 'markets' },
+  { href: '#engine', label: 'method' },
+  { href: '#risk', label: 'finding' },
+  { href: '#case-study', label: 'case' },
 ];
 
 export function SiteHeader() {
@@ -56,7 +78,7 @@ export function SiteHeader() {
           className="button button-small header-action"
           href={dashboardLinks.assets}
         >
-          {dashboardCopy.nav} <ArrowUpRight size={16} />
+          {dashboardCopy.nav}
         </a>
         <button
           ref={button}
@@ -67,7 +89,7 @@ export function SiteHeader() {
           aria-label={open ? 'Close navigation' : 'Open navigation'}
           onClick={() => setOpen(!open)}
         >
-          {open ? <X size={22} /> : <Menu size={22} />}
+          {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
       <nav
@@ -79,12 +101,10 @@ export function SiteHeader() {
         {links.map((link) => (
           <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
             {link.label}
-            <ArrowUpRight size={16} />
           </a>
         ))}
         <a href={dashboardLinks.assets} onClick={() => setOpen(false)}>
           {dashboardCopy.nav}
-          <ArrowUpRight size={16} />
         </a>
       </nav>
     </header>

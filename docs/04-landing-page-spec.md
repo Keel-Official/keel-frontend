@@ -1,5 +1,11 @@
 # Keel Frontend — Landing Page Specification
 
+> **Superseded in part.** The section list and the wireframe below describe the page as
+> first specified. The rhythm the page now ships is in `08-instrument-design-kit.md`
+> under "Landing rhythm", and that document also records which sections were dropped and
+> why. The goal, the audience, the art-direction rule and the per-section content
+> requirements that survive still hold.
+
 ## Goal
 
 A first-time visitor should understand Keel in under 30 seconds **because they can see what the product outputs**, not because they have read several explanatory sections.

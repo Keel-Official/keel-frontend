@@ -1,5 +1,11 @@
 # Keel Frontend — Design System
 
+> **Superseded in part.** The shipping visual system is `08-instrument-design-kit.md`
+> (instrument system v2), with the rendered kit at `design-kit.html`. That document
+> replaces §3 Brand palette, §4 Typography and §7 Shape & elevation below. The
+> principles in §2 and the product-surface rules in §6 still hold; read them here and
+> take every colour, type and shape value from `08`.
+
 ## 1. Visual direction
 
 **Working direction:** modern financial infrastructure + inspectable risk product.

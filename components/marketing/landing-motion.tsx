@@ -43,8 +43,7 @@ export function LandingMotion() {
           observer.unobserve(entry.target);
           if (entry.target.id === 'product-preview') {
             play('.hero-product', arrive);
-            play('.hero-product .depth-bar', measure, 140, 600);
-            play('.hero-product .source-bar', measure, 280, 500);
+            play('.hero-depth td > span', arrive, 140, 420);
           } else if (entry.target.id === 'engine') {
             play('.flow-inputs > div', arrive, 0, 420);
             play('.flow-connector', measure, 160, 500);

@@ -1,13 +1,34 @@
-import { ArrowUpRight, CircleHelp } from 'lucide-react';
-import { februaryPoints, observationSegments } from '../../lib/format/history';
+import { ArrowUpRight } from 'lucide-react';
+import { februaryPoints } from '../../lib/format/history';
 import { formatAmount, geometryRatio } from '../../lib/format/keel';
 import { BACKTEST_REPORT_URL } from '../../lib/report';
 
+/** The chart's own coordinate space. Bars, not a line: a gap must read as an
+    absent observation rather than a segment joining the days either side of it. */
+const PLOT = { left: 56, right: 736, top: 40, base: 240 };
+const CEILING = '0.4';
+const GRID: readonly (readonly [string, number])[] = [
+  ['0.4', PLOT.top],
+  ['0.3', PLOT.top + 50],
+  ['0.2', PLOT.top + 100],
+  ['0.1', PLOT.top + 150],
+  ['0', PLOT.base],
+];
+const SLOT = (PLOT.right - PLOT.left) / februaryPoints.length;
+const BAR = 13;
+const INCIDENT = '2026-02-22';
+
+const slotCentre = (index: number) => PLOT.left + SLOT * (index + 0.5);
+const barHeight = (movement: string) =>
+  (geometryRatio(movement, CEILING) / 100) * (PLOT.base - PLOT.top);
+
 export function BlendCasePreview() {
-  const x = (day: string) =>
-    56 + ((Date.parse(day) - Date.parse('2026-02-01')) / 86400000) * (648 / 27);
-  const y = (movement: string) => 224 - geometryRatio(movement, '0.4') * 1.6;
-  const eventX = x('2026-02-22');
+  const missing = februaryPoints.filter((point) => point.movement === null);
+  const incidentIndex = februaryPoints.findIndex(
+    (point) => point.day === INCIDENT,
+  );
+  const incidentMovement = februaryPoints[incidentIndex]?.movement ?? null;
+
   return (
     <section
       className="section case-section"
@@ -15,219 +36,187 @@ export function BlendCasePreview() {
       aria-labelledby="case-title"
     >
       <div className="container">
-        <div className="case-heading">
-          <div>
-            <span className="case-label">Blend / USTRY · February 2026</span>
-            <h2 id="case-title">
-              The February
-              <br />
-              USTRY incident.
-            </h2>
-          </div>
-          <p>
-            Historical evidence includes its limits. The February trade stream
-            did not establish an actionable advance warning.
-          </p>
-        </div>
-        <div className="case-layout">
-          <div className="history-panel panel">
-            <div className="history-heading">
-              <div>
-                <h3>Movement within a trade leg</h3>
-                <p>Largest observed daily price span · USTRY / USDC</p>
-              </div>
-              <span className="sample-label">Historical observations</span>
+        <h2 id="case-title">The February USTRY incident.</h2>
+        <p className="intro">
+          Historical evidence includes its limits. The February trade stream did
+          not establish an actionable advance warning.
+        </p>
+        <div className="chart-card">
+          <div className="chart-head">
+            <div>
+              <h3>Movement within a trade leg</h3>
+              <p>Largest observed daily price span · USTRY / USDC</p>
             </div>
-            <svg
-              className="history-chart"
-              viewBox="0 0 760 280"
-              role="img"
-              aria-labelledby="history-chart-title history-chart-description"
-            >
-              <title id="history-chart-title">
-                Observed trade-leg price movement in February 2026
-              </title>
-              <desc id="history-chart-description">
-                Daily maximum price movement, from zero to 0.4 percent. The
-                largest observed movement occurs on February 22, the incident
-                date. Missing observations are shown as gaps, not zeros. Exact
-                values are available in the table below.
-              </desc>
-              {[
-                ['0.4', 64],
-                ['0.3', 104],
-                ['0.2', 144],
-                ['0.1', 184],
-                ['0', 224],
-              ].map(([value, lineY]) => (
-                <g key={value}>
-                  <line
-                    className="chart-grid"
-                    x1="56"
-                    x2="704"
-                    y1={lineY}
-                    y2={lineY}
-                  />
-                  <text className="chart-label" x="12" y={+lineY + 4}>
-                    {value}%
-                  </text>
-                </g>
-              ))}
-              <line
-                className="event-line"
-                x1={eventX}
-                x2={eventX}
-                y1="48"
-                y2="236"
-              />
-              <rect
-                x={eventX - 108}
-                y="8"
-                width="176"
-                height="28"
-                rx="6"
-                className="event-label-bg"
-              />
-              <text x={eventX - 96} y="27" className="event-label">
-                22 Feb · incident
-              </text>
-              {observationSegments(februaryPoints).map((segment, index) => (
-                <polyline
-                  key={index}
-                  className="history-line"
-                  points={segment
-                    .map((point) => `${x(point.day)},${y(point.movement!)}`)
-                    .join(' ')}
+            <span className="sample-label">Historical observations</span>
+          </div>
+          <p className="chart-desc">
+            Observed trade-leg price movement in February 2026. Daily maximum
+            price movement, from zero to 0.4 percent. The largest observed
+            movement occurs on February 22, the incident date. {missing.length}{' '}
+            days carry no within-leg observation; they are shown as gaps, not
+            zeros.
+          </p>
+          <svg
+            className="history-chart"
+            viewBox="0 0 760 290"
+            role="img"
+            aria-labelledby="history-chart-title history-chart-description"
+          >
+            <title id="history-chart-title">
+              Observed trade-leg price movement in February 2026
+            </title>
+            <desc id="history-chart-description">
+              Daily maximum price movement, from zero to 0.4 percent. The
+              largest observed movement occurs on February 22, the incident
+              date. Missing observations are shown as gaps, not zeros. Exact
+              values are available in the table below.
+            </desc>
+            {GRID.map(([value, lineY]) => (
+              <g key={value}>
+                <line
+                  className="chart-grid"
+                  x1={PLOT.left}
+                  x2={PLOT.right}
+                  y1={lineY}
+                  y2={lineY}
                 />
-              ))}
-              {februaryPoints.map((point) =>
-                point.movement !== null ? (
-                  <circle
-                    key={point.day}
-                    className={
-                      point.day === '2026-02-22'
-                        ? 'event-point'
-                        : 'history-point'
-                    }
-                    cx={x(point.day)}
-                    cy={y(point.movement)}
-                    r={point.day === '2026-02-22' ? 6 : 3}
-                  >
-                    <title>{`${point.day}: ${formatAmount(point.movement)}%`}</title>
-                  </circle>
-                ) : (
-                  <g key={point.day}>
-                    <line
-                      className="missing-point"
-                      x1={x(point.day) - 3}
-                      x2={x(point.day) + 3}
-                      y1="232"
-                      y2="238"
-                    />
-                    <line
-                      className="missing-point"
-                      x1={x(point.day) - 3}
-                      x2={x(point.day) + 3}
-                      y1="238"
-                      y2="232"
-                    />
-                  </g>
-                ),
-              )}
-              {[
-                '2026-02-01',
-                '2026-02-08',
-                '2026-02-15',
-                '2026-02-22',
-                '2026-02-28',
-              ].map((day) => (
                 <text
                   className="chart-label"
-                  key={day}
-                  x={x(day)}
-                  y="264"
-                  textAnchor="middle"
+                  x={PLOT.left - 12}
+                  y={lineY + 4}
+                  textAnchor="end"
                 >
-                  {day.slice(-2)} Feb
+                  {value}%
                 </text>
-              ))}
-            </svg>
-            <div className="chart-legend">
-              <span>
-                <i className="legend-dot" />
-                Observed movement
-              </span>
-              <span>× No within-leg observation</span>
-              <span>Gaps are not interpolated</span>
-            </div>
-            <details className="chart-values">
-              <summary>Inspect exact observations</summary>
-              <div className="observation-table">
-                <table>
-                  <caption>
-                    Historical trade observations. This is not an
-                    executable-depth series.
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th>Date (UTC)</th>
-                      <th>Maximum within-leg move (%)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {februaryPoints.map((point) => (
-                      <tr key={point.day}>
-                        <td>{point.day}</td>
-                        <td>{formatAmount(point.movement)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </details>
+              </g>
+            ))}
+            {februaryPoints.map((point, index) =>
+              point.movement === null ? (
+                <g key={point.day} className="missing-mark">
+                  <line
+                    x1={slotCentre(index) - 4}
+                    x2={slotCentre(index) + 4}
+                    y1={PLOT.base - 8}
+                    y2={PLOT.base}
+                  />
+                  <line
+                    x1={slotCentre(index) - 4}
+                    x2={slotCentre(index) + 4}
+                    y1={PLOT.base}
+                    y2={PLOT.base - 8}
+                  />
+                  <title>{`${point.day}: no within-leg observation`}</title>
+                </g>
+              ) : (
+                <rect
+                  key={point.day}
+                  className={
+                    point.day === INCIDENT ? 'event-bar' : 'history-bar'
+                  }
+                  x={slotCentre(index) - BAR / 2}
+                  y={PLOT.base - barHeight(point.movement)}
+                  width={BAR}
+                  height={Math.max(barHeight(point.movement), 1)}
+                  rx="2"
+                >
+                  <title>{`${point.day}: ${formatAmount(point.movement)}%`}</title>
+                </rect>
+              ),
+            )}
+            {incidentMovement !== null && (
+              <text
+                className="event-label"
+                x={slotCentre(incidentIndex) - 9}
+                y={PLOT.base - barHeight(incidentMovement) - 10}
+                textAnchor="end"
+              >
+                22 Feb · incident
+              </text>
+            )}
+            {[0, 7, 14, 21, 27].map((index) => (
+              <text
+                className="chart-label"
+                key={index}
+                x={slotCentre(index)}
+                y={PLOT.base + 26}
+                textAnchor="middle"
+              >
+                {februaryPoints[index].day.slice(-2)} Feb
+              </text>
+            ))}
+          </svg>
+          <div className="chart-legend">
+            <span>
+              <i className="legend-dot" />
+              Observed movement
+            </span>
+            <span>
+              <i className="legend-dot event-dot" />
+              Incident · 22 Feb
+            </span>
+            <span>× No within-leg observation</span>
+            <span>Gaps are not interpolated</span>
           </div>
-          <aside className="case-finding">
-            <CircleHelp size={24} />
-            <h3>
-              What the evidence
-              <br />
-              can establish.
-            </h3>
-            <p>
-              No trade leg crossed a 2% price move during the month. The stream
-              alone does not establish the available depth or a reliable advance
-              warning.
-            </p>
-            <p>
-              Observed trades are not a full historical orderbook. The incident
-              marker supplies context, not proof of prediction.
-            </p>
+          <details className="chart-values">
+            <summary>Inspect exact observations</summary>
+            <div className="observation-table">
+              <table>
+                <caption>
+                  Historical trade observations. This is not an executable-depth
+                  series.
+                </caption>
+                <thead>
+                  <tr>
+                    <th>Date (UTC)</th>
+                    <th>Maximum within-leg move (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {februaryPoints.map((point) => (
+                    <tr key={point.day}>
+                      <td>{point.day}</td>
+                      <td>{formatAmount(point.movement)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+        <div className="case-finding">
+          <p>
+            No trade leg crossed a 2% price move during the month. The stream
+            alone does not establish the available depth or a reliable advance
+            warning. Observed trades are not a full historical orderbook, and
+            the incident marker supplies context, not proof of prediction.
+          </p>
+          <div className="case-links">
             <a
-              className="text-link"
+              className="button"
               href={BACKTEST_REPORT_URL}
               target="_blank"
               rel="noreferrer"
             >
-              Read the backtest report <ArrowUpRight size={16} />
+              Read the backtest report <ArrowUpRight size={15} />
             </a>
-            <p className="case-report-note">
-              The February reconstruction in full, day by day, with the steps
-              that reproduce every number in it. Still a draft: the section that
-              says what those numbers mean is unwritten.
-            </p>
             <a
-              className="text-link secondary-link"
+              className="button button-ghost"
               href="/evidence/ustry-february-evidence.md"
             >
-              Read the evidence <ArrowUpRight size={16} />
+              Read the evidence
             </a>
             <a
-              className="text-link secondary-link"
+              className="button button-ghost"
               href="/evidence/ustry-february-daily.csv"
             >
-              Download daily observations <ArrowUpRight size={16} />
+              Download daily observations
             </a>
-          </aside>
+          </div>
+          <p className="case-report-note">
+            The February reconstruction in full, day by day, with the steps that
+            reproduce every number in it. Still a draft: the section that says
+            what those numbers mean is unwritten.
+          </p>
         </div>
       </div>
     </section>
