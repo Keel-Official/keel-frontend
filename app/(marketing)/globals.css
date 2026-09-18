@@ -790,13 +790,21 @@ main > section > .container {
     500 13.5px/1 var(--font-mono),
     monospace;
 }
+/* Choosing a rung is a measurement, so the fill is taken rather than switched: the
+   accent sweeps across the cell from the left, and the sell side follows the buy side
+   a beat later, so the eye reads one movement across the row instead of two cells
+   repainting at once. The figure turns white only once the fill has passed under it,
+   which keeps it legible the whole way across. */
 .hero-depth td > span {
   display: grid;
   place-items: center;
   min-height: 54px;
   padding: 0 6px;
   border-radius: 8px;
-  background: var(--surface-2);
+  background-color: var(--surface-2);
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
   color: var(--ink);
   font:
     600 13.5px/1.2 var(--font-mono),
@@ -804,16 +812,43 @@ main > section > .container {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   transition:
-    background 160ms var(--ease),
-    color 160ms var(--ease);
+    background-size 460ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    color 80ms linear;
+}
+.hero-depth td:last-child > span {
+  transition-delay: 90ms;
 }
 .hero-depth tr.is-selected th {
   color: var(--ink);
   font-weight: 700;
 }
+/* The figure turns white just after the fill has crossed the middle of its own cell,
+   so it is never light type on the pale rest of the tile, nor dark type on the
+   accent. This easing reaches the centre at about 110ms. */
 .hero-depth tr.is-selected td > span {
-  background: var(--accent);
+  background-size: 100% 100%;
   color: #fff;
+  transition-delay: 0ms, 110ms;
+}
+.hero-depth tr.is-selected td:last-child > span {
+  transition-delay: 90ms, 200ms;
+}
+.hero-depth th {
+  transition: color 200ms var(--ease);
+}
+/* The split is measured per rung, so its figures change with the choice and say so. */
+@keyframes hero-source-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-source {
+  animation: hero-source-in 280ms var(--ease) both;
 }
 .hero-collateral {
   display: flex;
