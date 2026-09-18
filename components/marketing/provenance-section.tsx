@@ -37,14 +37,6 @@ export function ProvenanceSection() {
     >
       <div className="container">
         <h2 id="provenance-title">Questions about Keel.</h2>
-        <p className="intro">
-          What the instrument does, what it deliberately does not claim, and
-          where each result on this page came from.
-        </p>
-        <div className="evidence-strip">
-          <ProvenanceStrip result={healthy} method={false} />
-          <span className="sample-label">USDC / XLM sample</span>
-        </div>
         <div className="faq-list">
           {questions.map(([question, answer], index) => (
             <details key={question} open={index === 0}>

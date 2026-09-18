@@ -1,7 +1,7 @@
-import { ArrowUpRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { februaryPoints } from '../../lib/format/history';
 import { formatAmount } from '../../lib/format/keel';
-import { BACKTEST_REPORT_URL } from '../../lib/report';
 import { FebruaryChart } from './february-chart';
 
 export function BlendCasePreview() {
@@ -31,8 +31,6 @@ export function BlendCasePreview() {
               <i className="legend-dot event-dot" />
               Incident · Feb 22
             </span>
-            <span>× No within-leg observation</span>
-            <span>Gaps are not interpolated</span>
           </div>
           <details className="chart-values">
             <summary>Inspect exact observations</summary>
@@ -62,23 +60,19 @@ export function BlendCasePreview() {
         </div>
         <div className="case-finding">
           <div className="case-links">
-            <a
-              className="button"
-              href={BACKTEST_REPORT_URL}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Read the backtest report <ArrowUpRight size={15} />
-            </a>
-            <a
-              className="button button-ghost"
-              href="/evidence/ustry-february-evidence.md"
-            >
-              Read the evidence
-            </a>
+            {/* The reading has its own page now: the month's totals, the chart, and
+                every day as a table. The CSV stays a direct download, because a file
+                is the honest answer to "give me the data". */}
+            <Link className="button" href="/backtest">
+              Open the backtest <ChevronRight size={15} />
+            </Link>
+            <Link className="button button-ghost" href="/backtest#daily">
+              Inspect every day
+            </Link>
             <a
               className="button button-ghost"
               href="/evidence/ustry-february-daily.csv"
+              download
             >
               Download daily observations
             </a>

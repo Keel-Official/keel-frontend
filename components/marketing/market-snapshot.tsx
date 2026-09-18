@@ -1,161 +1,148 @@
-import { ArrowDown, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, Database } from 'lucide-react';
+import Decimal from 'decimal.js';
+import Link from 'next/link';
 import { market } from '../../lib/api/fixtures';
 import { dashboardLinks } from '../../lib/dashboard';
-import { AssetIdentity, MetricValue, RiskBadge } from '../keel/result';
-import Link from 'next/link';
+import { geometryRatio } from '../../lib/format/keel';
+import { flagCopy } from '../../lib/keel/format/glossary';
+import { MetricValue, RiskBadge } from '../keel/result';
 
-/** The first triggered flag, written as a phrase rather than a constant. */
-function leadFlag(flags: readonly string[]) {
-  return flags[0]?.replaceAll('_', ' ').toLowerCase();
+type Row = (typeof market.items)[number];
+
+/**
+ * "None" is a result, not a missing field: the asset has no executable price. A field
+ * the response left out is said to be missing, never guessed.
+ */
+const priceSourceLabels: Record<NonNullable<Row['priceSource']>, string> = {
+  book: 'Order book',
+  pool: 'Pool',
+  none: 'None',
+};
+const priceSourceLabel = (row: Row) =>
+  row.priceSource ? priceSourceLabels[row.priceSource] : 'Not provided';
+
+/**
+ * One sentence per market, taken from what the engine reported. The list response
+ * carries triggered flags only, so an empty list is stated as "none triggered" and
+ * never as a pass.
+ */
+function summary(row: Row) {
+  if (row.flags.length === 0)
+    return row.priceSource && row.priceSource !== 'none'
+      ? `No flags triggered. The reference price comes from the ${priceSourceLabels[row.priceSource].toLowerCase()}.`
+      : 'No flags triggered.';
+  const first = flagCopy(row.flags[0]).label.toLowerCase();
+  return `${row.flags.length} flags triggered, including ${first}.`;
 }
 
 export function MarketSnapshot() {
+  const ledger = market.items[0].ledgerSeq;
+  // The bars compare the three markets with each other, so they share one scale.
+  const deepest = market.items
+    .map((row) => row.depth5PctBuySide)
+    .filter((depth): depth is string => typeof depth === 'string')
+    .reduce((max, depth) => (new Decimal(depth).gt(max) ? depth : max), '0');
+
   return (
     <section
       className="section market-section"
       id="markets"
       aria-labelledby="market-title"
     >
-      <div className="container">
+      <div className="container market-head">
         <h2 id="market-title">Compare Stellar markets.</h2>
-        <p className="intro">
+        <p className="market-lede">
           Executable depth, collateral capacity, and the findings that deserve a
-          closer look. Three sample markets, ledger {market.items[0].ledgerSeq}.
-          Amounts in {market.items[0].quote.code}, rounded to two decimals.
+          closer look. Amounts in {market.items[0].quote.code}, rounded to two
+          decimals.
         </p>
-        <div className="market-frame">
-          <div className="market-table-wrap">
-            <table className="market-table">
-              <caption className="sr-only">
-                Sample Stellar markets recorded at ledger{' '}
-                {market.items[0].ledgerSeq}. Amounts rounded to two decimals;
-                the full responses are linked below.
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Asset / quote</th>
-                  <th scope="col">Risk</th>
-                  <th scope="col">
-                    5% buy depth <ArrowDown size={11} />
-                  </th>
-                  <th scope="col" className="hide-sm">
-                    Max safe collateral
-                  </th>
-                  <th scope="col">Triggered flags</th>
-                </tr>
-              </thead>
-              <tbody>
-                {market.items.map((row) => (
-                  <tr key={row.asset.issuer}>
-                    <td>
-                      <AssetIdentity
-                        asset={row.asset}
-                        quote={row.quote}
-                        compact
-                      />
-                    </td>
-                    <td>
-                      <RiskBadge
-                        band={row.band}
-                        bandConfidence={row.bandConfidence}
-                      />
-                    </td>
-                    <td className="amt">
-                      <MetricValue
-                        value={row.depth5PctBuySide}
-                        unit={row.quote.code}
-                        places={2}
-                      />
-                      {row.priceSource === 'none' && (
-                        <span className="table-finding">
-                          No executable price
-                        </span>
-                      )}
-                    </td>
-                    <td className="amt hide-sm">
-                      <MetricValue
-                        value={row.maxSafeCollateral}
-                        unit={row.quote.code}
-                        places={2}
-                      />
-                    </td>
-                    <td>
-                      <span
-                        className={`flag-count band-${row.band.toLowerCase()} ${
-                          row.flags.length ? 'has-flags' : ''
-                        }`}
-                      >
-                        {row.flags.length === 0
-                          ? 'None triggered'
-                          : row.flags.length}
-                        {row.flags[0] && (
-                          <span className="fnote">{leadFlag(row.flags)}</span>
-                        )}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="market-cards">
-            {market.items.map((row) => (
-              <article key={row.asset.issuer} className="market-card">
-                <div className="result-heading">
-                  <AssetIdentity asset={row.asset} quote={row.quote} compact />
-                  <RiskBadge
-                    band={row.band}
-                    bandConfidence={row.bandConfidence}
-                  />
-                </div>
-                <dl>
-                  <div>
-                    <dt>5% buy depth</dt>
-                    <dd>
-                      <MetricValue
-                        value={row.depth5PctBuySide}
-                        unit={row.quote.code}
-                        places={2}
-                      />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Max safe collateral</dt>
-                    <dd>
-                      <MetricValue
-                        value={row.maxSafeCollateral}
-                        unit={row.quote.code}
-                        places={2}
-                      />
-                    </dd>
-                  </div>
-                </dl>
-                <p>
-                  {row.priceSource === 'none' ? 'No executable price · ' : ''}
-                  {row.flags.length} triggered flags
-                </p>
-              </article>
-            ))}
-          </div>
-          <div className="market-footer">
-            <span>Ledger {market.items[0].ledgerSeq}</span>
-            <span className="sample-label">Sample data · not live</span>
-            <span className="market-footer-links">
-              {/* The rows above are a recorded sample, and the dashboard now ships with
-                  the site, so the live set is the more useful next step. The recording
-                  stays alongside it: it is what a claim on this page is checked against,
-                  and the live set cannot serve that purpose because it moves. */}
-              <a href={dashboardLinks.assets}>
-                See every monitored asset, live <ArrowUpRight size={13} />
-              </a>
-              {/* Says what it gives you. "Inspect all sample rows" promises a table and
-                  delivers a file, which is a worse answer than the file honestly named. */}
-              <Link href="/evidence/asset-list-mixed">
-                See the whole sample set <ArrowUpRight size={13} />
-              </Link>
-            </span>
-          </div>
+        <div className="market-actions">
+          {/* The cards are a recorded sample, and the dashboard ships with the site,
+              so the live set is the more useful next step. The recording stays beside
+              it: it is what a claim on this page is checked against. */}
+          <a className="hero-button" href={dashboardLinks.assets}>
+            See every asset, live <ChevronRight size={16} />
+          </a>
+          <Link
+            className="hero-button hero-button-quiet"
+            href="/evidence/asset-list-mixed"
+          >
+            See the sample set <ChevronRight size={16} />
+          </Link>
         </div>
+      </div>
+
+      <div className="container market-grid">
+        {market.items.map((row) => (
+          <article className="market-card" key={row.asset.issuer}>
+            <RiskBadge band={row.band} bandConfidence={row.bandConfidence} />
+            <h3>
+              {row.asset.code}{' '}
+              <span className="pair-divider">/ {row.quote.code}</span>
+            </h3>
+            <p className="market-summary">{summary(row)}</p>
+
+            <div className="market-window">
+              <div className="market-window-bar">
+                <span className="market-window-dots" aria-hidden="true">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+                <span title={row.asset.issuer ?? 'Native Stellar asset'}>
+                  {row.asset.issuer
+                    ? `${row.asset.issuer.slice(0, 6)}…${row.asset.issuer.slice(-4)}`
+                    : 'Native asset'}
+                </span>
+              </div>
+              <dl className="market-rows">
+                <div>
+                  <dt>5% buy depth</dt>
+                  <dd>
+                    <MetricValue
+                      value={row.depth5PctBuySide}
+                      unit={row.quote.code}
+                      places={2}
+                    />
+                    {typeof row.depth5PctBuySide === 'string' && (
+                      <span className="market-bar" aria-hidden="true">
+                        <span
+                          style={{
+                            width: `${geometryRatio(row.depth5PctBuySide, deepest)}%`,
+                          }}
+                        />
+                      </span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Max safe collateral</dt>
+                  <dd>
+                    <MetricValue
+                      value={row.maxSafeCollateral}
+                      unit={row.quote.code}
+                      places={2}
+                    />
+                  </dd>
+                </div>
+                <div>
+                  <dt>Price source</dt>
+                  <dd
+                    className={
+                      row.priceSource === 'none' ? 'market-finding' : undefined
+                    }
+                  >
+                    {priceSourceLabel(row)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Triggered flags</dt>
+                  <dd>{row.flags.length === 0 ? 'None' : row.flags.length}</dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+        ))}
       </div>
     </section>
   );

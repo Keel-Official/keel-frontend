@@ -1,69 +1,116 @@
-import { ArrowUpRight, CircleHelp } from 'lucide-react';
-import { brokenBook } from '../../lib/api/fixtures';
-import {
-  AssetIdentity,
-  FlagList,
-  ManipulationRungs,
-  ProvenanceStrip,
-  RiskBadge,
-} from '../keel/result';
-import { formatAmount } from '../../lib/format/keel';
+import { ChevronRight, CircleHelp, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
+import { brokenBook } from '../../lib/api/fixtures';
+import { MetricValue } from '../keel/result';
+import {
+  formatAmount,
+  manipulationLabel,
+  percent,
+  sourceLabels,
+} from '../../lib/format/keel';
 
+/**
+ * One finding, read in two panes: what the engine concluded on the left, and the
+ * cost of moving the price that stands behind it on the right. Triggered and
+ * unevaluated checks share one bar but never one colour, because a check that could
+ * not run is not a check that passed.
+ */
 export function ExplainableRiskDemo() {
+  const result = brokenBook;
+  const triggered = result.flags.length;
+  const unevaluated = result.unevaluatedFlags.length;
+
   return (
-    <section
-      className="section risk-section"
-      id="risk"
-      aria-labelledby="risk-title"
-    >
-      <div className="container">
-        <h2 id="risk-title">Why this market is marked critical.</h2>
-        <p className="intro">
-          What triggered a finding, and what the available data could not
-          establish.
-        </p>
-        <p className="uncertainty-statement">
-          <CircleHelp size={16} aria-hidden="true" />
-          Unevaluated checks may conceal additional risk.
-        </p>
-        <div className="finding-layout">
-          <article className="fcard alert">
-            <div className="fhead">
-              <AssetIdentity
-                asset={brokenBook.asset}
-                quote={brokenBook.quote}
-                compact
-              />
-              <span className="sample-label">Historical sample</span>
+    <section className="risk-section" id="risk" aria-labelledby="risk-title">
+      <div className="container risk-frame">
+        <div className="risk-head">
+          <h2 id="risk-title">Why this market is marked critical.</h2>
+          <p className="risk-lede">
+            What triggered a finding, and what the available data could not
+            establish.
+          </p>
+          <Link className="risk-button" href="/evidence/asset-broken-book">
+            See the full finding <ChevronRight size={16} />
+          </Link>
+        </div>
+
+        <div className="risk-split">
+          <div className="risk-pane">
+            <article className="risk-card">
+              <div className="risk-card-media">
+                <p className="risk-banner">
+                  <TriangleAlert size={15} aria-hidden="true" />
+                  {result.band} ·{' '}
+                  {result.bandConfidence === 'partial' ? 'Partial' : 'Full'}{' '}
+                  confidence
+                </p>
+                <p className="risk-figure">
+                  <strong>{formatAmount(result.spreadPct, 2)}%</strong>
+                  <span>between bid and ask</span>
+                </p>
+              </div>
+              <h3>The reference price is unreliable.</h3>
+              <div
+                className="risk-progress"
+                aria-hidden="true"
+                style={{
+                  gridTemplateColumns: `${triggered}fr ${unevaluated}fr`,
+                }}
+              >
+                <span className="is-triggered" />
+                <span className="is-unevaluated" />
+              </div>
+              <p className="risk-count">
+                <strong>{triggered}</strong> triggered ·{' '}
+                <strong>{unevaluated}</strong> not evaluated
+              </p>
+            </article>
+          </div>
+
+          <div className="risk-pane risk-pane-quiet">
+            <div className="risk-rungs">
+              <p className="risk-rungs-head">
+                <span>Cost to move the price</span>
+                <span>Order book · {result.quote.code}</span>
+              </p>
+              <dl>
+                {result.manipulationCostOrderbookOnly.map((rung) => (
+                  <div key={rung.delta}>
+                    <dt>+{percent(rung.delta)}%</dt>
+                    <dd>
+                      <MetricValue
+                        value={rung.cost}
+                        unit={result.quote.code}
+                        places={2}
+                      />
+                      <span
+                        className={`risk-rung-status ${rung.reachable ? '' : 'is-blocked'}`}
+                      >
+                        {manipulationLabel(rung.cost, rung.reachable)}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
-            <div className="fhead">
-              <RiskBadge
-                band={brokenBook.band}
-                bandConfidence={brokenBook.bandConfidence}
-              />
+            <div className="risk-byline">
+              <span className="hero-avatar" aria-hidden="true">
+                {result.asset.code.slice(0, 1)}
+              </span>
+              <div>
+                <h3>
+                  {result.asset.code} / {result.quote.code}
+                </h3>
+                <p>
+                  Ledger {result.ledgerSeq} · {sourceLabels[result.dataSource]}
+                </p>
+                <p className="risk-caveat">
+                  <CircleHelp size={14} aria-hidden="true" />
+                  Unevaluated checks may conceal additional risk.
+                </p>
+              </div>
             </div>
-            <p className="fmsg">
-              <strong>The reference price is unreliable.</strong> A{' '}
-              {formatAmount(brokenBook.spreadPct, 2)}% spread separates the bid
-              and ask. Midpoint depth is not meaningful here.
-            </p>
-            <FlagList result={brokenBook} />
-          </article>
-          <article className="fcard">
-            <h3 className="flag-label">
-              Cost + reachability · orderbook only · {brokenBook.quote.code}
-            </h3>
-            <ManipulationRungs result={brokenBook} />
-            <p className="fnote2">
-              An exhausted book does not make a target expensive to reach. It
-              makes the target unreachable.
-            </p>
-            <ProvenanceStrip result={brokenBook} method={false} />
-            <Link className="text-link" href="/evidence/asset-broken-book">
-              See the full finding <ArrowUpRight size={14} />
-            </Link>
-          </article>
+          </div>
         </div>
       </div>
     </section>

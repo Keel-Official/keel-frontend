@@ -94,9 +94,6 @@ export function EngineStatusView({ status }: { status: EngineStatus | null }) {
         ) : null}
         {status.degraded ? <> · no scan recorded yet</> : null}
       </span>
-      <a className="engine-status-link" href={dashboardLinks.assets}>
-        Open the dashboard <ChevronRight size={14} aria-hidden="true" />
-      </a>
     </p>
   );
 }

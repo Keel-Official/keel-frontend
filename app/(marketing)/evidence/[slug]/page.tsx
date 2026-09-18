@@ -40,7 +40,7 @@ export default async function EvidencePage({ params }: PageProps<'/evidence/[slu
 
   return (
     <>
-      <SiteHeader />
+      <SiteHeader sectionBase="/" />
       <main className="evidence-main" id="main-content">
         <div className="container">
           <Link className="evidence-back" href="/">

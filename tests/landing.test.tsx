@@ -14,8 +14,12 @@ it('leads with a real result and keeps evidence accessible without live API call
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
     'Know how much a price can actually support.',
   );
-  expect(screen.getByText('Sample result')).toBeVisible();
-  expect(screen.getByText('Sample data · not live')).toBeVisible();
+  expect(screen.getByText('Result')).toBeVisible();
+  // The figures on this page are a recorded sample, and the page still says so
+  // where the numbers are: the panel's own note points at the sample response.
+  expect(
+    screen.getByText(/Exact amounts in the sample response/),
+  ).toBeVisible();
   expect(
     screen.getByText('Unevaluated checks may conceal additional risk.'),
   ).toBeVisible();
@@ -50,7 +54,15 @@ it('every local navigation link resolves to a section, a page, or a real artifac
       const route = `app/(dashboard)/dashboard/${segment}`.replace(/\/$/, '');
       expect(existsSync(`${route}/page.tsx`), href).toBe(true);
     } else if (href.startsWith('/') && href !== '/') {
-      expect(existsSync(`public${href}`), href).toBe(true);
+      // A page of this site or a file served from `public`. A fragment names a
+      // section of that page, so the page is what has to exist; the page's own test
+      // checks the section.
+      const [path] = href.split('#');
+      expect(
+        existsSync(`app/(marketing)${path}/page.tsx`) ||
+          existsSync(`public${path}`),
+        href,
+      ).toBe(true);
     }
   }
 });

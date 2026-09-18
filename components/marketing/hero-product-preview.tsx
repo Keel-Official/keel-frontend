@@ -32,7 +32,7 @@ export function HeroProductPreview() {
           <span className="hero-avatar" aria-hidden="true">
             {asset.code === 'USDC' ? '$' : asset.code.slice(0, 1)}
           </span>
-          <span className="sample-label">Sample result</span>
+          <span className="sample-label">Result</span>
         </div>
         <span className="hero-issuer" title={asset.issuer ?? undefined}>
           {asset.issuer
@@ -127,32 +127,5 @@ export function HeroProductPreview() {
         </p>
       </div>
     </div>
-  );
-}
-
-/**
- * Under the panel: where the reading came from. Triggered and unevaluated flags are
- * counted apart, because an empty list of triggered flags says nothing about checks
- * that could not run.
- */
-export function HeroProvenance() {
-  return (
-    <dl className="hero-proof">
-      <div>
-        <dt>Ledger</dt>
-        <dd>{healthy.ledgerSeq}</dd>
-      </div>
-      <div>
-        <dt>Ledger closed</dt>
-        <dd>{healthy.ledgerClosedAt.replace('T', ' ').replace('Z', ' UTC')}</dd>
-      </div>
-      <div>
-        <dt>Flags</dt>
-        <dd>
-          {healthy.flags.length} triggered · {healthy.unevaluatedFlags.length}{' '}
-          unevaluated
-        </dd>
-      </div>
-    </dl>
   );
 }

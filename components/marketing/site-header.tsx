@@ -15,27 +15,6 @@ export function BrandMark() {
   );
 }
 
-/**
- * The instrument bar. It states what this is and what data is on screen before the
- * page says anything else, so a recorded sample cannot be mistaken for a live feed
- * by a reader who only glances at the top of the window.
- */
-export function Masthead() {
-  return (
-    <div className="masthead">
-      <div className="container">
-        <span className="masthead-left">
-          <strong>KEEL</strong> · liquidity instrument · Stellar
-        </span>
-        <span className="masthead-right">
-          <i aria-hidden="true" />
-          read-only · sample data
-        </span>
-      </div>
-    </div>
-  );
-}
-
 const links = [
   { href: '#markets', label: 'markets' },
   { href: '#engine', label: 'method' },
@@ -43,7 +22,12 @@ const links = [
   { href: '#case-study', label: 'case' },
 ];
 
-export function SiteHeader() {
+/**
+ * The section links are anchors on the landing page. Any other page passes `/` as
+ * `sectionBase`, so they lead back to the landing section rather than to an anchor
+ * that page does not have.
+ */
+export function SiteHeader({ sectionBase = '' }: { sectionBase?: '' | '/' }) {
   const [open, setOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -63,13 +47,13 @@ export function SiteHeader() {
           href="/"
           className="brand-link"
           aria-label="Keel home"
-          aria-current="page"
+          aria-current={sectionBase === '' ? 'page' : undefined}
         >
           <BrandMark />
         </Link>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {links.map((link) => (
-            <a href={link.href} key={link.href}>
+            <a href={sectionBase + link.href} key={link.href}>
               {link.label}
             </a>
           ))}
@@ -99,7 +83,11 @@ export function SiteHeader() {
         hidden={!open}
       >
         {links.map((link) => (
-          <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
+          <a
+            key={link.href}
+            href={sectionBase + link.href}
+            onClick={() => setOpen(false)}
+          >
             {link.label}
           </a>
         ))}

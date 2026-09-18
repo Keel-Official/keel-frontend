@@ -24,7 +24,9 @@ it('reports what the engine says about itself, and no figure it was not given', 
   // cached or the tab is left open, and freshness is this page's whole subject.
   expect(screen.getByText(/20:46 UTC/)).toBeVisible();
   expect(screen.getByText(/64495710/)).toBeVisible();
-  expect(screen.getByRole('link')).toHaveAttribute('href', DASHBOARD_BASE);
+  // A live reading is a finding, not a control: the hero already carries the
+  // dashboard call to action, so the strip repeats no link when the engine answers.
+  expect(screen.queryByRole('link')).toBeNull();
 });
 
 it('says the engine was not reached rather than inventing a reading', () => {

@@ -2,15 +2,8 @@ import { Suspense } from 'react';
 import { ArrowUpRight, ChevronRight, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
 import { LandingMotion } from '@/components/marketing/landing-motion';
-import {
-  SiteHeader,
-  Masthead,
-  BrandMark,
-} from '@/components/marketing/site-header';
-import {
-  HeroProductPreview,
-  HeroProvenance,
-} from '@/components/marketing/hero-product-preview';
+import { SiteHeader, BrandMark } from '@/components/marketing/site-header';
+import { HeroProductPreview } from '@/components/marketing/hero-product-preview';
 import { MarketSnapshot } from '@/components/marketing/market-snapshot';
 import { dashboardCopy, dashboardLinks } from '@/lib/dashboard';
 import { BACKTEST_REPORT_URL } from '@/lib/report';
@@ -22,8 +15,6 @@ import { ArchitectureFlow } from '@/components/marketing/architecture-flow';
 import { ExplainableRiskDemo } from '@/components/marketing/explainable-risk-demo';
 import { BlendCasePreview } from '@/components/marketing/blend-case-preview';
 import { ProvenanceSection } from '@/components/marketing/provenance-section';
-import { market } from '@/lib/api/fixtures';
-import { MetricValue, RiskBadge } from '@/components/keel/result';
 
 export default function Home() {
   return (
@@ -32,13 +23,10 @@ export default function Home() {
       <a className="skip-link" href="#main-content">
         Skip to main content
       </a>
-      <Masthead />
       <SiteHeader />
       <main id="main-content">
         <section className="hero-section" aria-labelledby="hero-title">
           <div className="container hero-shell">
-            <span className="hero-cross hero-cross-start" aria-hidden="true" />
-            <span className="hero-cross hero-cross-end" aria-hidden="true" />
             <div className="hero-frame">
               <div className="hero-copy">
                 <a className="hero-pill" href="#case-study">
@@ -66,6 +54,9 @@ export default function Home() {
                     See the full response <ChevronRight size={16} />
                   </Link>
                 </div>
+              </div>
+              <div className="hero-visual">
+                <HeroProductPreview />
                 {/* ONE LIVE READING, STREAMED. The rest of this page is a recorded
                     sample by design, and a reader who meets "Sample data" first can
                     reasonably conclude the engine is a mock. Suspense keeps the hero
@@ -78,10 +69,6 @@ export default function Home() {
                   <EngineStatusLive />
                 </Suspense>
               </div>
-              <div className="hero-visual">
-                <HeroProductPreview />
-                <HeroProvenance />
-              </div>
             </div>
           </div>
         </section>
@@ -90,66 +77,6 @@ export default function Home() {
         <ExplainableRiskDemo />
         <BlendCasePreview />
         <ProvenanceSection />
-        <section className="final-cta-section" aria-labelledby="cta-title">
-          <div className="container">
-            <div className="final-cta">
-              <h2 id="cta-title">Start with a market result.</h2>
-              <p>
-                Open the dashboard to inspect executable depth, collateral
-                limits, and triggered flags across monitored Stellar markets.
-              </p>
-              <a className="button" href={dashboardLinks.assets}>
-                {dashboardCopy.assets} <ArrowUpRight size={16} />
-              </a>
-              <div className="mini-grid">
-                {market.items.map((row) => (
-                  <article className="mini" key={row.asset.issuer}>
-                    <div className="mini-top">
-                      <span className="mini-name">
-                        {row.asset.code} / {row.quote.code}
-                        <span>
-                          {row.asset.issuer
-                            ? `${row.asset.issuer.slice(0, 6)}…${row.asset.issuer.slice(-4)}`
-                            : 'Native asset'}
-                        </span>
-                      </span>
-                      <RiskBadge
-                        band={row.band}
-                        bandConfidence={row.bandConfidence}
-                      />
-                    </div>
-                    <dl>
-                      <div>
-                        <dt>5% depth</dt>
-                        <dd>
-                          <MetricValue
-                            value={row.depth5PctBuySide}
-                            unit={row.quote.code}
-                            places={2}
-                          />
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>collateral</dt>
-                        <dd>
-                          <MetricValue
-                            value={row.maxSafeCollateral}
-                            unit={row.quote.code}
-                            places={2}
-                          />
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>triggered flags</dt>
-                        <dd>{row.flags.length}</dd>
-                      </div>
-                    </dl>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
       <footer className="site-footer">
         <div className="container">
