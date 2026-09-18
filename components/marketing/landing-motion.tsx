@@ -45,8 +45,9 @@ export function LandingMotion() {
             play('.hero-product', arrive);
             play('.hero-depth td > span', arrive, 140, 420);
           } else if (entry.target.id === 'engine') {
-            play('.flow-inputs > div', arrive, 0, 420);
-            play('.flow-connector', measure, 160, 500);
+            // The rail and its slot own their transforms; the rail moves on its own.
+            play('.flow-event', arrive, 0, 420);
+            play('.flow-link', measure, 160, 500);
             play(
               '.engine-core',
               [
@@ -61,7 +62,7 @@ export function LandingMotion() {
               200,
               700,
             );
-            play('.flow-outputs > span', arrive, 360, 400);
+            play('.flow-outputs > li', arrive, 360, 400);
           }
         }
       },
