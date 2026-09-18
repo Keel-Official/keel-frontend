@@ -51,8 +51,16 @@ export function ManipulationTable({
     // sit at the x offset they would have had in a 434px-wide table, and widen the
     // whole page at 360px even though the table itself scrolls correctly.
     <div
+      // A region that scrolls has to be reachable by keyboard: a reader who cannot use
+      // a pointer has no other way to bring the right-hand columns into view. The role
+      // and the label are what make the tab stop announce itself as something other
+      // than a stray focusable div.
+      tabIndex={0}
+      role="region"
+      aria-label="Cost to move the price, scrollable"
       className={cn(
         'relative overflow-x-auto rounded-lg border border-[var(--keel-border)]',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
         className,
       )}
     >

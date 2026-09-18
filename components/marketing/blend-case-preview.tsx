@@ -1,6 +1,7 @@
 import { ArrowUpRight, CircleHelp } from 'lucide-react';
 import { februaryPoints, observationSegments } from '../../lib/format/history';
 import { formatAmount, geometryRatio } from '../../lib/format/keel';
+import { BACKTEST_REPORT_URL } from '../../lib/report';
 
 export function BlendCasePreview() {
   const x = (day: string) =>
@@ -203,6 +204,19 @@ export function BlendCasePreview() {
             </p>
             <a
               className="text-link"
+              href={BACKTEST_REPORT_URL}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Read the backtest report <ArrowUpRight size={16} />
+            </a>
+            <p className="case-report-note">
+              The February reconstruction in full, day by day, with the steps
+              that reproduce every number in it. Still a draft: the section that
+              says what those numbers mean is unwritten.
+            </p>
+            <a
+              className="text-link secondary-link"
               href="/evidence/ustry-february-evidence.md"
             >
               Read the evidence <ArrowUpRight size={16} />

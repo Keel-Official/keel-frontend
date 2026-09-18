@@ -43,7 +43,7 @@ export function SiteNav({ className }: { className?: string }) {
                   'rounded-md px-3 py-1.5 text-sm transition-colors',
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
                   active
-                    ? 'bg-[var(--keel-accent-soft)] font-medium text-[var(--keel-brand)]'
+                    ? 'bg-[var(--keel-accent-soft)] font-medium text-[var(--keel-brand-ink)]'
                     : 'text-[var(--keel-muted)] hover:bg-[var(--keel-surface-subtle)] hover:text-[var(--keel-ink)]',
                 )}
               >

@@ -46,11 +46,25 @@ export interface TrendChartProps {
    * and its highest as the same number, which says the opposite of what the line shows.
    */
   maxFractionDigits?: number;
+  /**
+   * Shortens the chart and drops the two rows a small card cannot carry: the lowest and
+   * highest figures, and the date range.
+   *
+   * Neither is discarded, and that is the condition of using this. In a grid of four
+   * charts the date range is the SAME range for all of them, so it belongs to the frame
+   * and printing it four times is noise; the caller is required to state it once.
+   *
+   * The series legend stays in both modes and is not optional: identity is never colour
+   * alone, so every line keeps its name and its latest served value.
+   */
+  dense?: boolean;
   className?: string;
 }
 
 const WIDTH = 720;
 const HEIGHT = 180;
+/** Shorter for a card in a grid, where the width is a third of what it is inline. */
+const DENSE_HEIGHT = 112;
 const PAD = 6;
 
 export function TrendChart({
@@ -60,8 +74,10 @@ export function TrendChart({
   fromLabel,
   toLabel,
   maxFractionDigits = 2,
+  dense = false,
   className,
 }: TrendChartProps) {
+  const height = dense ? DENSE_HEIGHT : HEIGHT;
   // One extent across every series on the chart, so the lines are comparable.
   const extent = sharedExtent(series.map((s) => s.points));
   if (extent === null) {
@@ -81,7 +97,7 @@ export function TrendChart({
   }));
 
   const toX = (x: number): number => PAD + x * (WIDTH - PAD * 2);
-  const toY = (y: number): number => HEIGHT - PAD - y * (HEIGHT - PAD * 2);
+  const toY = (y: number): number => height - PAD - y * (height - PAD * 2);
 
   // The axis labels are the SERVED strings at the extremes, found by comparing digits.
   // The geometry module's min and max are converted numbers and may never be printed.
@@ -90,7 +106,7 @@ export function TrendChart({
   return (
     <figure className={cn('m-0', className)}>
       <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        viewBox={`0 0 ${WIDTH} ${height}`}
         className="h-auto w-full rounded-md border border-[var(--keel-border)] bg-[var(--keel-surface)]"
         role="img"
         aria-label={`Trend from ${fromLabel} to ${toLabel}. Values are listed beneath the chart.`}
@@ -138,7 +154,7 @@ export function TrendChart({
         )}
       </svg>
 
-      {bounds === null ? null : (
+      {bounds === null || dense ? null : (
         <dl className="mt-1 flex justify-between text-xs text-[var(--keel-muted)]">
           <div className="flex items-baseline gap-1.5">
             <dt>Lowest</dt>
@@ -161,19 +177,26 @@ export function TrendChart({
         </dl>
       )}
 
-      <figcaption className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]">
-        <span className="tabular">
-          {fromLabel} — {toLabel}
-        </span>
-        <span>
-          {series.length === 1
-            ? null
-            : 'One scale across every line on this chart'}
-        </span>
-      </figcaption>
+      {dense ? null : (
+        <figcaption className="mt-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]">
+          <span className="tabular">
+            {fromLabel} — {toLabel}
+          </span>
+          <span>
+            {series.length === 1
+              ? null
+              : 'One scale across every line on this chart'}
+          </span>
+        </figcaption>
+      )}
 
       {/* Identity is never colour alone: each series is named, with its latest value. */}
-      <dl className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      <dl
+        className={cn(
+          'mt-2 flex flex-wrap gap-x-6 gap-y-1',
+          dense ? 'flex-col gap-y-0.5 text-xs' : 'text-sm',
+        )}
+      >
         {plotted.map((s) => (
           <div key={s.key} className="flex items-baseline gap-2">
             <dt className="flex items-center gap-1.5 text-[var(--keel-muted)]">

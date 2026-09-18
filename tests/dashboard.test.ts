@@ -5,6 +5,7 @@ import {
   DASHBOARD_BASE,
   dashboardAssetPath,
   dashboardPath,
+  decodeAssetId,
 } from '../lib/keel/routes';
 
 /**
@@ -51,5 +52,38 @@ describe('dashboard route builder', () => {
     expect(dashboardAssetPath('USDC:GA5Z')).toBe(
       '/dashboard/asset/USDC%3AGA5Z',
     );
+  });
+});
+
+/**
+ * The encoding used to compound. Next hands the `[assetId]` segment over still
+ * percent-encoded, the page passed it straight back into the link builders, and each
+ * navigation added a layer: `%3A`, then `%253A`, then `%25253A`. The engine tolerates
+ * the first and refuses the second as INVALID_ASSET_ID, so the asset page loaded and
+ * then broke on the first click of a window, resolution or source control.
+ */
+describe('an assetId that has been round-tripped through the URL', () => {
+  const decoded = 'USDC:GA5Z';
+  const encoded = 'USDC%3AGA5Z';
+
+  it('decodes a route segment back to the form the engine names', () => {
+    expect(decodeAssetId(encoded)).toBe(decoded);
+  });
+
+  it('leaves an already-decoded id alone, so decoding twice is safe', () => {
+    expect(decodeAssetId(decoded)).toBe(decoded);
+    expect(decodeAssetId(decodeAssetId(encoded))).toBe(decoded);
+  });
+
+  it('returns a malformed escape untouched rather than throwing', () => {
+    expect(decodeAssetId('USDC%ZZ')).toBe('USDC%ZZ');
+  });
+
+  it('builds the same path from either form, however many times round', () => {
+    const once = dashboardAssetPath(decoded);
+    expect(dashboardAssetPath(encoded)).toBe(once);
+    // The fixed point: feeding a built path's segment back in must not add a layer.
+    expect(dashboardAssetPath(once.split('/asset/')[1]!)).toBe(once);
+    expect(once).toBe('/dashboard/asset/USDC%3AGA5Z');
   });
 });

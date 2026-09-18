@@ -1,9 +1,13 @@
 import Link from 'next/link';
 
+import type { AssetQuery } from '@/lib/keel/url/asset-query';
 import { cn } from '@/lib/keel/utils';
 
+import { KeelMark } from '@/components/brand/keel-mark';
 import { Provenance } from '@/components/dashboard/provenance';
+import { HeaderSearch } from '@/components/dashboard/layout/header-search';
 import { SiteNav } from '@/components/dashboard/layout/site-nav';
+import { ThemeToggle } from '@/components/dashboard/layout/theme-toggle';
 
 /**
  * The frame every page sits in.
@@ -21,6 +25,12 @@ export interface AppShellProps {
   methodologyVersion: string | null;
   ledgerSeq?: number | null;
   stalenessSeconds?: string | null;
+  /**
+   * The view the header's search should carry through. Omitted on the pages that have
+   * no filter state of their own — an asset result, the methodology — where a search
+   * lands on the unfiltered set.
+   */
+  search?: AssetQuery;
 }
 
 export function AppShell({
@@ -28,6 +38,7 @@ export function AppShell({
   methodologyVersion,
   ledgerSeq,
   stalenessSeconds,
+  search,
 }: AppShellProps) {
   return (
     <>
@@ -45,11 +56,10 @@ export function AppShell({
               marketing home, and the set is one nav item away under Assets. */}
           <Link
             href="/"
-            className="flex items-baseline gap-2 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
+            className="flex items-center gap-2 rounded-md text-[var(--keel-brand-ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
           >
-            <span className="text-lg font-semibold tracking-tight text-[var(--keel-brand)]">
-              Keel
-            </span>
+            <KeelMark className="h-7 w-auto" />
+            <span className="text-lg font-semibold tracking-tight">Keel</span>
             <span className="hidden text-xs text-[var(--keel-muted)] sm:inline">
               Stellar liquidity risk
             </span>
@@ -57,12 +67,16 @@ export function AppShell({
 
           <SiteNav />
 
-          <Provenance
-            className="w-full sm:ml-auto sm:w-auto"
-            methodologyVersion={methodologyVersion}
-            ledgerSeq={ledgerSeq}
-            stalenessSeconds={stalenessSeconds}
-          />
+          <div className="flex w-full items-center gap-3 sm:ml-auto sm:w-auto">
+            <Provenance
+              className="min-w-0"
+              methodologyVersion={methodologyVersion}
+              ledgerSeq={ledgerSeq}
+              stalenessSeconds={stalenessSeconds}
+            />
+            <HeaderSearch className="ml-auto shrink-0 sm:ml-0" query={search} />
+            <ThemeToggle className="shrink-0" />
+          </div>
         </div>
       </header>
 
@@ -130,6 +144,7 @@ export function Section({
   id,
   title,
   standfirst,
+  hideHeading = false,
   children,
   className,
 }: {
@@ -137,6 +152,15 @@ export function Section({
   id?: string;
   title: string;
   standfirst?: React.ReactNode;
+  /**
+   * Keeps the heading in the document and out of the layout.
+   *
+   * The heading is never dropped, only hidden: the section is referenced by anchor and
+   * navigated by heading, and a section with no heading leaves anyone moving through
+   * the page with a keyboard or a screen reader nothing to land on.
+   */
+  hideHeading?: boolean;
+  standfirstHidden?: never;
   children: React.ReactNode;
   className?: string;
 }) {
@@ -146,7 +170,13 @@ export function Section({
     // below the widest thing inside it. Without this the manipulation table widens the
     // whole page at 360px instead of scrolling inside its own wrapper.
     <section id={id} className={cn('min-w-0 scroll-mt-20', className)}>
-      <h2 className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]">
+      <h2
+        className={
+          hideHeading
+            ? 'sr-only'
+            : 'text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]'
+        }
+      >
         {title}
       </h2>
       {standfirst ? (

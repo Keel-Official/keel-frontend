@@ -3,15 +3,13 @@
 import { ArrowUpRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { KeelMark } from '../brand/keel-mark';
 import { dashboardCopy, dashboardLinks } from '../../lib/dashboard';
 
 export function BrandMark() {
   return (
     <span className="brand">
-      <svg aria-hidden="true" viewBox="0 0 32 32" fill="none">
-        <path d="M6 6h7v9L23 6h9L18 19l12 7H17L6 19V6Z" fill="currentColor" />
-        <path d="M6 23v7h7v-3l-7-4Z" fill="var(--accent)" />
-      </svg>
+      <KeelMark />
       <span>keel</span>
     </span>
   );

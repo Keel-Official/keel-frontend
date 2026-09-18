@@ -6,6 +6,7 @@ import { healthy, brokenBook, history, market } from '../lib/api/fixtures';
 import { februaryPoints, observationSegments } from '../lib/format/history';
 import { EVIDENCE } from '../lib/evidence';
 import { DASHBOARD_BASE } from '../lib/keel/routes';
+import { BACKTEST_REPORT_URL } from '../lib/report';
 
 it('leads with a real result and keeps evidence accessible without live API calls', () => {
   render(<Home />);
@@ -45,6 +46,20 @@ it('every local navigation link resolves to a section, a page, or a real artifac
     } else if (href.startsWith('/') && href !== '/') {
       expect(existsSync(`public${href}`), href).toBe(true);
     }
+  }
+});
+
+it('offers the backtest report, and sends it somewhere that stays current', () => {
+  // The Statement of Work asks for the report to be published openly, and this page is
+  // where a reader arrives. The link is deliberately not `public/evidence/blend-report.md`:
+  // that copy stopped at the draft whose sections 5 and 6 were empty. See `lib/report.ts`.
+  const { container } = render(<Home />);
+  const links = Array.from(
+    container.querySelectorAll(`a[href="${BACKTEST_REPORT_URL}"]`),
+  );
+  expect(links.length).toBeGreaterThan(0);
+  for (const link of links) {
+    expect(link.getAttribute('rel'), link.textContent ?? '').toBe('noreferrer');
   }
 });
 

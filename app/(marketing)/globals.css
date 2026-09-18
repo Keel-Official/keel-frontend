@@ -26,6 +26,7 @@
   --brand-deep: #0b2430;
   --accent: #216c5d;
   --accent-light: #76c6b3;
+  --brand-amber: #e49f37;
   --accent-soft: #e7f3ed;
   --low: #24664f;
   --low-bg: #e6f3ea;
@@ -256,8 +257,9 @@ svg {
   letter-spacing: -0.04em;
 }
 .brand svg {
-  width: 32px;
-  height: 32px;
+  /* The mark is 64x100, so only the height is set; a fixed width would squash it. */
+  width: auto;
+  height: 46px;
 }
 .brand-link {
   display: inline-flex;
@@ -1435,6 +1437,14 @@ svg {
   font-size: 12px;
   line-height: 16px;
 }
+/* Caption under the report link. It says what the link gives and what it does not,
+   so it sits with the link rather than reading as a third paragraph of the finding. */
+.case-finding > .case-report-note {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--muted);
+}
 
 /* Provenance, FAQ, and closing surface. */
 .provenance-section {
@@ -1860,8 +1870,7 @@ svg {
     line-height: 32px;
   }
   .brand svg {
-    width: 28px;
-    height: 28px;
+    height: 36px;
   }
   .header-inner {
     min-height: 72px;

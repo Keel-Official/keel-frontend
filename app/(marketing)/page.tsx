@@ -5,6 +5,7 @@ import { SiteHeader, BrandMark } from '@/components/marketing/site-header';
 import { HeroProductPreview } from '@/components/marketing/hero-product-preview';
 import { MarketSnapshot } from '@/components/marketing/market-snapshot';
 import { dashboardCopy, dashboardLinks } from '@/lib/dashboard';
+import { BACKTEST_REPORT_URL } from '@/lib/report';
 import { MetricBento } from '@/components/marketing/metric-bento';
 import { ArchitectureFlow } from '@/components/marketing/architecture-flow';
 import { ExplainableRiskDemo } from '@/components/marketing/explainable-risk-demo';
@@ -87,6 +88,9 @@ export default function Home() {
             <nav aria-label="Footer resource links">
               <span>Resources</span>
               <a href="/evidence/keel-openapi.yaml">API contract</a>
+              <a href={BACKTEST_REPORT_URL} target="_blank" rel="noreferrer">
+                Backtest report <ArrowUpRight size={12} />
+              </a>
               <a href="https://github.com/Keel-Official/keel-frontend">
                 GitHub <ArrowUpRight size={12} />
               </a>

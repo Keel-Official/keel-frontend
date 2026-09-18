@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import localFont from 'next/font/local';
+
+import { THEME_COOKIE, themeAttribute } from '@/lib/keel/design/theme';
 
 import './dashboard/dashboard.css';
 
@@ -48,10 +51,16 @@ export const metadata: Metadata = {
   icons: { icon: '/icon.svg' },
 };
 
-export default function DashboardLayout({ children }: LayoutProps<'/'>) {
+export default async function DashboardLayout({ children }: LayoutProps<'/'>) {
+  // The reader's palette, read on the server so the first byte of HTML already carries
+  // it. See `lib/keel/design/theme.ts` for why the constant lives there and not beside
+  // the toggle that writes it.
+  const chosen = (await cookies()).get(THEME_COOKIE)?.value;
+
   return (
     <html
       lang="en"
+      data-theme={themeAttribute(chosen)}
       className={`${manrope.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>

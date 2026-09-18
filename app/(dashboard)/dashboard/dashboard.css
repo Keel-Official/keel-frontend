@@ -4,20 +4,6 @@
 @source "../";
 @source "../../../components/dashboard";
 
-/*
- * Design tokens. See docs/decisions/001-design-tokens.md for the validator output
- * behind every number here and for the alternatives that were rejected.
- *
- * Three families, and they do not mix:
- *   - neutrals and brand, inherited from the marketing site so the two read as one product
- *   - band, a reserved STATUS palette, never reused for a data series
- *   - series and ramps, for charts
- *
- * There is no dark theme. One was not shipped rather than shipped unvalidated: a dark
- * mode has to be selected deliberately from the same ramps and checked against the
- * dark surface, not produced by flipping the light one.
- */
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -86,8 +72,191 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Design tokens.
+ *
+ * `scripts/check-token-contrast.mjs` is the validator behind every number below. It
+ * checks two different properties and prints both: WCAG contrast for anything a reader
+ * has to read, and CIE76 delta E under normal and deuteranope vision for any two marks
+ * a reader has to tell apart. Run it after touching a token; it exits non-zero on a
+ * regression and names the pair that regressed.
+ *
+ * Three families, and they do not mix:
+ *   - neutrals and brand, sharing the marketing site's hues so the two read as one product
+ *   - band, a reserved STATUS palette, never reused for a data series
+ *   - series and ramps, for charts
+ *
+ * TWO THEMES. Dark is the dashboard's default and is what `:root` carries; light is
+ * reached by `data-theme="light"` on the html element and is the palette the marketing
+ * site uses, kept whole rather than discarded.
+ *
+ * The dark set was selected against the dark surface rather than produced by inverting
+ * the light one, and it is measurably the stronger of the two: all four band marks
+ * clear 3:1 against the surface in dark, where MEDIUM and HIGH manage 1.83:1 and 2.64:1
+ * in light. What does not change between themes is that colour is never the only
+ * signal — MEDIUM against HIGH separates by a deuteranope delta E of 5.9 in dark and
+ * 11.5 in light, both under the floor of 15, so the icon, the word, and in the risk map
+ * the labelled band region are mandatory in both.
+ *
+ * `prefers-color-scheme` is deliberately NOT consulted. Dark is this product's chosen
+ * surface, not a preference echo; a reader who wants light picks it, and that choice is
+ * stored and re-applied before first paint by the script in the dashboard layout.
+ */
+
 :root {
-  /* --- Neutrals and brand, from the marketing site ---------------------- */
+  color-scheme: dark;
+
+  /* --- Neutrals and brand ----------------------------------------------- */
+  --keel-bg: #0a1215;
+  --keel-surface: #101c21; /* 13.20:1 for ink */
+  --keel-surface-subtle: #16252b;
+  --keel-ink: #d5e3e7; /* 13.20:1 on --keel-surface */
+  --keel-ink-strong: #f2f8f9; /* 16.17:1 */
+  --keel-muted: #9bb0b8; /* 7.68:1, clears AA for body text */
+  --keel-border: #22333a;
+  --keel-border-strong: #375059;
+  --keel-brand: #1d3a47;
+  --keel-brand-deep: #162c36;
+  --keel-accent: #53c7a5; /* 8.33:1 */
+  --keel-accent-soft: #123028;
+
+  /* The mark's amber counter. It is not theme-scoped: the one colour in the
+     logo that is fixed, because it clears contrast on both themes' surfaces. */
+  --brand-amber: #e49f37;
+
+  /* Ink for a filled brand control. Dark surfaces take a light label. */
+  --keel-on-brand: #f2f8f9;
+
+  /*
+   * The brand, as TEXT. It is a separate token because `--keel-brand` is a SURFACE
+   * colour and the two cannot be the same value in both themes: the light theme's deep
+   * navy is a perfectly good heading colour on white, while the dark theme's is a card
+   * background that measures 1.44:1 against the page. A wordmark or a nav item set in
+   * `--keel-brand` was invisible in dark until this existed.
+   */
+  --keel-brand-ink: #9fe3cd; /* 11.42:1 on surface, 7.09:1 on --keel-accent-soft */
+
+  /* --- shadcn contract, pointed at the Keel neutrals -------------------- */
+  --background: var(--keel-bg);
+  --foreground: var(--keel-ink);
+  --card: var(--keel-surface);
+  --card-foreground: var(--keel-ink);
+  --popover: var(--keel-surface);
+  --popover-foreground: var(--keel-ink);
+  --primary: var(--keel-accent);
+  --primary-foreground: #06100f;
+  --secondary: var(--keel-surface-subtle);
+  --secondary-foreground: var(--keel-ink-strong);
+  --muted: var(--keel-surface-subtle);
+  --muted-foreground: var(--keel-muted);
+  --accent: var(--keel-accent-soft);
+  --accent-foreground: var(--keel-accent);
+  --destructive: #ff8b86;
+  --border: var(--keel-border);
+  --input: var(--keel-border-strong);
+  --ring: var(--keel-accent);
+  --radius: 0.5rem;
+
+  --sidebar: var(--keel-surface-subtle);
+  --sidebar-foreground: var(--keel-ink);
+  --sidebar-primary: var(--keel-accent);
+  --sidebar-primary-foreground: #06100f;
+  --sidebar-accent: var(--keel-accent-soft);
+  --sidebar-accent-foreground: var(--keel-accent);
+  --sidebar-border: var(--keel-border);
+  --sidebar-ring: var(--keel-accent);
+
+  /*
+   * --- Band: a reserved status palette ----------------------------------
+   *
+   * The mark carries the hue and the ink carries the text, and they are different
+   * values for a reason: a hue chosen to be legible as a large fill is rarely legible
+   * as eleven-pixel type. Every band ink clears 4.5:1 both on its own chip tint and on
+   * the plain surface, so a band label is readable wherever it lands.
+   */
+  --band-low: #2fb862; /* 6.74:1 on surface */
+  --band-medium: #efb02a; /* 9.02:1 */
+  --band-high: #f0834a; /* 6.65:1 */
+  --band-critical: #e5514f; /* 4.65:1 */
+
+  --band-low-ink: #6bdc9b; /* 10.19:1 on surface, 8.99:1 on its tint */
+  --band-medium-ink: #f2c257; /* 10.44:1 / 9.28:1 */
+  --band-high-ink: #f9a175; /* 8.58:1 / 7.67:1 */
+  --band-critical-ink: #ff8b86; /* 7.68:1 / 7.12:1 */
+
+  --band-low-surface: #0f2a20;
+  --band-medium-surface: #2e2309;
+  --band-high-surface: #33200f;
+  --band-critical-surface: #381718;
+
+  /*
+   * --- Venue series: categorical ----------------------------------------
+   *
+   * Two venues, validated as a pair against the dark surface: delta E 100.1 normal,
+   * 117.4 deuteranope. A band hue is never used for a venue and a venue hue is never
+   * used for a band.
+   */
+  --venue-sdex: #68a8f0; /* 6.98:1 */
+  --venue-amm: #ff8d51; /* 7.59:1 */
+  --venue-third: #4fd6b0;
+
+  --chart-1: var(--venue-sdex);
+  --chart-2: var(--venue-amm);
+  --chart-3: var(--venue-third);
+  --chart-4: var(--keel-muted);
+  --chart-5: var(--keel-border-strong);
+
+  /*
+   * --- Sequential ramp: magnitude, dark to light -------------------------
+   *
+   * One hue, strictly monotonic in luminance, running the opposite way from the light
+   * theme's so that "more" is always "brighter" against the surface it sits on. A
+   * rainbow was rejected in both themes: hue is not ordered, so a reader cannot rank it.
+   */
+  --seq-100: #15314f;
+  --seq-150: #183a5e;
+  --seq-200: #1b436d;
+  --seq-250: #1e4c7d;
+  --seq-300: #21568d;
+  --seq-350: #24609e;
+  --seq-400: #286bb0;
+  --seq-450: #3a7cc2;
+  --seq-500: #518dcd;
+  --seq-550: #689ed8;
+  --seq-600: #82b1e2;
+  --seq-650: #9dc4ec;
+  --seq-700: #bad8f6;
+
+  /*
+   * --- Absent, unknown, and unevaluated ----------------------------------
+   *
+   * A value the engine did not produce is not a low value, so it never takes a step on
+   * the risk scale or on the sequential ramp. It gets a neutral plus the hatch below,
+   * so it stays distinguishable in greyscale, in print, and in forced-colors mode.
+   */
+  --unmeasured: #8ba0a8; /* 6.36:1 */
+  --unmeasured-surface: #1a272d;
+
+  /*
+   * --- Confidence: orthogonal to band ------------------------------------
+   *
+   * bandConfidence is `partial` on all sixty-one monitored assets today, so a loud
+   * marker per row would be wallpaper rather than signal. It is carried as a quiet
+   * qualifier beside the band, and the fact that it is universal is stated once, loudly,
+   * at the top of the page where it actually changes how the whole table is read.
+   */
+  --confidence-partial: var(--keel-muted);
+  --confidence-full: var(--keel-ink-strong);
+}
+
+/*
+ * The light theme, inherited from the marketing site and kept whole. Every value here
+ * is the one the original validator pass selected; nothing was re-derived from the dark
+ * set. Applied by `data-theme="light"` on the html element, never by media query.
+ */
+:root[data-theme='light'] {
+  color-scheme: light;
+
   --keel-bg: #fbfcfc;
   --keel-surface: #ffffff;
   --keel-surface-subtle: #f1f6f5;
@@ -100,89 +269,43 @@
   --keel-brand-deep: #0b2430;
   --keel-accent: #216c5d;
   --keel-accent-soft: #e7f3ed;
+  --keel-on-brand: #ffffff;
+  --keel-brand-ink: #102e3c; /* 13.99:1 on surface; the surface hue reads as text here */
 
-  /* --- shadcn contract, pointed at the Keel neutrals -------------------- */
-  --background: var(--keel-bg);
-  --foreground: var(--keel-ink);
-  --card: var(--keel-surface);
-  --card-foreground: var(--keel-ink);
-  --popover: var(--keel-surface);
-  --popover-foreground: var(--keel-ink);
   --primary: var(--keel-brand);
   --primary-foreground: #ffffff;
-  --secondary: var(--keel-surface-subtle);
-  --secondary-foreground: var(--keel-ink-strong);
-  --muted: var(--keel-surface-subtle);
-  --muted-foreground: var(--keel-muted);
-  --accent: var(--keel-accent-soft);
   --accent-foreground: var(--keel-brand);
   --destructive: #ae3737;
-  --border: var(--keel-border);
-  --input: var(--keel-border-strong);
-  --ring: var(--keel-accent);
-  --radius: 0.5rem;
 
-  --sidebar: var(--keel-surface-subtle);
-  --sidebar-foreground: var(--keel-ink);
   --sidebar-primary: var(--keel-brand);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: var(--keel-accent-soft);
   --sidebar-accent-foreground: var(--keel-brand);
-  --sidebar-border: var(--keel-border);
-  --sidebar-ring: var(--keel-accent);
 
   /*
-   * --- Band: a reserved status palette ----------------------------------
-   *
-   * Marks carry the validated hues. Labels do NOT: at 1.78:1 and 2.57:1 against the
-   * surface, medium and high are unreadable as text, so every band label wears an ink
-   * that clears AA while the mark beside it carries the hue.
-   *
-   * The four hues fail a categorical check on purpose. Medium against high measures a
-   * normal-vision delta E of 13.6, under the floor of 15, so colour alone cannot carry
-   * the distinction. The icon and the text label are the mitigation and are mandatory,
-   * not decorative.
+   * Marks carry the validated hues. Labels do NOT: at 1.83:1 and 2.64:1 against the
+   * surface, medium and high are unreadable as text here, so every band label wears an
+   * ink that clears AA while the mark beside it carries the hue.
    */
   --band-low: #0ca30c;
   --band-medium: #fab219;
   --band-high: #ec835a;
   --band-critical: #d03b3b;
 
-  --band-low-ink: #24664f; /* 6.62:1 */
-  --band-medium-ink: #8a5c14; /* 5.64:1 */
-  --band-high-ink: #9a4b20; /* 6.01:1 */
-  --band-critical-ink: #ae3737; /* 6.01:1 */
+  --band-low-ink: #24664f; /* 6.80:1 */
+  --band-medium-ink: #8a5c14; /* 5.80:1 */
+  --band-high-ink: #9a4b20; /* 6.17:1 */
+  --band-critical-ink: #ae3737; /* 6.17:1 */
 
   --band-low-surface: #e6f3ea;
   --band-medium-surface: #fff2d7;
   --band-high-surface: #fff0e2;
   --band-critical-surface: #fdf0ee;
 
-  /*
-   * --- Venue series: categorical ----------------------------------------
-   *
-   * Validated as a set: worst adjacent pair delta E 27.6 normal, 9.2 deutan. Three
-   * slots is the limit; a fourth puts yellow beside orange and fails separation.
-   * These are never used for a band, and a band hue is never used for a venue.
-   */
   --venue-sdex: #2a78d6;
   --venue-amm: #eb6834;
   --venue-third: #1baf7a;
 
-  --chart-1: var(--venue-sdex);
-  --chart-2: var(--venue-amm);
-  --chart-3: var(--venue-third);
-  --chart-4: var(--keel-muted);
-  --chart-5: var(--keel-border-strong);
-
-  /*
-   * --- Sequential ramp: magnitude in a heatmap ---------------------------
-   *
-   * One hue, light to dark, strictly monotonic in luminance from 1.29:1 to 11.63:1.
-   * Blue, which puts step 450 on the same value as the SDEX series; that is the same
-   * design system rather than a collision, and the two never appear in one chart.
-   * A rainbow was rejected: hue is not ordered, so a reader cannot rank it.
-   */
+  /* Light to dark, so "more" is again "further from the surface". */
   --seq-100: #cde2fb;
   --seq-150: #b7d3f6;
   --seq-200: #9ec5f4;
@@ -197,25 +320,11 @@
   --seq-650: #104281;
   --seq-700: #0d366b;
 
-  /*
-   * --- Absent, unknown, and unevaluated ----------------------------------
-   *
-   * A value the engine did not produce is not a low value, so it never takes a step on
-   * the risk scale or on the sequential ramp. It gets a neutral plus the hatch below,
-   * so it stays distinguishable in greyscale, in print, and in forced-colors mode.
-   */
   --unmeasured: #626f77;
   --unmeasured-surface: #f1f3f4;
 
-  /*
-   * --- Confidence: orthogonal to band ------------------------------------
-   *
-   * bandConfidence is `partial` on every monitored asset today, so a loud marker on
-   * every row would be wallpaper rather than signal. It is carried as a quiet
-   * qualifier beside the band and stated in full on the detail view.
-   */
   --confidence-partial: var(--keel-muted);
-  --confidence-full: var(--keel-ink);
+  --confidence-full: var(--keel-ink-strong);
 }
 
 /*
@@ -230,6 +339,229 @@
     color-mix(in srgb, var(--unmeasured) 22%, var(--unmeasured-surface)) 3px,
     color-mix(in srgb, var(--unmeasured) 22%, var(--unmeasured-surface)) 6px
   );
+}
+
+/*
+ * The "?" that explains a term.
+ *
+ * Everything here is phrasing content — a button and two spans — so it nests inside a
+ * paragraph, a heading, a table header or another span, which is everywhere a term
+ * label appears. An earlier build used `<details>`, which is flow content and is
+ * therefore invalid in all four; see `components/dashboard/term.tsx`.
+ *
+ * The panel is revealed by hover and by focus. `:focus-within` rather than
+ * `:focus-visible`: a tap gives the button plain focus without the visible-focus
+ * heuristic firing, and a definition a touch reader cannot open is not a definition.
+ *
+ * It is positioned absolutely so that reading one never reflows the table or the card
+ * it sits in — a definition that shoves the figures around costs the reader the thing
+ * they were comparing.
+ */
+.keel-term {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.keel-term-disclosure {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+}
+
+.keel-term-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 1px solid var(--keel-border-strong);
+  border-radius: 9999px;
+  color: var(--keel-muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1;
+  cursor: help;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.keel-term-disclosure:hover .keel-term-button,
+.keel-term-disclosure:focus-within .keel-term-button {
+  color: var(--keel-accent);
+  border-color: var(--keel-accent);
+}
+
+.keel-term-button:focus-visible {
+  outline: 2px solid var(--keel-accent);
+  outline-offset: 2px;
+}
+
+.keel-term-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: max-content;
+  max-width: min(22rem, 70vw);
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--keel-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--keel-surface);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 0.35);
+  color: var(--keel-ink);
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: normal;
+  /*
+   * `display: none`, not `visibility: hidden`. A hidden-but-laid-out panel is still
+   * part of the document's scrollable area, and `width: max-content` put a dozen of
+   * them past the right edge of a 390px viewport — 223px of horizontal scroll on a page
+   * where nothing visible was overflowing. Taking them out of layout entirely is the
+   * only version that cannot do that.
+   */
+  display: none;
+}
+
+.keel-term-disclosure:hover .keel-term-panel,
+.keel-term-disclosure:focus-within .keel-term-panel {
+  display: block;
+}
+
+/*
+ * On a narrow screen there is no anchoring that keeps a max-content panel inside the
+ * viewport: wherever it is tethered, some trigger sits close enough to an edge to push
+ * it out. So below the table breakpoint it stops being a tethered popover and becomes a
+ * sheet pinned to the bottom of the viewport, which is always fully visible and always
+ * reachable by thumb.
+ */
+@media (max-width: 40rem) {
+  .keel-term-panel,
+  .keel-term-panel[data-align='end'] {
+    position: fixed;
+    top: auto;
+    right: 1rem;
+    bottom: 1rem;
+    left: 1rem;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* Near the right edge a left-anchored panel would leave the viewport. */
+.keel-term-panel[data-align='end'] {
+  left: auto;
+  right: 0;
+}
+
+.keel-term-panel > strong {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--keel-ink-strong);
+}
+
+/*
+ * Search in the header, behind an icon.
+ *
+ * A `<details>` disclosure so it needs no JavaScript: the panel holds a real GET form
+ * and the page it submits to is server-rendered like every other view here. See
+ * `components/dashboard/layout/header-search.tsx`.
+ */
+.keel-search {
+  position: relative;
+}
+
+.keel-search-trigger {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--keel-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--keel-muted);
+  cursor: pointer;
+  list-style: none;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.keel-search-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.keel-search-trigger:hover,
+.keel-search[open] > .keel-search-trigger {
+  color: var(--keel-accent);
+  border-color: var(--keel-accent);
+}
+
+.keel-search-trigger:focus-visible {
+  outline: 2px solid var(--keel-accent);
+  outline-offset: 2px;
+}
+
+/* Filters are on. Not a count — whether any are active is what changes how every
+   figure on the page should be read. */
+.keel-search-dot {
+  position: absolute;
+  top: -0.2rem;
+  right: -0.2rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 2px solid var(--keel-surface);
+  border-radius: 9999px;
+  background: var(--keel-accent);
+}
+
+.keel-search-panel {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 18rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.85rem;
+  border: 1px solid var(--keel-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--keel-surface);
+  box-shadow: 0 16px 36px rgb(0 0 0 / 0.35);
+}
+
+/* On a phone the header is narrow and a tethered panel would leave the viewport, so it
+   spans the screen under the bar instead. */
+@media (max-width: 40rem) {
+  .keel-search-panel {
+    position: fixed;
+    top: auto;
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/*
+ * The risk map's tiles. Sized and positioned from computed geometry, so only the parts
+ * that do not depend on the data live here.
+ */
+.keel-tile {
+  transition: filter 160ms ease;
+}
+
+.keel-tile:hover {
+  filter: brightness(1.22);
+}
+
+.keel-tile:focus-visible {
+  outline: 2px solid var(--keel-ink-strong);
+  outline-offset: -2px;
 }
 
 @layer base {
@@ -247,6 +579,19 @@
     font-family: var(--font-jetbrains), ui-monospace, monospace;
     font-variant-numeric: tabular-nums;
   }
+}
+
+/*
+ * While the palette is being swapped. See `theme-toggle.tsx`: without this every
+ * animated colour on the page spends the length of its transition interpolating between
+ * two palettes, and an interpolated colour belongs to neither and is validated by
+ * nothing.
+ */
+:root[data-theme-switching],
+:root[data-theme-switching] *,
+:root[data-theme-switching] *::before,
+:root[data-theme-switching] *::after {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
