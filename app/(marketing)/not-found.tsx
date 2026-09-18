@@ -5,10 +5,7 @@ export default function NotFound() {
     <main className="not-found container">
       <p className="eyebrow">Keel · 404</p>
       <h1>This page is not available.</h1>
-      <p>
-        Return to Keel to explore market samples, methodology, and historical
-        evidence.
-      </p>
+      <p>Return to Keel to explore market samples and historical evidence.</p>
       <Link href="/" className="button">
         Return to Keel
       </Link>

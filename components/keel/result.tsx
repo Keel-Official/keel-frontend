@@ -185,22 +185,27 @@ export function LiquiditySourceBreakdown({ result }: { result: AssetRisk }) {
 
 export function ProvenanceStrip({
   result,
+  method = true,
 }: {
   result: Pick<
     AssetRisk,
     'ledgerSeq' | 'methodologyVersion' | 'dataSource' | 'bandConfidence'
   >;
+  /** The marketing page does not carry methodology, so it drops this column. */
+  method?: boolean;
 }) {
   return (
-    <dl className="provenance-strip">
+    <dl className={`provenance-strip ${method ? '' : 'without-method'}`}>
       <div>
         <dt>Ledger</dt>
         <dd>{result.ledgerSeq}</dd>
       </div>
-      <div>
-        <dt>Method</dt>
-        <dd>{result.methodologyVersion}</dd>
-      </div>
+      {method && (
+        <div>
+          <dt>Method</dt>
+          <dd>{result.methodologyVersion}</dd>
+        </div>
+      )}
       <div>
         <dt>Source</dt>
         <dd>{sourceLabels[result.dataSource]}</dd>
@@ -237,7 +242,7 @@ const flagDescriptions: Partial<Record<components['schemas']['Flag'], string>> =
     MANIPULATION_CHEAP: 'A defined price target is reachable at low cost.',
     SPREAD_EXTREME:
       'The bid and ask are too far apart for a meaningful reference price.',
-    THIN_DEPTH_5PCT: 'Depth at ±5% falls below the methodology threshold.',
+    THIN_DEPTH_5PCT: 'Depth at ±5% falls below the configured threshold.',
   };
 
 export function FlagList({ result }: { result: AssetRisk }) {

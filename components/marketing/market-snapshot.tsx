@@ -141,9 +141,7 @@ export function MarketSnapshot() {
             ))}
           </div>
           <div className="market-footer">
-            <span>
-              Ledger {market.items[0].ledgerSeq} · {market.methodologyVersion}
-            </span>
+            <span>Ledger {market.items[0].ledgerSeq}</span>
             {/* The rows above are a recorded sample, and the dashboard now ships with
                 the site, so the live set is the more useful next step. The recording
                 stays alongside it: it is what a claim on this page is checked against,

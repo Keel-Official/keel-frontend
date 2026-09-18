@@ -9,8 +9,8 @@ import AxeBuilder from '@axe-core/playwright';
  * marketing stylesheet does not come with it.
  *
  * The figures come from the live API. The assertions are about the shape of what is
- * rendered — a populated table, a ledger, a methodology version — never a specific
- * value, which moves every fifteen minutes.
+ * rendered — a populated table, a ledger, a heading — never a specific value, which
+ * moves every fifteen minutes.
  */
 
 test('the header button opens the dashboard and the dashboard shows the monitored set', async ({
@@ -46,13 +46,21 @@ test('an asset row opens that asset, and the way back is the monitored set', asy
   await expect(page).toHaveURL(/\/dashboard$/);
 });
 
-test('methodology is served, not hardcoded, and reachable from the landing page', async ({
+test('methodology is served, not hardcoded, and reachable from its evidence page', async ({
   page,
 }) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: 'Read methodology' }).first().click();
+  // The landing page deliberately carries no methodology. The recording of it does,
+  // and that is where the live version is offered.
+  await page.goto('/evidence/methodology');
+  await page.getByRole('link', { name: 'See the same thing live' }).click();
   await expect(page).toHaveURL(/\/dashboard\/methodology$/);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+});
+
+test('the landing page offers no methodology', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText(/methodolog/i)).toHaveCount(0);
+  await expect(page.locator('a[href*="methodology"]')).toHaveCount(0);
 });
 
 test('the dashboard does not inherit the marketing stylesheet', async ({ page }) => {

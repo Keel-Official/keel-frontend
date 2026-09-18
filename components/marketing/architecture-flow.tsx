@@ -1,7 +1,6 @@
 import {
   ArrowDown,
   ArrowRight,
-  Binary,
   Braces,
   Database,
   Layers,
@@ -67,9 +66,6 @@ export function ArchitectureFlow() {
             </div>
             <strong>Keel engine</strong>
             <span>Depth simulation & risk rules</span>
-            <div className="engine-core-footer">
-              <Binary size={14} /> Rule based methodology
-            </div>
           </div>
           <div className="flow-connector" aria-hidden="true">
             <ArrowRight />

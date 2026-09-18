@@ -21,7 +21,6 @@ const links = [
   { href: '#markets', label: 'Markets' },
   { href: '#metrics', label: 'Product' },
   { href: '#case-study', label: 'Case study' },
-  { href: '#api', label: 'Developers' },
 ];
 
 export function SiteHeader() {
@@ -87,10 +86,6 @@ export function SiteHeader() {
         ))}
         <a href={dashboardLinks.assets} onClick={() => setOpen(false)}>
           {dashboardCopy.nav}
-          <ArrowUpRight size={16} />
-        </a>
-        <a href={dashboardLinks.methodology} onClick={() => setOpen(false)}>
-          Methodology
           <ArrowUpRight size={16} />
         </a>
       </nav>

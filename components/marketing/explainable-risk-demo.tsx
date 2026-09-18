@@ -73,7 +73,7 @@ export function ExplainableRiskDemo() {
               </Link>
             </aside>
           </div>
-          <ProvenanceStrip result={brokenBook} />
+          <ProvenanceStrip result={brokenBook} method={false} />
         </div>
       </div>
     </section>
