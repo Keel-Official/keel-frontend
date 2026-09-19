@@ -32,6 +32,8 @@ export const BACKTEST = {
     '  -from 2026-02-01 -to 2026-03-01 -mark 2026-02-22 \\',
     '  -from-ledger 60977383 -out docs/evidences',
   ].join('\n'),
+  /* Still read by `/backtest`, whose own download button serves this file. The landing
+     section no longer links to it; the page that is about the record still does. */
   csvPath: '/evidence/ustry-february-daily.csv',
   notesPath: '/evidence/ustry-february-evidence.md',
 } as const;

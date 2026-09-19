@@ -2493,20 +2493,6 @@ dl.risk-rungs {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-/* A second link, quieter than the button above it: the file, for a reader who wants the
-   data rather than the page. */
-.case-aside {
-  margin-top: 12px;
-  align-self: flex-start;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.case-aside:hover {
-  color: var(--ink);
-}
 .history-plot {
   position: relative;
   margin-top: 20px;

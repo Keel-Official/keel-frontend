@@ -177,9 +177,6 @@ export function BlendCasePreview() {
             <Link className="split-more" href="/backtest#daily">
               Inspect every day <ChevronRight size={16} />
             </Link>
-            <a className="case-aside" href={BACKTEST.csvPath} download>
-              Download the daily CSV
-            </a>
           </article>
 
           <article className="split-pane split-pane-divided">
