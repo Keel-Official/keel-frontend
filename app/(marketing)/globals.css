@@ -2073,14 +2073,15 @@ li[data-reached] > .flow-output-field {
   font-size: 1.16rem;
   line-height: 1.55;
 }
-.risk-split {
+.split {
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
-/* A column, not a card: the product object on top, then what it means, then the way
-   into the full record. The only division between two columns is the hairline they
-   share, which is the same rule the page column is drawn with. */
-.risk-pane {
+/* THE SHARED COLUMN PATTERN, used by the finding and by the case study.
+   A column, not a card: the product object on top, then what it means, then the way into
+   the full record. The only division between two columns is the hairline they share,
+   which is the same rule the page column is drawn with. */
+.split-pane {
   display: flex;
   flex-direction: column;
   min-height: 560px;
@@ -2088,38 +2089,40 @@ li[data-reached] > .flow-output-field {
 }
 /* The second column is divided from the first and not tinted away from it: one
    background across the sheet, so neither reading looks like the quieter one. */
-.risk-pane-quiet {
+.split-pane-divided {
   border-left: 1px solid var(--border);
 }
 /* The visual is given the same height in both columns and centres inside it, so the
    two headings land on one line however tall the two objects are. Flexing it instead
    would hand the leftover space to whichever column had the shorter paragraph, which
    is exactly the amount the headings would then disagree by. */
-.risk-visual {
+.split-visual {
   display: flex;
   flex: none;
-  /* Tall enough for the deeper of the two objects — the four rungs — so the box is the
-     same in both columns and the headings under them share a line. */
-  min-height: 290px;
+  /* Reserved, not flexed: the same box in both columns, so the two headings under them
+     share a line however tall the objects are. Flexing it would hand the leftover space
+     to whichever column had the shorter paragraph, which is exactly the amount the
+     headings would then disagree by. Each section sets the height its objects need. */
+  min-height: var(--visual-height, 290px);
   flex-direction: column;
   justify-content: center;
   gap: 18px;
   margin-bottom: 30px;
 }
-.risk-title {
+.split-title {
   margin-bottom: 10px;
   font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
-.risk-copy {
+.split-copy {
   max-width: 44ch;
   margin-bottom: 22px;
   color: var(--muted);
   font-size: 16px;
   line-height: 1.55;
 }
-.risk-more {
+.split-more {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -2137,7 +2140,7 @@ li[data-reached] > .flow-output-field {
   text-decoration: none;
   transition: border-color 160ms var(--ease);
 }
-.risk-more:hover {
+.split-more:hover {
   border-color: var(--muted);
 }
 .risk-banner {
@@ -2431,8 +2434,78 @@ dl.risk-rungs {
   width: 100%;
   height: auto;
 }
-.case-section h2 {
-  margin-bottom: 24px;
+/* The case study is drawn on the same ruled sheet as the finding above it: the page
+   column edge to edge, the heading centred over a hairline, then the chart, then the two
+   columns. The band behind it stays `--bg`, so the sheet reads as a sheet. */
+.case-section {
+  border-top: 1px solid var(--border);
+  padding-block: 0;
+}
+.container.case-frame {
+  max-width: none;
+  width: var(--column);
+  /* The taller of the two objects is the five-row table at 225px, plus its caption.
+     Measured rather than guessed: reserving more than that puts a hole between the
+     objects and the headings under them. */
+  --visual-height: 265px;
+  background: var(--surface);
+}
+.case-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 72px 28px 56px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+.case-head h2 {
+  max-width: none;
+  margin-bottom: 14px;
+  font-size: clamp(2.25rem, 4.6vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+.case-lede {
+  max-width: 50ch;
+  color: var(--muted);
+  font-size: 1.16rem;
+  line-height: 1.55;
+}
+/* The chart runs the width of the sheet with no card of its own: the sheet's own edges
+   are its frame, and a border inside a border is the thing this page is done with. */
+.case-chart {
+  padding: 40px 56px 36px;
+  border-bottom: 1px solid var(--border);
+}
+/* Both objects here are cropped from the top down, so they start at the top of the
+   reserved box rather than floating in the middle of it, and the two captions over them
+   share a line the way the two headings under them do. */
+.case-frame .split-visual {
+  justify-content: flex-start;
+}
+/* A caption over a cropped object, saying what part of it this is. */
+.case-caption {
+  color: var(--muted);
+  font:
+    600 11px/1.4 var(--font-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+/* A second link, quieter than the button above it: the file, for a reader who wants the
+   data rather than the page. */
+.case-aside {
+  margin-top: 12px;
+  align-self: flex-start;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.case-aside:hover {
+  color: var(--ink);
 }
 .history-plot {
   position: relative;
@@ -2642,14 +2715,125 @@ dl.risk-rungs {
   font-size: 10.5px;
   font-weight: 700;
 }
-.case-finding {
-  margin-top: 26px;
+/* The daily record, cropped to its first five rows. It borrows the full table's
+   language — mono uppercase heads, hairline rows, the same chips — and drops four of its
+   nine columns, because the full one is 1040px wide at its narrowest and this is half a
+   column. The crop fades rather than stopping, so the table reads as continuing. */
+.case-daily {
+  min-width: 0;
+  mask-image: linear-gradient(#000 72%, transparent);
 }
-.case-links {
+.case-daily table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  table-layout: fixed;
+}
+.case-daily th,
+.case-daily td {
+  padding: 9px 8px 9px 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+}
+.case-daily thead th {
+  padding-top: 0;
+  color: var(--muted);
+  font:
+    600 10px/1.3 var(--font-mono),
+    monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.case-daily tbody th {
+  color: var(--ink);
+  font:
+    600 12px/1.3 var(--font-mono),
+    monospace;
+  white-space: nowrap;
+}
+.case-daily .numeric {
+  text-align: right;
+  padding-right: 10px;
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}
+.case-daily tbody td:last-child {
+  padding-right: 0;
+  text-align: right;
+}
+/* The deck: four cards in one place, the front one read and the rest saying there are
+   more. Depth is offset and stacking order, never a dimmed number — a figure a reader
+   can half-read is worse than one they cannot see at all, so what shows of the cards
+   behind is their edge and nothing else. */
+.case-deck {
+  position: relative;
+  margin: 0;
+  /* The cards are out of flow, so the box that holds them is stated: the front card
+     plus the three edges below it. */
+  height: 176px;
+}
+.case-deck > div {
+  position: absolute;
+  inset-inline: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
+  flex-direction: column;
+  /* One height for all four, so a card with no note still shows an edge under the one
+     in front of it rather than hiding inside it. */
+  min-height: 118px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  /* Cast upward: the card in front shades the edge of the one behind it, which is what
+     makes four white cards on a white sheet read as a stack at all. */
+  box-shadow: 0 -8px 18px -12px rgba(15, 26, 36, 0.22);
+}
+/* Front to back: each card behind sits a little lower and a little narrower, so the
+   deck reads as depth rather than as a list that failed to lay out. */
+.case-deck > div:nth-child(1) {
+  top: 0;
+  z-index: 4;
+}
+.case-deck > div:nth-child(2) {
+  top: 16px;
+  z-index: 3;
+  margin-inline: 13px;
+}
+.case-deck > div:nth-child(3) {
+  top: 32px;
+  z-index: 2;
+  margin-inline: 26px;
+}
+.case-deck > div:nth-child(4) {
+  top: 48px;
+  z-index: 1;
+  margin-inline: 39px;
+}
+.case-deck dd {
+  order: 1;
+  margin: 0 0 6px;
+  color: var(--ink);
+  font:
+    700 26px/1.1 var(--font-mono),
+    monospace;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.case-deck dt {
+  order: 2;
+  color: var(--ink-2);
+  font-size: 14px;
+  font-weight: 600;
+}
+.case-deck .case-deck-note {
+  order: 3;
+  margin: 8px 0 0;
+  color: var(--muted);
+  font:
+    400 13px/1.5 var(--font-manrope),
+    sans-serif;
+  letter-spacing: normal;
 }
 
 /* --- Notes / FAQ ----------------------------------------------------------- */
@@ -3381,7 +3565,7 @@ dl.risk-rungs {
   .backtest-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .risk-pane {
+  .split-pane {
     min-height: 0;
     padding: 48px 28px;
   }
@@ -3413,19 +3597,19 @@ dl.risk-rungs {
 }
 
 @media (max-width: 880px) {
-  .risk-split {
+  .split {
     grid-template-columns: 1fr;
   }
-  .risk-pane-quiet {
+  .split-pane-divided {
     border-top: 1px solid var(--border);
     border-left: 0;
   }
   /* Stacked, there is no second column to align a heading with, and the reserved
      height would only be empty space above it. */
-  .risk-visual {
+  .split-visual {
     min-height: 0;
   }
-  .risk-more {
+  .split-more {
     margin-top: 0;
   }
   .hero-frame {
@@ -3553,7 +3737,7 @@ dl.risk-rungs {
   .risk-head {
     padding: 48px 20px 44px;
   }
-  .risk-pane {
+  .split-pane {
     padding: 32px 16px;
   }
   .container {

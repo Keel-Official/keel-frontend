@@ -9,7 +9,7 @@ import {
   BACKTEST_SUMMARY,
   type BacktestDay,
 } from '@/lib/backtest';
-import { formatAmount, percent } from '@/lib/format/keel';
+import { formatAmount, movePercent, percent } from '@/lib/format/keel';
 import { BACKTEST_REPORT_URL } from '@/lib/report';
 import { flagCopy } from '@/lib/keel/format/glossary';
 import { SiteHeader } from '@/components/marketing/site-header';
@@ -20,18 +20,6 @@ export const metadata: Metadata = {
   description:
     'Every UTC day of USTRY/USDC trading in February 2026, read from Horizon: what the trade stream can show about depth, and what it cannot.',
 };
-
-/**
- * A move, as a percentage. Small moves keep three significant digits so they never
- * round to a zero nobody measured; large ones keep two decimals so a hundredfold
- * spike is not rounded into a different number.
- */
-function movePercent(fraction: string) {
-  const value = new Decimal(fraction).times(100);
-  return value.gte(1)
-    ? `${formatAmount(value.toFixed(2))}%`
-    : `${value.toSignificantDigits(3).toFixed()}%`;
-}
 
 /** Four decimals for display; the exact value rides along in the title. */
 function Price({ value }: { value: string }) {

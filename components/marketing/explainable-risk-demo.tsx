@@ -37,9 +37,9 @@ export function ExplainableRiskDemo() {
           </p>
         </div>
 
-        <div className="risk-split">
-          <article className="risk-pane">
-            <div className="risk-visual">
+        <div className="split">
+          <article className="split-pane">
+            <div className="split-visual">
               <p className="risk-banner">
                 <TriangleAlert size={15} aria-hidden="true" />
                 {result.band} ·{' '}
@@ -68,20 +68,20 @@ export function ExplainableRiskDemo() {
               </div>
             </div>
 
-            <h3 className="risk-title">The reference price is unreliable.</h3>
-            <p className="risk-copy">
+            <h3 className="split-title">The reference price is unreliable.</h3>
+            <p className="split-copy">
               The best bid and the best ask sit almost two hundred per cent
               apart, so the midpoint between them is a number no one can trade
               at. Six more checks could not be evaluated at all, which is why
               this band is a floor rather than a verdict.
             </p>
-            <Link className="risk-more" href="/evidence/asset-broken-book">
+            <Link className="split-more" href="/evidence/asset-broken-book">
               See the full finding <ChevronRight size={16} />
             </Link>
           </article>
 
-          <article className="risk-pane risk-pane-quiet">
-            <div className="risk-visual">
+          <article className="split-pane split-pane-divided">
+            <div className="split-visual">
               <p className="risk-rungs-head">
                 <span>Cost to move the price</span>
                 <span>Order book · {result.quote.code}</span>
@@ -107,13 +107,13 @@ export function ExplainableRiskDemo() {
               </dl>
             </div>
 
-            <h3 className="risk-title">And moving it costs nothing.</h3>
-            <p className="risk-copy">
+            <h3 className="split-title">And moving it costs nothing.</h3>
+            <p className="split-copy">
               Lifting this price by half takes no capital at all. Past that the
               book is exhausted, so the figures beside those rungs are where the
               market ran out — not the price of getting there.
             </p>
-            <Link className="risk-more" href="/evidence/asset-broken-book">
+            <Link className="split-more" href="/evidence/asset-broken-book">
               See every rung <ChevronRight size={16} />
             </Link>
           </article>

@@ -16,6 +16,21 @@ export function percent(delta: number): string {
   return new Exact(delta).times(100).toFixed();
 }
 
+/**
+ * A move, as a percentage.
+ *
+ * Small moves keep three significant digits so they never round to a zero nobody
+ * measured; large ones keep two decimals so a hundredfold spike is not rounded into a
+ * different number. Shared, because the backtest page and the landing preview of it have
+ * to print the same fraction the same way.
+ */
+export function movePercent(fraction: string): string {
+  const value = new Exact(fraction).times(100);
+  return value.gte(1)
+    ? `${formatAmount(value.toFixed(2))}%`
+    : `${value.toSignificantDigits(3).toFixed()}%`;
+}
+
 export function sourceContribution(sdex: string, amm: string) {
   const total = new Exact(sdex).plus(amm);
   if (total.isZero()) return null;
