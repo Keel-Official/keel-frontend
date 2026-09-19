@@ -2,9 +2,11 @@ import Link from 'next/link';
 import {
   ArrowRight,
   CircleDashed,
+  CircleSlash,
   Layers,
   OctagonAlert,
   OctagonX,
+  Siren,
 } from 'lucide-react';
 
 import type {
@@ -16,7 +18,9 @@ import { HISTORY_RANGES } from '@/lib/keel/assets/history-range';
 import { SEQUENTIAL_RAMP } from '@/lib/keel/design/tokens';
 import { compareDecimalStrings } from '@/lib/keel/format/compare';
 import { formatDecimal } from '@/lib/keel/format/decimal';
+import { flagCopy, bandCopy } from '@/lib/keel/format/glossary';
 import { classify, isMeasured } from '@/lib/keel/format/value';
+import type { Flag } from '@/lib/keel/format/flags';
 import {
   assetHref,
   rangeHref,
@@ -357,6 +361,15 @@ function AttentionCard({
   const high = rows.filter((row) => row.band === 'HIGH').length;
   const partial = rows.filter((row) => row.bandConfidence === 'partial').length;
 
+  // Counting rows and counting flags. Neither touches a decimal, which is the whole
+  // reason these two can be here at all: an average depth or a spread across the set
+  // would mean arithmetic on served figures, and nothing on this page does that.
+  const noPrice = rows.filter(
+    (row) =>
+      row.priceSource === 'none' || row.flags.includes('NO_EXECUTABLE_PRICE'),
+  ).length;
+  const commonest = commonestFlag(rows);
+
   return (
     <section className="flex min-w-0 flex-col rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-5">
       <h2 className="text-xs font-semibold tracking-wide text-[var(--keel-muted)] uppercase">
@@ -368,7 +381,7 @@ function AttentionCard({
           icon={OctagonX}
           label="Critical risk"
           value={critical}
-          caption="Cannot safely back a position"
+          caption={bandCopy('CRITICAL').caption}
           href={assetHref(query, {
             band: query.band === 'CRITICAL' ? null : 'CRITICAL',
           })}
@@ -380,7 +393,7 @@ function AttentionCard({
           icon={OctagonAlert}
           label="High risk"
           value={high}
-          caption="Usable only with a tight limit"
+          caption={bandCopy('HIGH').caption}
           href={assetHref(query, {
             band: query.band === 'HIGH' ? null : 'HIGH',
           })}
@@ -388,6 +401,55 @@ function AttentionCard({
           tint="var(--band-high-surface)"
           ink="var(--band-high-ink)"
         />
+        {/*
+          A 200 with no executable price is the most severe thing the engine reports and
+          the only finding on this page that nothing else counts. It renders an honest
+          zero when the set is clear of it rather than disappearing, because "none
+          today" is a reading and an absent row is not.
+        */}
+        <StatRow
+          icon={CircleSlash}
+          label="No executable price"
+          value={noPrice}
+          caption={
+            noPrice === 0
+              ? 'Every market in view quotes a price'
+              : 'The quote has nothing behind it'
+          }
+          href={assetHref(query, {
+            hasFlag:
+              query.hasFlag === 'NO_EXECUTABLE_PRICE'
+                ? null
+                : 'NO_EXECUTABLE_PRICE',
+          })}
+          active={query.hasFlag === 'NO_EXECUTABLE_PRICE'}
+          // A red zero reads as an alarm for something that did not happen. The
+          // severity hue is spent only when there is something to be severe about.
+          tint={
+            noPrice === 0
+              ? 'var(--keel-accent-soft)'
+              : 'var(--band-critical-surface)'
+          }
+          ink={
+            noPrice === 0 ? 'var(--keel-accent)' : 'var(--band-critical-ink)'
+          }
+        />
+        {/* Which check fires most often is the one line on this card that says WHY the
+            set looks the way it does, rather than how much of it is bad. */}
+        {commonest ? (
+          <StatRow
+            icon={Siren}
+            label="Most common check"
+            value={commonest.count}
+            caption={flagCopy(commonest.flag).label}
+            href={assetHref(query, {
+              hasFlag: query.hasFlag === commonest.flag ? null : commonest.flag,
+            })}
+            active={query.hasFlag === commonest.flag}
+            tint="var(--keel-surface-subtle)"
+            ink="var(--keel-ink-strong)"
+          />
+        ) : null}
         <StatRow
           icon={Layers}
           label={query.band === null ? 'Assets monitored' : 'Assets in view'}
@@ -441,6 +503,31 @@ function AttentionCard({
       </div>
     </section>
   );
+}
+
+/**
+ * The check that fired on more of these markets than any other.
+ *
+ * Counting occurrences in an array of enum values. A tie is settled by the first flag
+ * the engine listed rather than by a severity order: the contract publishes no severity
+ * per flag, and inventing one here would be a methodology statement this dashboard has
+ * no standing to make.
+ */
+function commonestFlag(
+  rows: readonly AssetSummary[],
+): { flag: Flag; count: number } | null {
+  const tally = new Map<Flag, number>();
+  for (const row of rows) {
+    for (const flag of row.flags) {
+      tally.set(flag, (tally.get(flag) ?? 0) + 1);
+    }
+  }
+
+  let best: { flag: Flag; count: number } | null = null;
+  for (const [flag, count] of tally) {
+    if (best === null || count > best.count) best = { flag, count };
+  }
+  return best;
 }
 
 /**

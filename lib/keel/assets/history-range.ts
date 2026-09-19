@@ -58,6 +58,19 @@ export const DEFAULT_HISTORY: HistoryQuery = {
   source: 'horizon',
 };
 
+/**
+ * The resolution a range can afford when a page of rows asks at once.
+ *
+ * One chart can carry an hourly week; eight rows cannot. Measured against the live API:
+ * a seven day window is ~110 KB per asset hourly and ~5.3 KB daily, and the whole
+ * audience shares sixty requests a minute because every read is made from the server.
+ * A day is still eight points over a week and thirty over a month, which is a shape; an
+ * hour over a day is twenty-four, which is also a shape. So the rule is per range.
+ */
+export function rowResolution(range: HistoryRangeKey): HistoryResolution {
+  return range === '24h' ? 'hour' : 'day';
+}
+
 type Raw = string | string[] | undefined;
 
 function one<T extends string>(raw: Raw, allowed: readonly T[]): T | null {

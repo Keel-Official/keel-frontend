@@ -115,10 +115,31 @@ test('search lives in the header and carries the rest of the view with it', asyn
   await expect(page).toHaveURL(/dir=desc/);
 });
 
+test('the monitored set opens as one section per band', async ({ page }) => {
+  // The page used to be a single table behind four filter chips, which meant the shape
+  // of the market was something a reader had to reconstruct by clicking. Every band is
+  // a section, including one holding nothing, because an absent section says nothing.
+  await page.goto('/dashboard');
+
+  for (const band of ['Critical', 'High', 'Medium', 'Low']) {
+    await expect(
+      page.getByRole('heading', { level: 3, name: new RegExp(`^${band}`) }),
+    ).toBeVisible();
+  }
+
+  // A band with more rows than its preview says how many are behind the link, and the
+  // link is where the window columns are.
+  const seeAll = page.getByRole('link', { name: /^See all \d+ critical/ });
+  await expect(seeAll).toBeVisible();
+  await seeAll.click();
+  await expect(page).toHaveURL(/band=CRITICAL/);
+});
+
 test('the table pages, and paging is part of the shareable view', async ({
   page,
 }) => {
-  await page.goto('/dashboard');
+  // Paging belongs to a band's own view now: the overview previews every band instead.
+  await page.goto('/dashboard?band=CRITICAL');
   // Derived, not hardcoded: the page size is one constant and changing it should not
   // take a passing suite with it.
   await expect(page.locator('tbody tr')).toHaveCount(PAGE_SIZE);
@@ -145,7 +166,7 @@ test('the table pages, and paging is part of the shareable view', async ({
 test('a page past the end shows the last page rather than an empty table', async ({
   page,
 }) => {
-  await page.goto('/dashboard?page=99');
+  await page.goto('/dashboard?band=CRITICAL&page=99');
   await expect(page.locator('tbody tr').first()).toBeVisible();
   await expect(page.getByText(/Showing \d+ to \d+ of/)).toBeVisible();
 });
@@ -153,7 +174,7 @@ test('a page past the end shows the last page rather than an empty table', async
 test('filtering returns to the first page', async ({ page }) => {
   // Page three of a filtered set holds different assets, and often does not exist at
   // all. Keeping the old number would land the reader past the end.
-  await page.goto('/dashboard?page=3');
+  await page.goto('/dashboard?band=CRITICAL&page=3');
   await page.getByRole('link', { name: /^High risk/ }).click();
 
   await expect(page).toHaveURL(/band=HIGH/);

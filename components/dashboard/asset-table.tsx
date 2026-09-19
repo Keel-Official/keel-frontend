@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { ArrowDown, ArrowUp, ChevronRight } from 'lucide-react';
 
 import { assetKey } from '@/lib/keel/assets/list';
-import { BAND_TOKENS } from '@/lib/keel/design/tokens';
+import type { RowSeries } from '@/lib/keel/assets/row-series';
+import { BAND_TOKENS, CONFIDENCE_TOKENS } from '@/lib/keel/design/tokens';
 import type { AssetSummary } from '@/lib/keel/api/types';
 import { truncateIssuer } from '@/lib/keel/format/decimal';
 import { classify } from '@/lib/keel/format/value';
@@ -18,6 +19,11 @@ import { BandChip } from './band-chip';
 import { FlagChip } from './flag-chip';
 import { Term } from './term';
 import { Value } from './value';
+import {
+  WindowRangeCell,
+  WindowTrendCell,
+  WindowVerdictCell,
+} from './window-cells';
 
 /**
  * The monitored set, in full, and the way into one asset.
@@ -38,33 +44,108 @@ import { Value } from './value';
  * is where the distinction is shown in full.
  */
 
-const COLUMNS: {
-  key: SortKey;
+interface Column {
+  key: SortKey | 'trend' | 'range' | 'verdict';
   label: string;
   term?: React.ComponentProps<typeof Term>['name'];
   numeric?: boolean;
-}[] = [
-  { key: 'asset', label: 'Asset' },
-  { key: 'band', label: 'Risk', term: 'band' },
-  { key: 'depth', label: 'Depth, 5% buy', term: 'depth', numeric: true },
-  {
-    key: 'collateral',
-    label: 'Max safe collateral',
-    term: 'collateral',
-    numeric: true,
-  },
-  { key: 'flags', label: 'Why', term: 'flags' },
-];
+  /** A column the reader can order by. A window figure is not one: see `columns`. */
+  sort?: SortKey;
+  /** Present only from `lg` up, where the table is not already a scroll region. */
+  windowOnly?: boolean;
+}
+
+/**
+ * The columns, which depend on whether this table was given a window.
+ *
+ * NONE OF THE WINDOW COLUMNS IS SORTABLE. Sorting is applied to the whole filtered set
+ * before it is paged, and a window figure exists only for the rows on screen — an
+ * ordering by it would silently describe a page rather than the set, which is the exact
+ * failure the notice above this table exists to report.
+ */
+function columns(
+  trend: AssetTableTrend | undefined,
+  bandSort: boolean,
+): Column[] {
+  const base: Column[] = [
+    { key: 'asset', label: 'Asset', sort: 'asset' },
+    // In a band section every row carries the same band, so neither the chip nor an
+    // ordering by it says anything the heading has not: the column narrows to the one
+    // part that still varies, which is whether the band is a floor.
+    bandSort
+      ? { key: 'band', label: 'Risk', term: 'band', sort: 'band' as const }
+      : { key: 'band', label: 'Confidence', term: 'confidence' },
+    {
+      key: 'depth',
+      label: 'Depth, 5% buy',
+      term: 'depth',
+      numeric: true,
+      sort: 'depth',
+    },
+  ];
+
+  const windowColumns: Column[] = trend
+    ? [
+        {
+          key: 'trend',
+          label: `Over the ${trend.label}`,
+          term: 'window',
+          windowOnly: true,
+        },
+        { key: 'range', label: 'Low / high', numeric: true, windowOnly: true },
+        {
+          key: 'verdict',
+          label: 'Verdict in window',
+          term: 'band',
+          windowOnly: true,
+        },
+      ]
+    : [];
+
+  return [
+    ...base,
+    ...windowColumns,
+    {
+      key: 'collateral',
+      label: 'Max safe collateral',
+      term: 'collateral',
+      numeric: true,
+      sort: 'collateral',
+    },
+    { key: 'flags', label: 'Why', term: 'flags', sort: 'flags' },
+  ];
+}
 
 /** More than this and the row is a wall of chips; the rest go behind a count. */
 const FLAGS_SHOWN = 2;
 
+/** The stored series behind the rows on screen, when this view asked for them. */
+export interface AssetTableTrend {
+  /** "last 7 days", for the column heading. */
+  readonly label: string;
+  /** Keyed by `assetKey`. A missing entry is "not read in this view", not "empty". */
+  readonly series: ReadonlyMap<string, RowSeries>;
+}
+
 export interface AssetTableProps {
   items: readonly AssetSummary[];
   query: AssetQuery;
+  /** Omitted renders exactly the table that existed before the window columns. */
+  trend?: AssetTableTrend;
+  /** False inside a band section, where every row shares one band. */
+  bandSort?: boolean;
+  /** Four sections mean four scroll regions, and four identical names help nobody. */
+  regionLabel?: string;
 }
 
-export function AssetTable({ items, query }: AssetTableProps) {
+export function AssetTable({
+  items,
+  query,
+  trend,
+  bandSort = true,
+  regionLabel = 'Monitored assets, scrollable',
+}: AssetTableProps) {
+  const shown = columns(trend, bandSort);
   return (
     <>
       {/* Desktop. `overflow-visible` from lg up so a term's panel is not clipped by
@@ -72,7 +153,7 @@ export function AssetTable({ items, query }: AssetTableProps) {
       <div
         tabIndex={0}
         role="region"
-        aria-label="Monitored assets, scrollable"
+        aria-label={regionLabel}
         className="relative hidden overflow-x-auto rounded-xl border border-[var(--keel-border)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)] md:block lg:overflow-x-visible"
       >
         <table
@@ -81,20 +162,23 @@ export function AssetTable({ items, query }: AssetTableProps) {
         >
           <thead>
             <tr className="border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)]">
-              {COLUMNS.map((column) => (
+              {shown.map((column) => (
                 <th
                   key={column.key}
                   scope="col"
                   aria-sort={
-                    query.sort === column.key
-                      ? query.dir === 'asc'
-                        ? 'ascending'
-                        : 'descending'
-                      : 'none'
+                    column.sort === undefined
+                      ? undefined
+                      : query.sort === column.sort
+                        ? query.dir === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                        : 'none'
                   }
                   className={cn(
                     'px-3 py-2.5 font-medium text-[var(--keel-muted)]',
                     column.numeric ? 'text-right' : 'text-left',
+                    column.windowOnly && 'hidden lg:table-cell',
                   )}
                 >
                   <span
@@ -103,11 +187,15 @@ export function AssetTable({ items, query }: AssetTableProps) {
                       column.numeric && 'flex-row-reverse',
                     )}
                   >
-                    <SortLink
-                      query={query}
-                      column={column.key}
-                      label={column.label}
-                    />
+                    {column.sort === undefined ? (
+                      column.label
+                    ) : (
+                      <SortLink
+                        query={query}
+                        column={column.sort}
+                        label={column.label}
+                      />
+                    )}
                     {column.term ? (
                       <Term
                         name={column.term}
@@ -147,14 +235,42 @@ export function AssetTable({ items, query }: AssetTableProps) {
                     </span>
                   </td>
                   <td className="px-3 py-2.5">
-                    <BandChip
-                      band={item.band}
-                      confidence={item.bandConfidence}
-                    />
+                    {bandSort ? (
+                      <BandChip
+                        band={item.band}
+                        confidence={item.bandConfidence}
+                      />
+                    ) : (
+                      <span
+                        className="text-xs whitespace-nowrap"
+                        style={{
+                          color: CONFIDENCE_TOKENS[item.bandConfidence].ink,
+                        }}
+                        title={CONFIDENCE_TOKENS[item.bandConfidence].label}
+                      >
+                        {item.bandConfidence}
+                      </span>
+                    )}
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <DepthCell item={item} />
                   </td>
+                  {trend ? (
+                    <>
+                      <td className="hidden px-3 py-2.5 lg:table-cell">
+                        <WindowTrendCell series={trend.series.get(id)} />
+                      </td>
+                      <td className="hidden px-3 py-2.5 text-right lg:table-cell">
+                        <WindowRangeCell
+                          series={trend.series.get(id)}
+                          quoteCode={item.quote.code}
+                        />
+                      </td>
+                      <td className="hidden px-3 py-2.5 lg:table-cell">
+                        <WindowVerdictCell series={trend.series.get(id)} />
+                      </td>
+                    </>
+                  ) : null}
                   <td className="px-3 py-2.5 text-right">
                     <Value
                       value={classify(item.maxSafeCollateral, item.quote.code)}
@@ -214,6 +330,30 @@ export function AssetTable({ items, query }: AssetTableProps) {
                   />
                 </dd>
               </dl>
+              {trend ? (
+                <div className="mt-2.5 border-t border-[var(--keel-border)] pt-2.5">
+                  {/* A card has the width a row does not, so the series is larger here
+                      and the window's figures sit under it rather than beside it. */}
+                  <WindowTrendCell series={trend.series.get(id)} />
+                  <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+                    <dt className="text-[var(--keel-muted)]">
+                      {`Low / high, ${trend.label}`}
+                    </dt>
+                    <dd className="text-right">
+                      <WindowRangeCell
+                        series={trend.series.get(id)}
+                        quoteCode={item.quote.code}
+                      />
+                    </dd>
+                    <dt className="text-[var(--keel-muted)]">
+                      Verdict in window
+                    </dt>
+                    <dd className="text-right">
+                      <WindowVerdictCell series={trend.series.get(id)} />
+                    </dd>
+                  </dl>
+                </div>
+              ) : null}
               <div className="mt-2.5">
                 <Reasons item={item} />
               </div>

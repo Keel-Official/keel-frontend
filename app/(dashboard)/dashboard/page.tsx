@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 
 import { AssetFilters } from '@/components/dashboard/asset-filters';
-import { AssetTable } from '@/components/dashboard/asset-table';
+import type { AssetTableTrend } from '@/components/dashboard/asset-table';
+import { BandSection } from '@/components/dashboard/band-section';
 import { DepthComposition } from '@/components/dashboard/depth-composition';
 import { Notice } from '@/components/dashboard/notice';
 import { OverviewHero } from '@/components/dashboard/overview-hero';
@@ -14,7 +16,14 @@ import {
   fetchHistory,
 } from '@/lib/keel/api/server';
 import type { AssetSummary } from '@/lib/keel/api/types';
-import { DEFAULT_HISTORY, ledgerWindow } from '@/lib/keel/assets/history-range';
+import {
+  DEFAULT_HISTORY,
+  HISTORY_RANGES,
+  ledgerWindow,
+  rowResolution,
+} from '@/lib/keel/assets/history-range';
+import { groupByBand, type BandGroup } from '@/lib/keel/assets/band-groups';
+import { readRowSeries, type RowSeries } from '@/lib/keel/assets/row-series';
 import { assetKey, filterByText, sortAssets } from '@/lib/keel/assets/list';
 import { compareValues } from '@/lib/keel/format/compare';
 import { classify } from '@/lib/keel/format/value';
@@ -22,6 +31,7 @@ import {
   assetHref,
   paginate,
   parseAssetQuery,
+  type AssetQuery,
 } from '@/lib/keel/url/asset-query';
 
 /**
@@ -80,6 +90,36 @@ export default async function AssetsPage({
   // computed from `rows` rather than from `paged.rows` — "39 critical" is a statement
   // about the market, not about which eight rows happen to be on screen.
   const paged = paginate(rows, query.page);
+
+  // Four sections when nothing is selected; one, paged, when a band is. `rows` is
+  // already the filtered set, so a selected band leaves three empty groups that are
+  // never rendered.
+  const groups = groupByBand(rows, query);
+  const selectedGroup: BandGroup =
+    query.band === null
+      ? groups[0]
+      : {
+          band: query.band,
+          rows,
+          preview: paged.rows,
+          // Nothing is held back behind a link here: the pagination below is how the
+          // rest of this band is reached.
+          hidden: 0,
+          partial: rows.filter((row) => row.bandConfidence === 'partial')
+            .length,
+        };
+
+  const pagination = (
+    <Pagination
+      className="mt-4"
+      query={query}
+      page={paged.page}
+      pageCount={paged.pageCount}
+      from={paged.from}
+      to={paged.to}
+      total={rows.length}
+    />
+  );
 
   // The asset the hero describes. Every row leads to that asset's own page now, so
   // there is nothing on this screen that changes the focus; it is the deepest market in
@@ -233,17 +273,51 @@ export default async function AssetsPage({
                   — open a row to see which checks ran and which could not.
                 </p>
 
-                <AssetTable items={paged.rows} query={query} />
-
-                <Pagination
-                  className="mt-4"
-                  query={query}
-                  page={paged.page}
-                  pageCount={paged.pageCount}
-                  from={paged.from}
-                  to={paged.to}
-                  total={rows.length}
-                />
+                {query.band === null ? (
+                  /*
+                    The whole set, cut into its bands. No window is read here: one
+                    series is one request per row, the audience shares sixty a minute
+                    because every read is made from the server, and four previews would
+                    spend sixteen of them before the reader has asked for anything. Each
+                    section's link says where the window is.
+                  */
+                  <div className="flex flex-col gap-10">
+                    {groups.map((group) => (
+                      <BandSection
+                        key={group.band}
+                        group={group}
+                        query={query}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  /*
+                    One band, paged, with the window. The fallback is the SAME table
+                    with the same three columns in their pending state, so the snapshot
+                    figures are final in the first chunk and nothing moves when the
+                    series land.
+                  */
+                  <Suspense
+                    key={`${query.band}-${query.range}-${query.page}`}
+                    fallback={
+                      <BandSection
+                        group={selectedGroup}
+                        query={query}
+                        trend={pendingTrend(selectedGroup, query.range)}
+                      >
+                        {pagination}
+                      </BandSection>
+                    }
+                  >
+                    <WindowedBandSection
+                      group={selectedGroup}
+                      query={query}
+                      latestLedger={latestLedger}
+                    >
+                      {pagination}
+                    </WindowedBandSection>
+                  </Suspense>
+                )}
 
                 <p className="mt-2 text-xs text-[var(--keel-muted)]">
                   Figures are denominated in each row&apos;s quote asset and
@@ -269,6 +343,93 @@ export default async function AssetsPage({
         </div>
       )}
     </AppShell>
+  );
+}
+
+/**
+ * Every row on screen in its pending state, which is what the Suspense fallback shows.
+ *
+ * The fallback is the real table, not a skeleton: every snapshot figure is final in the
+ * first chunk and only the three window cells are waiting, so the columns already hold
+ * their width and nothing reflows when the series arrive.
+ */
+function pendingTrend(
+  group: BandGroup,
+  range: AssetQuery['range'],
+): AssetTableTrend {
+  return {
+    label: HISTORY_RANGES[range].label.toLowerCase(),
+    series: new Map(
+      group.preview.map((row) => [
+        assetKey(row),
+        { state: 'pending' } as const,
+      ]),
+    ),
+  };
+}
+
+/**
+ * The band's own view, with each row's stored series.
+ *
+ * ONE REQUEST PER ROW, AND THE PAGE IS THE BOUND. Eight rows is eight requests against
+ * a budget of sixty a minute that the whole audience shares, and the resolution follows
+ * the range so a week is eight daily readings rather than a hundred and sixty-eight
+ * hourly ones.
+ *
+ * `fetchHistory` returns a failure rather than throwing, so `Promise.all` cannot reject
+ * and a row whose series failed is a rendered state rather than a lost page.
+ */
+async function WindowedBandSection({
+  group,
+  query,
+  latestLedger,
+  children,
+}: {
+  group: BandGroup;
+  query: AssetQuery;
+  latestLedger: number | null;
+  children?: React.ReactNode;
+}) {
+  if (latestLedger === null) {
+    // No ledger, no window to ask for. The snapshot table is still the whole answer to
+    // every other question on the row.
+    return (
+      <BandSection group={group} query={query}>
+        {children}
+      </BandSection>
+    );
+  }
+
+  const window = ledgerWindow(latestLedger, {
+    range: query.range,
+    resolution: rowResolution(query.range),
+    source: DEFAULT_HISTORY.source,
+  });
+
+  const fetched = await Promise.all(
+    group.preview.map((row) =>
+      fetchHistory(assetKey(row), window, DEFAULT_HISTORY.source),
+    ),
+  );
+
+  const series = new Map<string, RowSeries>(
+    group.preview.map((row, index) => [
+      assetKey(row),
+      readRowSeries(fetched[index], query.range),
+    ]),
+  );
+
+  return (
+    <BandSection
+      group={group}
+      query={query}
+      trend={{
+        label: HISTORY_RANGES[query.range].label.toLowerCase(),
+        series,
+      }}
+    >
+      {children}
+    </BandSection>
   );
 }
 

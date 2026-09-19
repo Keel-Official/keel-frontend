@@ -24,7 +24,7 @@
  * the API response.
  */
 
-import type { Flag } from './flags';
+import type { Band, Flag } from './flags';
 
 export interface FlagCopy {
   /** What a reader sees first. Sentence case, no jargon, no threshold. */
@@ -224,6 +224,71 @@ export const TERMS = {
     definition:
       'The unit every value on the row is measured in. Figures are never silently converted to dollars, so the quote code always travels with the number.',
   },
+  window: {
+    term: 'Window',
+    definition:
+      'The stretch of stored readings these figures describe. The series is only as old as the deployment, so a window can reach further back than anything that was recorded.',
+  },
 } as const satisfies Record<string, TermCopy>;
 
 export type TermKey = keyof typeof TERMS;
+
+/**
+ * What each band means for a reader, as one sentence per section.
+ *
+ * It lives here for the same reason the flag copy does: these are the sentences that
+ * could most easily drift into stating a threshold, and this file is where the rule
+ * against that is written down and tested.
+ *
+ * THE LOW SENTENCE CARRIES A LIMIT ON PURPOSE. `LOW` is the one section a reader will
+ * try to read as a clean bill of health, and the list endpoint cannot support that: it
+ * carries triggered flags and not the checks that could not run. So the sentence says
+ * what the verdict rests on rather than stopping at the good news.
+ *
+ * The register follows the captions already in the overview, which now read from here.
+ */
+export interface BandCopy {
+  /** The section heading. */
+  readonly heading: string;
+  /** The caption beside a count, short enough for the attention card. */
+  readonly caption: string;
+  /** One sentence on what the band means, opening the section. */
+  readonly sentence: string;
+  /** What it means that this band holds nothing at this ledger. */
+  readonly empty: string;
+}
+
+export const BAND_COPY = {
+  CRITICAL: {
+    heading: 'Critical',
+    caption: 'Cannot safely back a position',
+    sentence:
+      'Something fired that disqualifies this market outright. There is no size Keel would call safe here, and a position taken against this price may not be exitable at anything near it.',
+    empty: 'No monitored asset is in this band at this ledger.',
+  },
+  HIGH: {
+    heading: 'High',
+    caption: 'Usable only with a tight limit',
+    sentence:
+      'The depth behind this price does not hold up at ordinary size. A position here should be small enough that unwinding it would not itself be what moves the market.',
+    empty: 'No monitored asset is in this band at this ledger.',
+  },
+  MEDIUM: {
+    heading: 'Medium',
+    caption: 'Workable, with room to watch',
+    sentence:
+      'Nothing disqualifying fired, but at least one check came back short of comfortable. The price holds at modest size and stops being dependable beyond it.',
+    empty: 'No monitored asset is in this band at this ledger.',
+  },
+  LOW: {
+    heading: 'Low',
+    caption: 'Nothing fired at a level Keel treats as a problem',
+    sentence:
+      'No check fired at a level Keel treats as a problem. It is the best verdict on this page, and it still describes only the checks that could be run.',
+    empty: 'No monitored asset is in this band at this ledger.',
+  },
+} as const satisfies Record<Band, BandCopy>;
+
+export function bandCopy(band: Band): BandCopy {
+  return BAND_COPY[band];
+}

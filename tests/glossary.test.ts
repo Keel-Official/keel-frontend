@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { FLAG_COPY, TERMS, flagCopy } from '../lib/keel/format/glossary';
+import {
+  BAND_COPY,
+  FLAG_COPY,
+  TERMS,
+  bandCopy,
+} from '../lib/keel/format/glossary';
+import { flagCopy } from '../lib/keel/format/glossary';
+import { BAND_ORDER } from '../lib/keel/design/tokens';
 import { pageNumbers } from '../components/dashboard/pagination';
 import {
   DEFAULT_QUERY,
@@ -21,6 +28,46 @@ import {
  * perfectly and goes stale the moment the engine is redeployed, and nothing in the
  * build would notice.
  */
+
+describe('band copy', () => {
+  it('covers every band the contract declares', () => {
+    for (const band of BAND_ORDER) {
+      const copy = bandCopy(band);
+      expect(copy.heading.length).toBeGreaterThan(0);
+      expect(copy.caption.length).toBeGreaterThan(0);
+      expect(copy.sentence.length).toBeGreaterThan(0);
+      expect(copy.empty.length).toBeGreaterThan(0);
+    }
+    expect(Object.keys(BAND_COPY).sort()).toEqual([...BAND_ORDER].sort());
+  });
+
+  it('never writes a figure into a band sentence', () => {
+    // Stricter than the flag rule: a band sentence has no legitimate rung to name, so
+    // any digit in one is a threshold that will go stale the next time the engine is
+    // redeployed.
+    for (const band of BAND_ORDER) {
+      const copy = bandCopy(band);
+      expect(`${copy.sentence} ${copy.caption}`).not.toMatch(/\d/);
+    }
+  });
+
+  it('keeps the low band from reading as a clean bill of health', () => {
+    // The list endpoint carries triggered flags and not the checks that could not run,
+    // so the best verdict on the page still has to say what it rests on. This is the
+    // one sentence a future edit is most likely to trim into a false promise.
+    expect(bandCopy('LOW').sentence).toMatch(
+      /only the checks that could be run/i,
+    );
+  });
+
+  it('says an empty band is a fact about the scan, not good news', () => {
+    for (const band of BAND_ORDER) {
+      const { empty } = bandCopy(band);
+      expect(empty).toMatch(/ledger/i);
+      expect(empty).not.toMatch(/\b(safe|good|healthy|clear)\b/i);
+    }
+  });
+});
 
 describe('flag copy', () => {
   it('covers every flag the contract declares', () => {
