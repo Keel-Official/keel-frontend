@@ -40,29 +40,30 @@ it('every local navigation link resolves to a section, a page, or a real artifac
 
   for (const link of container.querySelectorAll('a[href]')) {
     const href = link.getAttribute('href')!;
+    // A query or a fragment narrows a view of a route; it never names a different one.
+    // `/dashboard?band=LOW` is the monitored set with a filter applied, and what has to
+    // exist on disk is `/dashboard`.
+    const path = href.split(/[?#]/)[0];
     if (href.startsWith('#')) {
       expect(container.querySelector(href), href).not.toBeNull();
-    } else if (href.startsWith('/evidence/') && !href.includes('.')) {
+    } else if (path.startsWith('/evidence/') && !path.includes('.')) {
       // A rendered evidence page rather than the file it renders. It resolves when
       // the registry has the slug, because that is what generates the route.
-      expect(evidenceSlugs.has(href.slice('/evidence/'.length)), href).toBe(
+      expect(evidenceSlugs.has(path.slice('/evidence/'.length)), href).toBe(
         true,
       );
     } else if (
-      href === DASHBOARD_BASE ||
-      href.startsWith(`${DASHBOARD_BASE}/`)
+      path === DASHBOARD_BASE ||
+      path.startsWith(`${DASHBOARD_BASE}/`)
     ) {
       // The dashboard is rendered by this application rather than served from
       // `public`, so it resolves when the route segment exists on disk. Its pages read
       // the live API, which is why this checks the route and not the response.
-      const segment = href.slice(DASHBOARD_BASE.length).replace(/^\//, '');
+      const segment = path.slice(DASHBOARD_BASE.length).replace(/^\//, '');
       const route = `app/(dashboard)/dashboard/${segment}`.replace(/\/$/, '');
       expect(existsSync(`${route}/page.tsx`), href).toBe(true);
-    } else if (href.startsWith('/') && href !== '/') {
-      // A page of this site or a file served from `public`. A fragment names a
-      // section of that page, so the page is what has to exist; the page's own test
-      // checks the section.
-      const [path] = href.split('#');
+    } else if (path.startsWith('/') && path !== '/') {
+      // A page of this site or a file served from `public`.
       expect(
         existsSync(`app/(marketing)${path}/page.tsx`) ||
           existsSync(`public${path}`),

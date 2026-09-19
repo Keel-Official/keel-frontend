@@ -179,7 +179,7 @@ export function BlendCasePreview() {
             </Link>
           </article>
 
-          <article className="split-pane split-pane-divided">
+          <article className="split-pane">
             <div className="split-visual">
               <p className="case-caption">Four readings for the month</p>
               {/* Stacked rather than tiled: the front card is the reading, the three

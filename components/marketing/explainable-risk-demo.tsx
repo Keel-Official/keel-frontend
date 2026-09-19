@@ -80,7 +80,7 @@ export function ExplainableRiskDemo() {
             </Link>
           </article>
 
-          <article className="split-pane split-pane-divided">
+          <article className="split-pane">
             <div className="split-visual">
               <p className="risk-rungs-head">
                 <span>Cost to move the price</span>

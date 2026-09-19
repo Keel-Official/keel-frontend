@@ -1224,13 +1224,26 @@ main > section > .container {
 }
 /* --- Monitored markets ----------------------------------------------------- */
 
+/* The same ruled sheet as the finding and the case study: the page column edge to edge,
+   a centred head over a hairline, then the markets as columns of it rather than as three
+   cards floating in a grid. */
 .market-section {
-  padding-block: 72px 80px;
+  padding-block: 0;
+  border-top: 1px solid var(--border);
+}
+.container.market-frame {
+  max-width: none;
+  width: var(--column);
+  /* Measured: the badge, the gap and the window come to 324. */
+  --visual-height: 330px;
+  background: var(--surface);
 }
 .market-head {
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 72px 28px 56px;
+  border-bottom: 1px solid var(--border);
   text-align: center;
 }
 .market-pill {
@@ -1267,6 +1280,11 @@ main > section > .container {
 .market-lede {
   max-width: 54ch;
   margin-bottom: 28px;
+}
+/* The head carried two buttons under this line; where it does not, the space they
+   stood in goes with them. */
+.market-head .market-lede:last-child {
+  margin-bottom: 0;
   color: var(--muted);
   font-size: 1.16rem;
   line-height: 1.55;
@@ -1289,60 +1307,28 @@ main > section > .container {
   background: var(--surface);
 }
 
-/* Three markets side by side. Each card ends in a window onto its reading that runs
-   into the card's right and bottom edges, so the figures read as product, not copy. */
-.market-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 56px;
+/* The badge reads right-aligned wherever it sits beside a figure; in a column it reads
+   with the column. Same override the hero makes, for the same reason. */
+.market-frame .split-visual {
+  justify-content: flex-start;
 }
-.market-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-height: 460px;
-  padding: 28px 0 0 28px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: var(--surface);
-  box-shadow:
-    0 1px 2px rgba(15, 26, 36, 0.04),
-    0 12px 32px -16px rgba(15, 26, 36, 0.1);
-}
-.market-card .risk-status {
+.market-frame .risk-status {
   align-items: flex-start;
 }
-.market-card h3 {
-  margin: 20px 28px 8px 0;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-}
-.market-summary {
-  margin-right: 28px;
-  color: var(--muted);
-  font-size: 15.5px;
-  line-height: 1.55;
-}
+/* The reading itself, which is what a column opens on. It keeps the window chrome —
+   the issuer bar and the ruled rows — because that is the product object; what it loses
+   is the card that used to be drawn around it inside a sheet that already has edges. */
 .market-window {
   width: 100%;
-  margin-top: auto;
-  padding-top: 28px;
-}
-.market-window > * {
-  border-left: 1px solid var(--border);
 }
 .market-window-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 11px 16px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  border-top-left-radius: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
   color: var(--muted);
   font:
     500 11.5px/1.4 var(--font-mono),
@@ -1360,7 +1346,10 @@ main > section > .container {
 }
 .market-rows {
   margin: 0;
-  padding: 8px 16px 18px;
+  padding: 6px 14px 10px;
+  border: 1px solid var(--border);
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
 }
 .market-rows > div {
   display: flex;
@@ -2077,6 +2066,9 @@ li[data-reached] > .flow-output-field {
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
+.split-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
 /* THE SHARED COLUMN PATTERN, used by the finding and by the case study.
    A column, not a card: the product object on top, then what it means, then the way into
    the full record. The only division between two columns is the hairline they share,
@@ -2087,9 +2079,11 @@ li[data-reached] > .flow-output-field {
   min-height: 560px;
   padding: 64px 56px 56px;
 }
-/* The second column is divided from the first and not tinted away from it: one
-   background across the sheet, so neither reading looks like the quieter one. */
-.split-pane-divided {
+/* A column is divided from the one before it and not tinted away from it: one
+   background across the sheet, so no reading looks like the quieter one. The rule is on
+   every pane after the first, so a sheet of three needs no new class and no pane has to
+   know where it sits. */
+.split-pane + .split-pane {
   border-left: 1px solid var(--border);
 }
 /* The visual is given the same height in both columns and centres inside it, so the
@@ -3555,13 +3549,10 @@ dl.risk-rungs {
     min-height: 0;
     padding: 48px 28px;
   }
-  .market-grid {
-    grid-template-columns: minmax(0, 560px);
-    justify-content: center;
-    margin-top: 44px;
-  }
-  .market-card {
-    min-height: 0;
+  /* Three columns do not survive a tablet; two do, and the third wraps under them
+     keeping the same rules. */
+  .split-three {
+    grid-template-columns: 1fr 1fr;
   }
   .hero-frame {
     gap: 32px;
@@ -3586,9 +3577,16 @@ dl.risk-rungs {
   .split {
     grid-template-columns: 1fr;
   }
-  .split-pane-divided {
+  .split-pane + .split-pane {
     border-top: 1px solid var(--border);
     border-left: 0;
+  }
+  /* Stacked, a column of three is as wide as the sheet, and a reading meant for a third
+     of it would stretch across the whole thing. The dividing rules stay full width and
+     the content is inset to a readable measure, so everything inside a column still
+     lines up on one left edge. */
+  .split-three .split-pane {
+    padding-inline: max(28px, calc((100% - 560px) / 2));
   }
   /* Stacked, there is no second column to align a heading with, and the reserved
      height would only be empty space above it. */
