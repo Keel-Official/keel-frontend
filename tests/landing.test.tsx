@@ -20,8 +20,13 @@ it('leads with a real result and keeps evidence accessible without live API call
   expect(
     screen.getByText(/Exact amounts in the sample response/),
   ).toBeVisible();
+  // The page must never let a band read as a complete check. The sentence that said so
+  // used to be a standalone note under the finding; it is now the clause that closes
+  // the finding's own paragraph, and the guarantee is the same one either way.
   expect(
-    screen.getByText('Unevaluated checks may conceal additional risk.'),
+    screen.getByText(
+      /could not be evaluated at all, which is why this band is a floor/,
+    ),
   ).toBeVisible();
   fireEvent.click(screen.getByText('Does Keel need a wallet?'));
   expect(

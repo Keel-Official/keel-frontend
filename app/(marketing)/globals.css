@@ -2073,66 +2073,83 @@ li[data-reached] > .flow-output-field {
   font-size: 1.16rem;
   line-height: 1.55;
 }
-.risk-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 10px 16px 10px 20px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(15, 26, 36, 0.06);
-  color: var(--ink);
-  font-size: 15.5px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: border-color 160ms var(--ease);
-}
-.risk-button:hover {
-  border-color: var(--muted);
-}
 .risk-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
 }
+/* A column, not a card: the product object on top, then what it means, then the way
+   into the full record. The only division between two columns is the hairline they
+   share, which is the same rule the page column is drawn with. */
 .risk-pane {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   min-height: 560px;
-  padding: 72px 56px;
+  padding: 64px 56px 56px;
 }
+/* The second column is divided from the first and not tinted away from it: one
+   background across the sheet, so neither reading looks like the quieter one. */
 .risk-pane-quiet {
   border-left: 1px solid var(--border);
-  background: var(--surface-2);
 }
-.risk-card {
-  padding: 12px 12px 22px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: 0 12px 32px -18px rgba(15, 26, 36, 0.18);
-}
-.risk-card-media {
+/* The visual is given the same height in both columns and centres inside it, so the
+   two headings land on one line however tall the two objects are. Flexing it instead
+   would hand the leftover space to whichever column had the shorter paragraph, which
+   is exactly the amount the headings would then disagree by. */
+.risk-visual {
   display: flex;
+  flex: none;
+  /* Tall enough for the deeper of the two objects — the four rungs — so the box is the
+     same in both columns and the headings under them share a line. */
+  min-height: 290px;
   flex-direction: column;
-  padding: 10px;
-  border-radius: 12px;
-  background: linear-gradient(
-    180deg,
-    var(--critical-bg),
-    color-mix(in srgb, var(--critical-bg) 35%, var(--surface))
-  );
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.risk-title {
+  margin-bottom: 10px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.risk-copy {
+  max-width: 44ch;
+  margin-bottom: 22px;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.risk-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  /* Bottom of the column, so two links line up even when one paragraph runs a line
+     longer than the other. */
+  margin-top: auto;
+  min-height: 44px;
+  padding: 10px 14px 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 160ms var(--ease);
+}
+.risk-more:hover {
+  border-color: var(--muted);
 }
 .risk-banner {
-  display: flex;
+  display: inline-flex;
+  align-self: flex-start;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  min-height: 38px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--critical-line) 55%, var(--surface));
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 1px solid var(--critical-line);
+  border-radius: 999px;
+  background: var(--critical-bg);
   color: var(--critical);
   font:
     700 12.5px/1.2 var(--font-mono),
@@ -2142,15 +2159,12 @@ li[data-reached] > .flow-output-field {
 .risk-figure {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 52px 12px 60px;
-  text-align: center;
+  gap: 4px;
 }
 .risk-figure strong {
   color: var(--critical);
   font:
-    700 clamp(2.5rem, 5vw, 3.5rem) / 1 var(--font-mono),
+    700 clamp(3rem, 6vw, 4.25rem) / 1 var(--font-mono),
     monospace;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
@@ -2160,19 +2174,17 @@ li[data-reached] > .flow-output-field {
   font-size: 14.5px;
   font-weight: 600;
 }
-.risk-card h3 {
-  margin: 22px 12px 14px;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
 /* Triggered and not-evaluated share the bar but not a fill: the second is hatched,
    so a check that could not run never reads as one that came back clear. */
+.risk-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .risk-progress {
   display: grid;
   gap: 3px;
   height: 6px;
-  margin: 0 12px;
 }
 .risk-progress span {
   border-radius: 3px;
@@ -2188,7 +2200,6 @@ li[data-reached] > .flow-output-field {
   );
 }
 .risk-count {
-  margin: 12px 12px 0;
   color: var(--muted);
   font-size: 14.5px;
 }
@@ -2196,18 +2207,14 @@ li[data-reached] > .flow-output-field {
   color: var(--ink);
   font-weight: 700;
 }
-.risk-rungs {
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-  box-shadow: 0 12px 32px -18px rgba(15, 26, 36, 0.18);
-}
+/* The rungs are a list ruled by hairlines. The card that held them drew a second
+   border inside the sheet's own and a shadow that lifted four rows of a table off the
+   page, which is not what a table is. */
 .risk-rungs-head {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 18px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border);
   color: var(--ink);
   font-size: 14px;
@@ -2219,19 +2226,19 @@ li[data-reached] > .flow-output-field {
     500 12px/1.6 var(--font-mono),
     monospace;
 }
-.risk-rungs dl {
+dl.risk-rungs {
   margin: 0;
 }
-.risk-rungs dl > div {
+.risk-rungs > div {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 72px 1fr;
   align-items: center;
   gap: 12px;
-  min-height: 62px;
-  padding: 10px 18px;
+  min-height: 58px;
+  padding: 8px 0;
   border-bottom: 1px solid var(--border);
 }
-.risk-rungs dl > div:last-child {
+.risk-rungs > div:last-child {
   border-bottom: 0;
 }
 .risk-rungs dt {
@@ -3413,6 +3420,14 @@ li[data-reached] > .flow-output-field {
     border-top: 1px solid var(--border);
     border-left: 0;
   }
+  /* Stacked, there is no second column to align a heading with, and the reserved
+     height would only be empty space above it. */
+  .risk-visual {
+    min-height: 0;
+  }
+  .risk-more {
+    margin-top: 0;
+  }
   .hero-frame {
     grid-template-columns: 1fr;
     gap: 44px;
@@ -3599,9 +3614,8 @@ li[data-reached] > .flow-output-field {
     grid-template-columns: 56px 1fr 1fr;
     gap: 8px;
   }
-  .risk-rungs dl > div {
-    grid-template-columns: 48px 1fr;
-    padding-inline: 14px;
+  .risk-rungs > div {
+    grid-template-columns: 56px 1fr;
   }
   .chart-card {
     padding: 16px;
