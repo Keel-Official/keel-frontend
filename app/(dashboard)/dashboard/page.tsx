@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, cache } from 'react';
 import Link from 'next/link';
 
 import { AssetFilters } from '@/components/dashboard/asset-filters';
@@ -6,7 +6,11 @@ import type { AssetTableTrend } from '@/components/dashboard/asset-table';
 import { BandSection } from '@/components/dashboard/band-section';
 import { DepthComposition } from '@/components/dashboard/depth-composition';
 import { Notice } from '@/components/dashboard/notice';
-import { OverviewHero } from '@/components/dashboard/overview-hero';
+import {
+  FocusCard,
+  FocusCardPending,
+  OverviewHero,
+} from '@/components/dashboard/overview-hero';
 import { Pagination } from '@/components/dashboard/pagination';
 import { AppShell } from '@/components/dashboard/layout/app-shell';
 import {
@@ -127,28 +131,12 @@ export default async function AssetsPage({
   // movement at all.
   const focusId = deepestId(rows);
 
-  const depth = focusId === null ? null : await fetchDepth(focusId);
-
-  // The series needs the latest ledger to size its window, so it follows health. It is
-  // a different endpoint from the historical replay that `historicalAvailable` turns
-  // off: this one reads the stored series and answers today.
-  const latestLedger =
-    health.data?.latestScanLedgerSeq ?? depth?.data?.ledgerSeq ?? null;
-  const history =
-    focusId === null || latestLedger === null
-      ? null
-      : await fetchHistory(
-          focusId,
-          // The window is the reader's, from the URL; the resolution and the source
-          // stay at their defaults here. One request is one source, and mixing a
-          // reconstruction into an overview chart would put a lower bound and a
-          // measurement on the same line.
-          ledgerWindow(latestLedger, {
-            ...DEFAULT_HISTORY,
-            range: query.range,
-          }),
-          DEFAULT_HISTORY.source,
-        );
+  // THE FOCUS IS NOT AWAITED HERE. Its two requests used to run in sequence before
+  // anything rendered, which put four round trips in front of the first byte. They
+  // now run in parallel inside the two Suspense boundaries below, and everything
+  // else on the page, the counts and the whole table, renders from health and
+  // assets alone. See `loadFocus`.
+  const latestLedger = health.data?.latestScanLedgerSeq ?? null;
 
   const failure = assets.failure ?? health.failure;
 
@@ -205,9 +193,27 @@ export default async function AssetsPage({
         <div className="flex flex-col gap-8">
           <OverviewHero
             rows={rows}
-            risk={depth?.data ?? null}
-            history={history?.data ?? null}
-            historyFailure={history?.failure?.message ?? null}
+            focus={
+              focusId === null ? (
+                <FocusCard
+                  risk={null}
+                  history={null}
+                  historyFailure={null}
+                  query={query}
+                />
+              ) : (
+                <Suspense
+                  key={`focus-${focusId}-${query.range}`}
+                  fallback={<FocusCardPending query={query} />}
+                >
+                  <FocusSection
+                    focusId={focusId}
+                    latestLedger={latestLedger}
+                    query={query}
+                  />
+                </Suspense>
+              )
+            }
             monitored={health.data?.assetsMonitored ?? total}
             query={query}
           />
@@ -226,22 +232,19 @@ export default async function AssetsPage({
             </Notice>
           ) : (
             <>
-              {depth?.data ? (
-                <section aria-labelledby="focus-title" className="min-w-0">
-                  <h2
-                    id="focus-title"
-                    className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]"
-                  >
-                    {`Where ${depth.data.asset.code}'s depth comes from`}
-                  </h2>
-                  <div className="mt-4 rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-4 sm:p-5">
-                    <DepthComposition
-                      depth={depth.data.depth}
-                      quoteCode={depth.data.quote.code}
-                    />
-                  </div>
-                </section>
-              ) : null}
+              {focusId === null ? null : (
+                // No fallback: the composition sits between the hero and the table,
+                // and a placeholder there would push the table down and then pull it
+                // back up. It appears when it is ready, and the table never moves
+                // because of it until then.
+                <Suspense key={`composition-${focusId}-${query.range}`}>
+                  <CompositionSection
+                    focusId={focusId}
+                    latestLedger={latestLedger}
+                    range={query.range}
+                  />
+                </Suspense>
+              )}
 
               <section aria-labelledby="table-title" className="min-w-0">
                 {/*
@@ -325,25 +328,121 @@ export default async function AssetsPage({
                   shown to two decimal places. The exact value the engine served
                   is on every figure, and in full on the asset&apos;s own page.
                 </p>
-
-                {depth?.failure ? (
-                  <Notice
-                    className="mt-3"
-                    tone="problem"
-                    title={
-                      depth.failure.kind === 'transport'
-                        ? 'The detail behind the chart above could not be loaded'
-                        : `The engine reported ${depth.failure.code}`
-                    }
-                    detail={depth.failure.message}
-                  />
-                ) : null}
               </section>
             </>
           )}
         </div>
       )}
     </AppShell>
+  );
+}
+
+/**
+ * The asset in focus, read once per request however many boundaries ask for it.
+ *
+ * `cache` dedupes on the arguments for the length of one server render, so the focus
+ * card and the composition section share a single depth request and a single series
+ * request rather than issuing two of each against a budget the whole audience shares.
+ *
+ * The two requests run in PARALLEL when health supplied the latest ledger, which is
+ * the ordinary case. Without it the series window has nothing to be sized from until
+ * the depth answer names a ledger, so that path stays sequential, as it always was.
+ */
+const loadFocus = cache(
+  async (
+    focusId: string,
+    latestLedger: number | null,
+    range: AssetQuery['range'],
+  ) => {
+    // The window is the reader's, from the URL; the resolution and the source stay
+    // at their defaults here. One request is one source, and mixing a reconstruction
+    // into an overview chart would put a lower bound and a measurement on one line.
+    const window = (ledger: number) =>
+      ledgerWindow(ledger, { ...DEFAULT_HISTORY, range });
+
+    if (latestLedger !== null) {
+      const [depth, history] = await Promise.all([
+        fetchDepth(focusId),
+        fetchHistory(focusId, window(latestLedger), DEFAULT_HISTORY.source),
+      ]);
+      return { depth, history };
+    }
+
+    const depth = await fetchDepth(focusId);
+    const ledger = depth.data?.ledgerSeq ?? null;
+    const history =
+      ledger === null
+        ? null
+        : await fetchHistory(focusId, window(ledger), DEFAULT_HISTORY.source);
+    return { depth, history };
+  },
+);
+
+async function FocusSection({
+  focusId,
+  latestLedger,
+  query,
+}: {
+  focusId: string;
+  latestLedger: number | null;
+  query: AssetQuery;
+}) {
+  const { depth, history } = await loadFocus(
+    focusId,
+    latestLedger,
+    query.range,
+  );
+  return (
+    <FocusCard
+      risk={depth.data ?? null}
+      history={history?.data ?? null}
+      historyFailure={history?.failure?.message ?? null}
+      query={query}
+    />
+  );
+}
+
+async function CompositionSection({
+  focusId,
+  latestLedger,
+  range,
+}: {
+  focusId: string;
+  latestLedger: number | null;
+  range: AssetQuery['range'];
+}) {
+  const { depth } = await loadFocus(focusId, latestLedger, range);
+
+  if (depth.failure) {
+    return (
+      <Notice
+        tone="problem"
+        title={
+          depth.failure.kind === 'transport'
+            ? 'The detail behind the chart above could not be loaded'
+            : `The engine reported ${depth.failure.code}`
+        }
+        detail={depth.failure.message}
+      />
+    );
+  }
+  if (!depth.data) return null;
+
+  return (
+    <section aria-labelledby="focus-title" className="min-w-0">
+      <h2
+        id="focus-title"
+        className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]"
+      >
+        {`Where ${depth.data.asset.code}'s depth comes from`}
+      </h2>
+      <div className="mt-4 rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-4 sm:p-5">
+        <DepthComposition
+          depth={depth.data.depth}
+          quoteCode={depth.data.quote.code}
+        />
+      </div>
+    </section>
   );
 }
 
