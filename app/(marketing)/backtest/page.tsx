@@ -7,10 +7,13 @@ import {
   BACKTEST,
   BACKTEST_DAYS,
   BACKTEST_SUMMARY,
+  RECONSTRUCTED_LEDGERS,
   type BacktestDay,
 } from '@/lib/backtest';
 import { formatAmount, movePercent, percent } from '@/lib/format/keel';
 import { BACKTEST_REPORT_URL } from '@/lib/report';
+import { assetAtLedgerPath } from '@/lib/keel/url/ledger';
+import { ENGINE_EVIDENCE } from '@/lib/evidence';
 import { flagCopy } from '@/lib/keel/format/glossary';
 import { SiteHeader } from '@/components/marketing/site-header';
 import { FebruaryChart } from '@/components/marketing/february-chart';
@@ -243,6 +246,49 @@ export default function BacktestPage() {
           </div>
         </section>
 
+        <section
+          className="backtest-section"
+          id="ledgers"
+          aria-labelledby="backtest-ledgers"
+        >
+          <div className="container">
+            <div className="backtest-section-head">
+              <h2 id="backtest-ledgers">Three ledgers, read by the engine.</h2>
+              <p>
+                The daily rows above come from the trade stream. These three are
+                full risk results the engine rebuilt from the operation stream
+                at single ledgers on the incident morning. Each opens the
+                engine&rsquo;s own answer, gaps included: a rebuilt book is too
+                thin, never too deep, so its depth is a lower bound.
+              </p>
+            </div>
+            <div className="backtest-kinds backtest-ledgers">
+              {RECONSTRUCTED_LEDGERS.map((item) => (
+                <article key={item.ledger}>
+                  <h3>
+                    Ledger <span className="tabular">{item.ledger}</span>
+                  </h3>
+                  <p>
+                    <span className="tabular">{item.closedAt}</span>
+                    <br />
+                    {item.note}
+                  </p>
+                  <Link
+                    className="backtest-ledger-link"
+                    href={assetAtLedgerPath(
+                      `${base.code}:${base.issuer}`,
+                      item.ledger,
+                    )}
+                  >
+                    Open the engine&rsquo;s reading{' '}
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </Link>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="backtest-band" aria-labelledby="backtest-read">
           <div className="container">
             <div className="backtest-section-head">
@@ -282,6 +328,19 @@ export default function BacktestPage() {
                 Run from the engine repository. The CSV and the evidence notes
                 linked above are the files this produced.
               </p>
+            </div>
+            <div className="backtest-reproduce">
+              <h3>Evidence filed since</h3>
+              <ul className="backtest-keys">
+                {ENGINE_EVIDENCE.map((item) => (
+                  <li key={item.href}>
+                    <a href={item.href} target="_blank" rel="noreferrer">
+                      <strong>{item.title}</strong>
+                    </a>
+                    {item.summary}
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>

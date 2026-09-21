@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight, FileJson } from 'lucide-react';
 
-import type { components } from '@/lib/api/schema';
+import type { components } from '@/lib/keel/api/schema';
 import { EVIDENCE, findEvidence, type EvidenceItem } from '@/lib/evidence';
 import { dashboardLinks } from '@/lib/dashboard';
 import {
@@ -129,6 +129,44 @@ function AssetEvidence({ result }: { result: AssetRisk }) {
         </p>
         <FlagList result={result} />
       </section>
+
+      {result.reconstruction ? (
+        <section className="evidence-card evidence-caution">
+          <h2>This book was rebuilt, not observed</h2>
+          <p className="evidence-note">
+            Source <code>{result.dataSource}</code> at ledger {result.ledgerSeq}. Every gap
+            below removes offers, so read the depth above as a lower bound and the risk as
+            an upper bound. The counts are the engine&rsquo;s, out of{' '}
+            {result.reconstruction.accountsWalked} accounts walked
+            {result.reconstruction.floorLedger > 0
+              ? ` with an operation floor at ledger ${result.reconstruction.floorLedger}`
+              : ''}
+            .
+          </p>
+          <dl className="evidence-figures">
+            <div>
+              <dt>Offers never seen created</dt>
+              <dd>{result.reconstruction.missingOffers}</dd>
+            </div>
+            <div>
+              <dt>Walks stopped at the floor</dt>
+              <dd>{result.reconstruction.stoppedAtFloor}</dd>
+            </div>
+            <div>
+              <dt>Walks that hit the page cap</dt>
+              <dd>{result.reconstruction.truncated}</dd>
+            </div>
+            <div>
+              <dt>Walks that failed</dt>
+              <dd>{result.reconstruction.failed}</dd>
+            </div>
+            <div>
+              <dt>Unsizable results</dt>
+              <dd>{result.reconstruction.unsizable}</dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
 
       {result.warnings.length > 0 ? (
         <section className="evidence-card">

@@ -37,6 +37,7 @@ export default async function MethodologyPage() {
         methodology.provenance.methodologyVersion
       }
       ledgerSeq={health.data?.latestScanLedgerSeq}
+      buildRevision={health.data?.buildRevision}
       stalenessSeconds={methodology.provenance.stalenessSeconds}
     >
       <PageHeader title="Which thresholds produced these numbers?">

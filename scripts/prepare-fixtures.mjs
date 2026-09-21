@@ -13,7 +13,7 @@ const fixtures = {
 };
 let source =
   '// Generated from public/evidence by scripts/prepare-fixtures.mjs. Do not edit fixture values.\n';
-source += 'import type { components } from "./schema";\n\n';
+source += 'import type { components } from "../api/schema";\n\n';
 for (const [name, [file, schema]] of Object.entries(fixtures)) {
   const data = JSON.parse(
     readFileSync(
@@ -23,7 +23,7 @@ for (const [name, [file, schema]] of Object.entries(fixtures)) {
   );
   source += `export const ${name}: components["schemas"]["${schema}"] = ${JSON.stringify(data, null, 2)};\n\n`;
 }
-writeFileSync(new URL('../lib/api/fixtures.ts', import.meta.url), source);
+writeFileSync(new URL('../lib/keel/fixtures/fixtures.ts', import.meta.url), source);
 
 // This export has no quoted/multiline fields. Keep all CSV values as strings.
 const [header, ...rows] = readFileSync(
@@ -39,6 +39,6 @@ const daily = rows.map((row) =>
   ),
 );
 writeFileSync(
-  new URL('../lib/api/february-evidence.json', import.meta.url),
+  new URL('../lib/keel/fixtures/february-evidence.json', import.meta.url),
   JSON.stringify(daily, null, 2) + '\n',
 );

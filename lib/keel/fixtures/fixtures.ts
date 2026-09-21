@@ -1,5 +1,5 @@
 // Generated from public/evidence by scripts/prepare-fixtures.mjs. Do not edit fixture values.
-import type { components } from "./schema";
+import type { components } from "../api/schema";
 
 export const healthy: components["schemas"]["AssetRisk"] = {
   "asset": {
@@ -479,7 +479,7 @@ export const brokenBook: components["schemas"]["AssetRisk"] = {
   "warnings": [
     "A spread of 196.0777141 percent exceeds the spreadExtremePct threshold. The midPrice of 53.8971414 is the midpoint of an ask at 106.7372828 and a bid at 1.0570000, two prices unrelated to each other. Every metric derived from midPrice, including the 2/5/10 percent depth ladder, is meaningless in this response.",
     "There is no AMM pool for this pair, so every fromAmm value is zero and maxReachablePrice is determined entirely by the orderbook.",
-    "dataSource is offers-implied. The orderbook snapshot at this ledger was unavailable, so both sides of the book were reconstructed by replaying manage_sell_offer and manage_buy_offer operations. That is a reconstruction, so the depth figures are not a direct measurement, but it is a stronger source than trades-implied would be: an offer proves liquidity that was posted, while a trade proves only liquidity that was consumed.",
+    "dataSource is offers-implied. The orderbook snapshot at this ledger was unavailable, so both sides of the book were reconstructed by folding the offer operations and the trades that consumed them forward to it. That is a reconstruction, so the depth figures are not a direct measurement, but it is a stronger source than trades-implied would be: an offer proves liquidity that was posted, while a trade proves only liquidity that was consumed.",
     "A cost of 0.0000000 at delta 0.5 with reachable true is the most dangerous condition Keel can report: the price 80.8457121 is attainable without paying anything to a third party. Compare that with delta 1.0, 10, and 100, whose cost is 130.0627093 but whose reachable is false; there the book runs out before the target and that cost figure does not mean the target is expensive to reach.",
     "maxSafeCollateral is 0.0000000 because the sell side depth at the liquidation delta is zero, so the first term of C_max is zero and the minimum is zero with it.",
     "Six flags could not be assessed from this snapshot because they require supply data, trade history, or trustline distribution. They are listed in unevaluatedFlags, and bandConfidence is partial as a result. The band still reads CRITICAL because two CRITICAL flags are already triggered, so the missing data does not change the conclusion here. That is a coincidence of this case and not a guarantee: partial means the band is a floor, and it can only be worse than reported.",
@@ -502,7 +502,7 @@ export const historical: components["schemas"]["AssetRisk"] = {
   "ledgerClosedAt": "2026-05-19T11:02:44Z",
   "computedAt": "2026-08-19T02:40:11Z",
   "methodologyVersion": "1.0.8-draft",
-  "dataSource": "hubble",
+  "dataSource": "offers-implied",
   "midPrice": "0.0104200",
   "priceSource": "book",
   "poolSpotPrice": null,
@@ -625,8 +625,20 @@ export const historical: components["schemas"]["AssetRisk"] = {
   "warnings": [
     "There was no AMM liquidity for this pair at that ledger.",
     "The delta 10 and 100 rungs were not reached. Every ask is exhausted at a price of 0.0891000. The cost of 2210.4400000 on both of those rungs is the cost of exhausting the book, not the cost of reaching the target price.",
-    "There was no genuine trade within the 900 second oracle window, so the oracle resistance ratio cannot be computed."
-  ]
+    "There was no genuine trade within the 900 second oracle window, so the oracle resistance ratio cannot be computed.",
+    "reconstructed book: 42 of 65 account walk(s) stopped at the operation floor at ledger 61300000, so an offer created before that ledger is invisible to this row",
+    "reconstructed book: 3 of 65 account walk(s) reached their page cap before the account ran out of operations",
+    "every gap above REMOVES offers, so this book is too THIN and never too deep: read its depth as a lower bound and its risk as an upper bound"
+  ],
+  "reconstruction": {
+    "truncated": 3,
+    "stoppedAtFloor": 42,
+    "failed": 0,
+    "unsizable": 0,
+    "missingOffers": 0,
+    "floorLedger": 61300000,
+    "accountsWalked": 65
+  }
 };
 
 export const market: components["schemas"]["AssetListResponse"] = {
@@ -791,20 +803,23 @@ export const methodology: components["schemas"]["Methodology"] = {
   "calibrated": false,
   "calibrationNote": "The thresholds were chosen based on the magnitude of the Blend incident of February 2026 and on conservative judgement, not calibrated against a set of incidents. Every flag is reported separately so that consumers can apply their own thresholds.",
   "thresholds": {
-    "manipulationCheapAbsolute": "10000.0000000",
-    "manipulationCheapUnit": "XLM",
-    "manipulationRatioLowPct": "1.0",
-    "thinDepth5PctAbsolute": "50000.0000000",
-    "thinDepth5PctUnit": "XLM",
-    "holderTop1ExtremePct": "50.0",
-    "holderTop10HighPct": "80.0",
+    "manipulationCheapAbsolute": "10000",
+    "manipulationCheapUnit": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    "manipulationRatioLowPct": "0.1",
+    "thinDepth5PctAbsolute": "50000",
+    "thinDepth5PctUnit": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+    "holderTop1ExtremePct": "50",
+    "holderTop10HighPct": "80",
     "genuineTradeStaleDays": 30,
     "genuineTradeWarnDays": 7,
-    "washTradeSuspectedPct": "50.0",
-    "spreadExtremePct": "20.0",
-    "priceDivergencePct": "10.0",
+    "washTradeSuspectedPct": "50",
+    "spreadExtremePct": "20",
+    "priceDivergencePct": "10",
     "oracleWindowSeconds": 900,
-    "ammFeeBp": 30
+    "liquidationDelta": 0.1,
+    "liquidationHaircut": "0.5",
+    "manipulationCriticalDelta": 0.5,
+    "manipulationMargin": "0.25"
   }
 };
 

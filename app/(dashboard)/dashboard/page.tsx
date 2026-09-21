@@ -160,6 +160,7 @@ export default async function AssetsPage({
         assets.provenance.methodologyVersion
       }
       ledgerSeq={health.data?.latestScanLedgerSeq}
+      buildRevision={health.data?.buildRevision}
       stalenessSeconds={assets.provenance.stalenessSeconds}
       search={query}
     >

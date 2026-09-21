@@ -66,7 +66,7 @@ keel-openapi.yaml
 openapi-typescript
         │
         ▼
-lib/api/schema.d.ts
+lib/keel/api/schema.d.ts
         │
         ▼
 openapi-fetch client

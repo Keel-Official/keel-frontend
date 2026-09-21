@@ -1,4 +1,4 @@
-import { healthy } from '../../lib/api/fixtures';
+import { healthy } from '../../lib/keel/fixtures/fixtures';
 import { ProvenanceStrip } from '../keel/result';
 
 const questions = [
