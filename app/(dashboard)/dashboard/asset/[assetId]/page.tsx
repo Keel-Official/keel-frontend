@@ -13,9 +13,22 @@ import {
   type KeelExampleName,
 } from '@/lib/keel/api/client';
 import { ChartCard } from '@/components/dashboard/chart-card';
+import { EngineWarnings } from '@/components/dashboard/engine-warnings';
+import { LedgerPicker } from '@/components/dashboard/ledger-picker';
+import {
+  oracleRows,
+  priceRows,
+  reachRows,
+} from '@/components/dashboard/reading-rows';
+import { ReconstructionPanel } from '@/components/dashboard/reconstruction-panel';
 import { fetchDepth, fetchHealth, fetchHistory } from '@/lib/keel/api/server';
 import type { HistoryResponse } from '@/lib/keel/api/types';
-import { DASHBOARD_BASE, decodeAssetId } from '@/lib/keel/routes';
+import {
+  DASHBOARD_BASE,
+  dashboardAssetPath,
+  decodeAssetId,
+} from '@/lib/keel/routes';
+import { parseLedger } from '@/lib/keel/url/ledger';
 import { SEQUENTIAL_RAMP } from '@/lib/keel/design/tokens';
 import {
   HISTORY_RANGES,
@@ -53,10 +66,14 @@ export default async function AssetDetailPage({
   const example = readMockExample(await searchParams);
 
   const historyQuery = parseHistoryQuery(await searchParams);
+  // A past ledger turns the page into one reading of the engine's historical path.
+  // The stored series is not fetched then: its window is sized from today's ledger and
+  // would sit beside a reading from months earlier as though they were one view.
+  const atLedger = parseLedger((await searchParams).ledger);
 
   const [health, depth] = await Promise.all([
     fetchHealth(),
-    fetchDepth(assetId, example),
+    fetchDepth(assetId, example, atLedger ?? undefined),
   ]);
 
   // The series is a separate endpoint from the replay path that health turns off, and
@@ -64,7 +81,7 @@ export default async function AssetDetailPage({
   const latestLedger =
     health.data?.latestScanLedgerSeq ?? depth.data?.ledgerSeq ?? null;
   const history =
-    latestLedger === null
+    latestLedger === null || atLedger !== null
       ? null
       : await fetchHistory(
           assetId,
@@ -82,6 +99,7 @@ export default async function AssetDetailPage({
       }
       ledgerSeq={risk?.ledgerSeq ?? health.data?.latestScanLedgerSeq}
       stalenessSeconds={depth.provenance.stalenessSeconds}
+      buildRevision={health.data?.buildRevision}
     >
       {example ? (
         <Notice
@@ -124,6 +142,23 @@ export default async function AssetDetailPage({
               <code className="tabular">http://localhost:4010</code> or to the
               live API, then reload.
             </p>
+          ) : atLedger !== null ? (
+            // The historical path answers only for ledgers a replay has stored, so a
+            // refusal here is usually "not stored", and the way on is the live reading.
+            <p className="flex flex-wrap gap-x-4 gap-y-1">
+              <Link
+                className="underline underline-offset-2"
+                href={dashboardAssetPath(assetId)}
+              >
+                Read this asset live instead
+              </Link>
+              <Link
+                className="underline underline-offset-2"
+                href={DASHBOARD_BASE}
+              >
+                Back to the monitored set
+              </Link>
+            </p>
           ) : (
             <p>
               <Link
@@ -147,6 +182,8 @@ export default async function AssetDetailPage({
           historyFailed={history?.failure?.message ?? null}
           historyQuery={historyQuery}
           assetId={assetId}
+          atLedger={atLedger}
+          historicalAvailable={health.data?.historicalAvailable ?? null}
         />
       )}
     </AppShell>
@@ -159,27 +196,50 @@ function AssetRiskView({
   historyFailed,
   historyQuery,
   assetId,
+  atLedger,
+  historicalAvailable,
 }: {
   risk: AssetRisk;
   history: HistoryResponse | null;
   historyFailed: string | null;
   historyQuery: HistoryQuery;
   assetId: string;
+  atLedger: number | null;
+  historicalAvailable: boolean | null;
 }) {
   const quoteCode = risk.quote.code;
   const ceiling = readCollateralCeiling(risk, quoteCode);
+  const oracle = oracleRows(risk);
 
   return (
     <div className="flex flex-col gap-10">
-      <Section id="history" hideHeading title="How has this moved over time?">
-        <HistoryView
-          assetId={assetId}
-          history={history}
-          failed={historyFailed}
-          quoteCode={risk.quote.code}
-          historyQuery={historyQuery}
+      {atLedger !== null ? (
+        <ReconstructionPanel
+          risk={risk}
+          liveHref={dashboardAssetPath(assetId)}
         />
-      </Section>
+      ) : (
+        <Section id="history" hideHeading title="How has this moved over time?">
+          <HistoryView
+            assetId={assetId}
+            history={history}
+            failed={historyFailed}
+            quoteCode={risk.quote.code}
+            historyQuery={historyQuery}
+          />
+        </Section>
+      )}
+
+      {/* Offered only when the engine says its historical path is on. When it is off,
+          every ledger would be refused, and a control that can only fail is noise. */}
+      {historicalAvailable === true ? (
+        <Section
+          title="What did this look like at a past ledger?"
+          standfirst="The engine answers only for ledgers a replay has stored, and says so when it has not. A stored past reading is rebuilt from the operation stream, so it carries its own gaps."
+        >
+          <LedgerPicker assetId={assetId} current={atLedger} />
+        </Section>
+      ) : null}
 
       <Section
         title="How much can this asset safely back?"
@@ -199,6 +259,20 @@ function AssetRiskView({
 
           <CollateralCeilingPanel ceiling={ceiling} />
         </div>
+      </Section>
+
+      <Section
+        title="What does the engine say about this reading?"
+        standfirst="The engine's own notes on the limits of this computation, verbatim and in the order served."
+      >
+        <EngineWarnings warnings={risk.warnings} />
+      </Section>
+
+      <Section
+        title="Where does the price come from?"
+        standfirst="Both price sources are shown, not only the one that won, and the pair that set the band is named."
+      >
+        <FigureList rows={priceRows(risk)} />
       </Section>
 
       <Section
@@ -231,6 +305,29 @@ function AssetRiskView({
           price bound. The order-book-only column is the one that answers
           whether a target is attainable, and it is the one Keel itself uses.
         </p>
+
+        <FigureList className="mt-6" rows={reachRows(risk)} />
+      </Section>
+
+      <Section
+        title="What does the oracle window add?"
+        standfirst="An averaging oracle makes an attacker outweigh genuine trading as well as move the book. A market with no genuine volume has no such defence."
+      >
+        {oracle === null ? (
+          // The contract reserves null for "no executable price". The engine can also
+          // send null beside a price it did compute, so the reason is stated only when
+          // the response itself carries it, and otherwise the absence is just said.
+          <Notice
+            tone="empty"
+            title={
+              risk.priceSource === 'none'
+                ? 'Not computed: there is no executable price to move'
+                : 'The engine sent no oracle-window figures for this reading'
+            }
+          />
+        ) : (
+          <FigureList rows={oracle} />
+        )}
       </Section>
 
       <Section

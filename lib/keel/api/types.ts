@@ -19,6 +19,7 @@ export type ManipulationCost = Schemas['ManipulationCost'];
 export type OracleResistance = Schemas['OracleResistance'];
 export type VolumeToSupply = Schemas['VolumeToSupply'];
 export type LastGenuineTrade = Schemas['LastGenuineTrade'];
+export type Reconstruction = Schemas['Reconstruction'];
 export type PairSummary = Schemas['PairSummary'];
 export type HistoryPoint = Schemas['HistoryPoint'];
 export type HistoryResponse = Schemas['HistoryResponse'];

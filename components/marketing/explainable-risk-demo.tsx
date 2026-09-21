@@ -1,6 +1,6 @@
 import { ChevronRight, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { brokenBook } from '../../lib/api/fixtures';
+import { brokenBook } from '../../lib/keel/fixtures/fixtures';
 import { MetricValue } from '../keel/result';
 import {
   formatAmount,

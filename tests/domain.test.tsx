@@ -13,7 +13,7 @@ import {
   noPrice,
   brokenBook,
   historical,
-} from '../lib/api/fixtures';
+} from '../lib/keel/fixtures/fixtures';
 
 describe('Keel result semantics', () => {
   it('shows partial confidence even for LOW', () => {

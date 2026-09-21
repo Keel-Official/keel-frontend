@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import daily from '../api/february-evidence.json';
+import daily from '../keel/fixtures/february-evidence.json';
 
 // These are observed trade-leg price spans, not depth estimates or risk bands.
 export const februaryPoints = daily.map((row) => ({

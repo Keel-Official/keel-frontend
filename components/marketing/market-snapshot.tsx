@@ -1,7 +1,7 @@
 import { ChevronRight } from 'lucide-react';
 import Decimal from 'decimal.js';
 import Link from 'next/link';
-import { market } from '../../lib/api/fixtures';
+import { market } from '../../lib/keel/fixtures/fixtures';
 import { dashboardLinks } from '../../lib/dashboard';
 import { geometryRatio } from '../../lib/format/keel';
 import { flagCopy } from '../../lib/keel/format/glossary';

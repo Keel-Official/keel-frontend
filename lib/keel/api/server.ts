@@ -202,12 +202,21 @@ export async function fetchDepth(
    * build, so a URL cannot change what a reader is shown.
    */
   example?: KeelExampleName,
+  /**
+   * A past ledger, for the engine's historical path. Omitted, the engine answers with
+   * the latest scan. A ledger no replay has stored is refused by the engine with a
+   * message of its own, and that refusal is rendered as served.
+   */
+  ledger?: number,
 ): Promise<Fetched<AssetRisk>> {
   try {
     const client = createKeelClient(example ? { example } : {});
     const result = await client.GET('/asset/{assetId}/depth', {
       ...NO_CACHE,
-      params: { path: { assetId } },
+      params: {
+        path: { assetId },
+        ...(ledger === undefined ? {} : { query: { ledger } }),
+      },
     });
     return {
       data: result.data ?? null,

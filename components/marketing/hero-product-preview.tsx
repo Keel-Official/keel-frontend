@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Database, Layers, Ruler } from 'lucide-react';
-import { healthy } from '../../lib/api/fixtures';
+import { healthy } from '../../lib/keel/fixtures/fixtures';
 import { MetricValue, RiskBadge } from '../keel/result';
 import {
   formatAmount,

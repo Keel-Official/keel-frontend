@@ -270,3 +270,46 @@ test('both palettes are accessible, not just the one that ships by default', asy
     .analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
 });
+
+test('the backtest opens a reconstructed ledger, and the page says it is a lower bound', async ({
+  page,
+}) => {
+  // The engine's historical path, contract 1.7.0. The assertions are about what a
+  // reconstructed reading must say before any figure, never about a specific value.
+  await page.goto('/backtest');
+
+  const ledgers = page.locator('#ledgers');
+  await expect(ledgers.getByRole('link')).toHaveCount(3);
+  await ledgers.getByRole('link').nth(1).click();
+
+  await expect(page).toHaveURL(/\/dashboard\/asset\/.+\?ledger=61340262$/);
+  await expect(
+    page.getByRole('heading', { name: /A past reading, at ledger 61340262/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/rebuilt, not observed/)).toBeVisible();
+  await expect(page.getByText('Offers never seen created')).toBeVisible();
+  // The stored series is not drawn beside a reading from months earlier.
+  await expect(
+    page.getByRole('heading', { name: 'How has this moved over time?' }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('heading', {
+      name: 'What does the engine say about this reading?',
+    }),
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test('a ledger the engine has not stored is refused by name, with a way back', async ({
+  page,
+}) => {
+  await page.goto(
+    '/dashboard/asset/USTRY%3AGCRYUGD5NVARGXT56XEZI5CIFCQETYHAPQQTHO2O3IQZTHDH4LATMYWC?ledger=61340000',
+  );
+  await expect(page.getByText(/The engine reported/)).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Read this asset live instead' }),
+  ).toBeVisible();
+});

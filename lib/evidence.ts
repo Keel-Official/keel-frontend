@@ -1,4 +1,12 @@
-import { brokenBook, healthy, market, methodology, noPrice, poolOnly } from './api/fixtures';
+import {
+  brokenBook,
+  healthy,
+  historical,
+  market,
+  methodology,
+  noPrice,
+  poolOnly,
+} from './keel/fixtures/fixtures';
 
 /**
  * The recorded evidence behind the claims on this page, rendered rather than dumped.
@@ -66,6 +74,15 @@ export const EVIDENCE: readonly EvidenceItem[] = [
     data: poolOnly,
   },
   {
+    slug: 'asset-historical',
+    kind: 'asset',
+    title: 'What a rebuilt past reading looks like',
+    summary:
+      'A result at a past ledger, rebuilt from the operation stream rather than read from a live book. Every gap the rebuild knows about removes offers, so its depth is a lower bound and its risk an upper bound, and the result counts its own gaps so a reader can see how large they are.',
+    rawPath: '/evidence/asset-historical.json',
+    data: historical,
+  },
+  {
     slug: 'asset-list-mixed',
     kind: 'list',
     title: 'A set of markets, side by side',
@@ -88,3 +105,32 @@ export const EVIDENCE: readonly EvidenceItem[] = [
 export function findEvidence(slug: string): EvidenceItem | undefined {
   return EVIDENCE.find((item) => item.slug === slug);
 }
+
+/**
+ * Evidence the engine filed after the report's sections 5 and 6 were written, linked
+ * where it lives rather than copied. Each is a dated record in the engine repository
+ * with its own reproduction steps; a copy here would be a second home that drifts.
+ */
+const ENGINE_EVIDENCE_BASE =
+  'https://github.com/Keel-Official/keel-backend/tree/main/docs/evidences';
+
+export interface EngineEvidenceLink {
+  readonly title: string;
+  readonly summary: string;
+  readonly href: string;
+}
+
+export const ENGINE_EVIDENCE: readonly EngineEvidenceLink[] = [
+  {
+    title: 'The daily book rebuild, beyond the USTRY maker',
+    summary:
+      'Read 17 September 2026. Whether the 00:10 UTC withdrawal-and-repost seen on the USTRY book is something other makers do, measured over the same February window.',
+    href: `${ENGINE_EVIDENCE_BASE}/2026-09-17-maker-cadence-generalisation`,
+  },
+  {
+    title: 'The first pass of the trade-derived metrics',
+    summary:
+      'Read 18 September 2026. What volume-to-supply and time-since-last-genuine-trade cost to compute on public Horizon, and what they answer across the demonstration set.',
+    href: `${ENGINE_EVIDENCE_BASE}/2026-09-18-trade-derived-metrics-first-pass`,
+  },
+];

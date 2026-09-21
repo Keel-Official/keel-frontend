@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import daily from './api/february-evidence.json';
+import daily from './keel/fixtures/february-evidence.json';
 
 /**
  * The February USTRY/USDC backtest, as the `/backtest` page reads it.
@@ -37,6 +37,38 @@ export const BACKTEST = {
   csvPath: '/evidence/ustry-february-daily.csv',
   notesPath: '/evidence/ustry-february-evidence.md',
 } as const;
+
+/**
+ * The three ledgers of 22 February 2026 the engine's historical path serves.
+ *
+ * These are the ledgers DEC-023 in the engine repository authorises for storage, and
+ * `scripts/verify-sow.sh` there probes exactly these three. They are named here because
+ * this page cites the evidence behind the report; the figures at each ledger are NOT
+ * copied here. Each link asks the engine, so the band, the depth and the gaps in each
+ * rebuilt book are read from the answer rather than from a copy that could drift.
+ *
+ * The descriptions are timing facts from the operation stream: the book's market maker
+ * deleted its whole ladder at ledger 61340261 and re-posted it 79 seconds later
+ * (report section 6.4). What that timing MEANS is the report's section 6.5, and it is
+ * not restated here.
+ */
+export const RECONSTRUCTED_LEDGERS = [
+  {
+    ledger: 61340172,
+    closedAt: '2026-02-22T00:01:24Z',
+    note: 'Nine minutes earlier, with the ladder in place.',
+  },
+  {
+    ledger: 61340262,
+    closedAt: '2026-02-22T00:10:15Z',
+    note: 'Inside the 79 second window after the ladder was withdrawn.',
+  },
+  {
+    ledger: 61340263,
+    closedAt: '2026-02-22T00:10:21Z',
+    note: 'The next ledger, still inside that window.',
+  },
+] as const;
 
 /** The rungs the engine measures, as the keys the rows carry them under. */
 const RUNGS = ['0.02', '0.05', '0.1', '0.5'] as const;

@@ -26,6 +26,13 @@ export interface AppShellProps {
   ledgerSeq?: number | null;
   stalenessSeconds?: string | null;
   /**
+   * The commit the answering API was built from, from `GET /health`. It is in the
+   * footer rather than the header because it answers an operator's question — which
+   * build produced this? — and not a reader's. A missing field and an unreached API are
+   * both said, rather than left blank.
+   */
+  buildRevision?: string | null;
+  /**
    * The view the header's search should carry through. Omitted on the pages that have
    * no filter state of their own — an asset result, the methodology — where a search
    * lands on the unfiltered set.
@@ -38,6 +45,7 @@ export function AppShell({
   methodologyVersion,
   ledgerSeq,
   stalenessSeconds,
+  buildRevision,
   search,
 }: AppShellProps) {
   return (
@@ -100,6 +108,18 @@ export function AppShell({
           >
             API health
           </a>
+          <span>
+            Engine build{' '}
+            {buildRevision ? (
+              <code className="tabular" title={buildRevision}>
+                {buildRevision.slice(0, 7)}
+              </code>
+            ) : (
+              <span className="italic text-[var(--unmeasured)]">
+                not reported
+              </span>
+            )}
+          </span>
         </div>
       </footer>
     </>

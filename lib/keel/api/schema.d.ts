@@ -657,6 +657,64 @@ export interface components {
              *     These should be shown to the user, not hidden.
              */
             warnings: string[];
+            reconstruction?: components["schemas"]["Reconstruction"];
+        };
+        /**
+         * @description What the acquisition of a RECONSTRUCTED book detected about its own
+         *     completeness. Added in 1.7.0 by DEC-022.
+         *
+         *     **ABSENT MEANS THIS ROW IS NOT A RECONSTRUCTION. It never means a walk ran
+         *     and found nothing.** A `horizon` response reads the live book directly and
+         *     walks nothing, so it has no gaps to report and this key is omitted rather
+         *     than sent as null. A consumer that renders "gaps: unknown" beside a direct
+         *     reading has read the absence backwards.
+         *
+         *     **EVERY COUNTER IN HERE REMOVES OFFERS, so a row carrying them describes a
+         *     book that is too THIN and never too deep.** Read its depth as a lower bound
+         *     and its risk as an upper bound. The two gaps that would run the other way,
+         *     a book inflated by offers that were already eaten and a crossed book, can
+         *     never appear on a stored row: a reconstruction carrying either is refused
+         *     before it is computed, with no override.
+         *
+         *     **It is not a quality score and not a proof.** Zero everywhere means this
+         *     walk detected nothing, not that it saw every offer. An offer whose owner
+         *     never traded and is not resting today is invisible to this method, which is
+         *     the limitation `01-data-sources.md` states and this object cannot see.
+         *
+         *     `warnings` carries the same facts as sentences. Both are sent on purpose:
+         *     this object is for a consumer that branches, the prose is for the reader of
+         *     a response who never will.
+         */
+        Reconstruction: {
+            /** @description Account walks that reached their page cap before the account ran out of operations */
+            truncated: number;
+            /**
+             * @description Account walks that ended at the operation floor rather than at the
+             *     account's own first operation. Read it with `floorLedger`: an offer
+             *     created before that ledger is invisible to this row.
+             */
+            stoppedAtFloor: number;
+            /** @description Account walks that failed at the data source and contributed no offers */
+            failed: number;
+            /** @description Operation results whose remaining amount could not be read */
+            unsizable: number;
+            /**
+             * @description Offers that a later trade named as resting and that this walk never saw
+             *     created. Each one is a hole the reconstruction found in itself.
+             */
+            missingOffers: number;
+            /**
+             * Format: int64
+             * @description The operation floor the walk was given, or 0 when it was given none.
+             *     Present so that `stoppedAtFloor` can be read as a statement about which
+             *     offers are missing rather than as a bare count.
+             */
+            floorLedger: number;
+            /**
+             * @description The denominator for the three walk counters above. 42 of 65 is a
+             *     different statement from 42 of 400.
+             */
+            accountsWalked: number;
         };
         AssetSummary: {
             asset: components["schemas"]["Asset"];

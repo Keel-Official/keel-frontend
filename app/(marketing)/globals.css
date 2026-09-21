@@ -3498,6 +3498,29 @@ dl.risk-rungs {
     700 13px/1.3 var(--font-mono),
     monospace;
 }
+.backtest-ledgers {
+  grid-template-columns: repeat(3, 1fr);
+}
+/* `.backtest-kinds span` styles the one count line of a kind card; these cards carry
+   tabular spans inside running text, which must read as the text around them. */
+.backtest-ledgers span {
+  margin-top: 0;
+  color: inherit;
+  font: inherit;
+}
+.backtest-ledger-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  margin-top: auto;
+  padding-top: 14px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .backtest-reproduce {
   margin-top: 24px;
 }

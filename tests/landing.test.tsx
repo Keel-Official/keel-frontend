@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, it } from 'vitest';
 import Home from '../app/(marketing)/page';
-import { healthy, brokenBook, history, market } from '../lib/api/fixtures';
+import { healthy, brokenBook, history, market } from '../lib/keel/fixtures/fixtures';
 import { februaryPoints } from '../lib/format/history';
 import { EVIDENCE } from '../lib/evidence';
 import { BlendCasePreview } from '../components/marketing/blend-case-preview';
@@ -75,8 +75,9 @@ it('every local navigation link resolves to a section, a page, or a real artifac
 
 it('offers the backtest report, and sends it somewhere that stays current', () => {
   // The Statement of Work asks for the report to be published openly, and this page is
-  // where a reader arrives. The link is deliberately not `public/evidence/blend-report.md`:
-  // that copy stopped at the draft whose sections 5 and 6 were empty. See `lib/report.ts`.
+  // where a reader arrives. The link deliberately goes to the engine repository rather
+  // than to a copy under `public/`: the last such copy stopped at the draft whose
+  // sections 5 and 6 were empty, and was removed. See `lib/report.ts`.
   const { container } = render(<Home />);
   const links = Array.from(
     container.querySelectorAll(`a[href="${BACKTEST_REPORT_URL}"]`),
