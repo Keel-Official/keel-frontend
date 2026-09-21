@@ -67,10 +67,18 @@ import { TrendChart } from './trend-chart';
 
 export interface OverviewHeroProps {
   rows: readonly AssetSummary[];
-  /** The asset in focus: the one opened, or the deepest market in view. */
-  risk: AssetRisk | null;
-  history: HistoryResponse | null;
-  historyFailure: string | null;
+  /**
+   * The asset in focus, as a slot rather than as its data.
+   *
+   * THE SLOT IS WHAT LETS THE PAGE STREAM. The focus card needs two more requests
+   * than the rest of the page does, and the attention card beside it needs none, so
+   * taking the card's data here would hold every count on the screen back until the
+   * slowest series arrived. The page passes a Suspense boundary instead: the counts
+   * and the table render from the first round trip, and the card fills in when its
+   * own requests land. `FocusCard` and `FocusCardPending` are the two things the
+   * slot is expected to hold.
+   */
+  focus: React.ReactNode;
   monitored: number | null | undefined;
   query: AssetQuery;
   className?: string;
@@ -78,9 +86,7 @@ export interface OverviewHeroProps {
 
 export function OverviewHero({
   rows,
-  risk,
-  history,
-  historyFailure,
+  focus,
   monitored,
   query,
   className,
@@ -92,20 +98,42 @@ export function OverviewHero({
         className,
       )}
     >
-      <FocusCard
-        risk={risk}
-        history={history}
-        historyFailure={historyFailure}
-        query={query}
-      />
+      {focus}
       <AttentionCard rows={rows} monitored={monitored} query={query} />
     </div>
   );
 }
 
+/**
+ * The focus card while its two requests are in flight.
+ *
+ * It holds the card's frame and height so nothing beside it moves when the figures
+ * land, and it says what it is waiting for in words: a blank box and a spinner say
+ * nothing about whether the market is empty or the answer is late, and on this page
+ * those are different findings.
+ */
+export function FocusCardPending({ query }: { query: AssetQuery }) {
+  return (
+    <section
+      aria-busy="true"
+      className="flex min-h-[22rem] min-w-0 flex-col rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-5"
+    >
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--keel-muted)] uppercase">
+          <Term name="depth">Tradable depth</Term>
+        </div>
+        <RangeTabs query={query} />
+      </header>
+      <p role="status" className="mt-4 text-sm text-[var(--keel-muted)]">
+        Reading the deepest market in view and its stored series&hellip;
+      </p>
+    </section>
+  );
+}
+
 /* --- left: the asset in focus ------------------------------------------- */
 
-function FocusCard({
+export function FocusCard({
   risk,
   history,
   historyFailure,
