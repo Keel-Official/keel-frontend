@@ -16,6 +16,11 @@ import BacktestPage from '../app/(marketing)/backtest/page';
 import { RECONSTRUCTED_LEDGERS } from '../lib/backtest';
 import { healthy, historical, noPrice } from '../lib/keel/fixtures/fixtures';
 import { assetAtLedgerPath, parseLedger } from '../lib/keel/url/ledger';
+import {
+  HISTORY_SOURCES,
+  isStoredRangeSource,
+} from '../lib/keel/assets/history-range';
+import type { DataSource } from '../lib/keel/format/flags';
 
 /**
  * The historical path, contract 1.7.0.
@@ -205,5 +210,29 @@ describe('the backtest page', () => {
     );
     // The band at each ledger is the engine's to say, so the page must not state one.
     expect(section.textContent).not.toMatch(/CRITICAL|LOW|HIGH|MEDIUM/);
+  });
+});
+
+describe('a stored-range source', () => {
+  it('names the sources whose rows exist only where a replay ran', () => {
+    // The scan writes a horizon row every fifteen minutes, so a window lands on
+    // rows. A reconstruction is written by keel replay, at three ledgers in
+    // February 2026, and the engine caps one windowed request at 90 days: no
+    // window this dashboard offers can contain them. Contract 1.8.0 lets the
+    // window be omitted, and these are the sources that must omit it.
+    expect(isStoredRangeSource('offers-implied')).toBe(true);
+    expect(isStoredRangeSource('trades-implied')).toBe(true);
+    expect(isStoredRangeSource('horizon')).toBe(false);
+    expect(isStoredRangeSource('hubble')).toBe(false);
+  });
+
+  it('is exactly the set the window pickers are hidden for', () => {
+    // Every source the UI offers is classified, so adding one to the contract
+    // cannot leave it silently treated as windowed.
+    const sources = Object.keys(HISTORY_SOURCES) as DataSource[];
+    expect(sources.filter(isStoredRangeSource).sort()).toEqual([
+      'offers-implied',
+      'trades-implied',
+    ]);
   });
 });

@@ -131,6 +131,21 @@ export function ledgerWindow(
   };
 }
 
+/**
+ * A source whose rows exist only where a replay stored them, rather than wherever the
+ * scan has been running.
+ *
+ * WHY THE WINDOW DOES NOT APPLY TO THESE. The scan writes a `horizon` row every fifteen
+ * minutes, so a window of hours or days lands on rows. A reconstruction is written by
+ * `keel replay`, which has run at three ledgers in February 2026; the tip is about 3.2
+ * million ledgers later and the engine caps one windowed request at 90 days, so no
+ * window this dashboard offers can contain them. For these the series is asked for
+ * without a window and the engine reports the range it answered with.
+ */
+export function isStoredRangeSource(source: DataSource): boolean {
+  return source === 'offers-implied' || source === 'trades-implied';
+}
+
 /** `trades-implied` bounds from below; every figure drawn from it is a floor. */
 export function isLowerBoundSource(source: DataSource): boolean {
   return source === 'trades-implied';

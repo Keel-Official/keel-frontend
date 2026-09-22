@@ -36,6 +36,7 @@ import {
   HISTORY_SOURCES,
   historyHref,
   isLowerBoundSource,
+  isStoredRangeSource,
   ledgerWindow,
   parseHistoryQuery,
   type HistoryQuery,
@@ -80,12 +81,17 @@ export default async function AssetDetailPage({
   // it needs the latest ledger to size its window, so it is fetched after health.
   const latestLedger =
     health.data?.latestScanLedgerSeq ?? depth.data?.ledgerSeq ?? null;
+  // A reconstruction is stored where a replay ran, not where the scan is, so it is
+  // asked for WITHOUT a window: contract 1.8.0, and see isStoredRangeSource. Every
+  // window this page can offer sits inside the engine's 90 day cap and none of them
+  // contains February 2026, which is why that source used to come back empty.
+  const storedRange = isStoredRangeSource(historyQuery.source);
   const history =
-    latestLedger === null || atLedger !== null
+    atLedger !== null || (latestLedger === null && !storedRange)
       ? null
       : await fetchHistory(
           assetId,
-          ledgerWindow(latestLedger, historyQuery),
+          storedRange ? null : ledgerWindow(latestLedger!, historyQuery),
           historyQuery.source,
         );
   const risk = depth.data;
@@ -393,6 +399,7 @@ function HistoryView({
   const first = points[0];
   const last = points[points.length - 1];
   const lowerBound = isLowerBoundSource(historyQuery.source);
+  const storedRange = isStoredRangeSource(historyQuery.source);
 
   const axis =
     first && last
@@ -404,32 +411,38 @@ function HistoryView({
       {/* One wrapping row, not three stacked ones. This is the only thing between the
           top of the page and the charts, so it earns as little height as it can. */}
       <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
-        <Picker
-          label="Window"
-          options={Object.entries(HISTORY_RANGES).map(([key, v]) => ({
-            key,
-            label: v.label,
-          }))}
-          active={historyQuery.range}
-          href={(key) =>
-            historyHref(assetId, historyQuery, {
-              range: key as HistoryQuery['range'],
-            })
-          }
-        />
-        <Picker
-          label="Resolution"
-          options={Object.entries(HISTORY_RESOLUTIONS).map(([key, label]) => ({
-            key,
-            label,
-          }))}
-          active={historyQuery.resolution}
-          href={(key) =>
-            historyHref(assetId, historyQuery, {
-              resolution: key as HistoryQuery['resolution'],
-            })
-          }
-        />
+        {/* Neither control applies to a stored range: the engine is asked which
+            readings it holds, and it answers with all of them. Showing them anyway
+            would offer a reader two choices that change nothing on the screen. */}
+        {storedRange ? null : (
+          <>
+            <Picker
+              label="Window"
+              options={Object.entries(HISTORY_RANGES).map(([key, v]) => ({
+                key,
+                label: v.label,
+              }))}
+              active={historyQuery.range}
+              href={(key) =>
+                historyHref(assetId, historyQuery, {
+                  range: key as HistoryQuery['range'],
+                })
+              }
+            />
+            <Picker
+              label="Resolution"
+              options={Object.entries(HISTORY_RESOLUTIONS).map(
+                ([key, label]) => ({ key, label }),
+              )}
+              active={historyQuery.resolution}
+              href={(key) =>
+                historyHref(assetId, historyQuery, {
+                  resolution: key as HistoryQuery['resolution'],
+                })
+              }
+            />
+          </>
+        )}
         <Picker
           label="Source"
           options={Object.entries(HISTORY_SOURCES).map(([key, v]) => ({
@@ -445,6 +458,14 @@ function HistoryView({
           }
         />
       </div>
+
+      {storedRange ? (
+        <Notice
+          tone="empty"
+          title="Every stored reading from this source, whenever it was taken"
+          detail="A reconstruction is written where a replay ran rather than on the scan's cadence, so there is no window to choose: the engine returns the readings it holds and the axis below is labelled from them."
+        />
+      ) : null}
 
       {lowerBound ? (
         <Notice
@@ -464,7 +485,11 @@ function HistoryView({
         <Notice
           tone="empty"
           title="No readings were stored in this range from this source"
-          detail={`The engine accepted the request and returned nothing for ${HISTORY_SOURCES[historyQuery.source].label}. The series is as old as the deployment, and the reconstruction sources are not populated in production, so a window can reach back further than anything that was recorded. It is not empty because the figures were zero.`}
+          detail={
+            storedRange
+              ? `The engine holds no stored reading for ${HISTORY_SOURCES[historyQuery.source].label} on this asset. A reconstruction exists only where keel replay has been run, and it has been run on one pair.`
+              : `The engine accepted the request and returned nothing for ${HISTORY_SOURCES[historyQuery.source].label}. The series is as old as the deployment, so a window can reach back further than anything that was recorded. It is not empty because the figures were zero.`
+          }
         />
       ) : axis === null ? null : (
         <>

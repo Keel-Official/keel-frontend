@@ -281,6 +281,13 @@ async function readMethodology(): Promise<Fetched<Methodology>> {
  * picks a window it can actually fill and the chart labels itself from the points that
  * came back rather than from the range that was asked for.
  *
+ * A NULL RANGE IS A DIFFERENT QUESTION AND IT IS THE ONLY ONE A RECONSTRUCTION ANSWERS.
+ * Stored `offers-implied` rows sit where a replay ran, which is February 2026, about 3.2
+ * million ledgers behind the tip, and the engine caps one windowed request at 90 days.
+ * Every window this dashboard could offer therefore came back empty for that source.
+ * Passing null omits `from` and `to`, which asks the engine which readings it holds, and
+ * the response reports the range it answered with. Contract 1.8.0.
+ *
  * One request is one `source`. The response names it in `dataSource`, and two sources
  * are never drawn as one line: `trades-implied` is a lower bound rather than a
  * measurement, and averaging it with a direct reading would present the weakest number
@@ -288,7 +295,7 @@ async function readMethodology(): Promise<Fetched<Methodology>> {
  */
 export async function fetchHistory(
   assetId: string,
-  range: { from: number; to: number; resolution: 'hour' | 'day' },
+  range: { from: number; to: number; resolution: 'hour' | 'day' } | null,
   /** One request is one source; the response names it back in `dataSource`. */
   source?: DataSource,
 ): Promise<Fetched<HistoryResponse>> {
@@ -299,9 +306,13 @@ export async function fetchHistory(
       params: {
         path: { assetId },
         query: {
-          from: range.from,
-          to: range.to,
-          resolution: range.resolution,
+          ...(range === null
+            ? {}
+            : {
+                from: range.from,
+                to: range.to,
+                resolution: range.resolution,
+              }),
           ...(source ? { source } : {}),
         },
       },
