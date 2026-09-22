@@ -97,7 +97,20 @@ export interface paths {
         /**
          * A time series of metrics over a ledger range
          * @description Used by the dashboard for trend curves and by the Blend case study page.
-         *     The maximum range is 90 days per request.
+         *
+         *     TWO QUESTIONS, AND THE PARAMETERS SAY WHICH ONE IS ASKED. With `from` and
+         *     `to` this answers "what happened between these two ledgers", capped at 90
+         *     days per request, and the points are downsampled into `resolution`
+         *     buckets. With BOTH omitted it answers "which readings do you hold for
+         *     this source", returns them all without bucketing, and reports the range
+         *     that came back in `from` and `to`. One bound without the other is 400
+         *     INVALID_RANGE, because it is neither question.
+         *
+         *     THE SECOND FORM IS THE ONLY WAY TO REACH A RECONSTRUCTION. Stored
+         *     `offers-implied` rows sit where the replay ran, which today is February
+         *     2026, about 3.2 million ledgers behind the tip. No window inside the 90
+         *     day cap contains them, so every windowed request for that source comes
+         *     back empty and says nothing about whether anything is stored.
          *
          *     ONE SERIES IS ONE DATA SOURCE. A result is keyed by asset, ledger,
          *     methodology version and data source, so a single ledger can hold several
@@ -591,8 +604,13 @@ export interface components {
              */
             maxReachablePrice: components["schemas"]["Decimal"] | null;
             /**
-             * @description Null when there is no executable price, because then there is no price
-             *     to move.
+             * @description Null in two cases, and `warnings` names which. When there is no
+             *     executable price, because then there is no price to move. And when the
+             *     genuine volume inside the oracle window was not measured at THIS row's
+             *     ledger: the object pairs a manipulation cost at this ledger with the
+             *     volume in the `windowSeconds` before it, and a volume from another
+             *     instant would make that pairing meaningless. A reconstructed historical
+             *     row carries no trade history and is null for the second reason.
              */
             oracleResistance?: components["schemas"]["OracleResistance"] | null;
             /**
@@ -1192,7 +1210,7 @@ export interface operations {
     };
     getAssetHistory: {
         parameters: {
-            query: {
+            query?: {
                 /**
                  * @description The quote asset used as the unit of measurement. If omitted, the asset's
                  *     PRIMARY pair is used, and the primary pair is always
@@ -1213,16 +1231,30 @@ export interface operations {
                  */
                 quote?: components["parameters"]["Quote"];
                 /**
-                 * @description The starting ledger sequence, inclusive
+                 * @description The starting ledger sequence, inclusive. Required WITH `to`, or omit
+                 *     both for the most recent stored readings of this source.
                  * @example 60890000
                  */
-                from: number;
+                from?: number;
                 /**
-                 * @description The ending ledger sequence, inclusive
+                 * @description The ending ledger sequence, inclusive. Required WITH `from`, or omit
+                 *     both for the most recent stored readings of this source.
                  * @example 60950000
                  */
-                to: number;
-                /** @description The aggregation interval between data points */
+                to?: number;
+                /**
+                 * @description The most rows one response may carry. Without a window this bounds
+                 *     how far back the stored readings are taken from, newest first, and
+                 *     they are still returned oldest first.
+                 */
+                limit?: number;
+                /**
+                 * @description The aggregation interval between data points. Applied only to a
+                 *     windowed request: without a window there is no range to divide into
+                 *     buckets, and bucketing anyway would collapse the three stored
+                 *     February reconstructions, which close inside one hour and read from
+                 *     LOW to CRITICAL, into a single point.
+                 */
                 resolution?: "hour" | "day";
                 /**
                  * @description Which data source the series is drawn from. One source per response,
