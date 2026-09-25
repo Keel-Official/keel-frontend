@@ -85,3 +85,25 @@ export function orderbookExceedsCombined(
 
   return offending;
 }
+
+/**
+ * A manipulation rung's delta, as the price rise it simulates.
+ *
+ * The contract's delta is a FRACTION of the price: "0.5 means a rise of 50 percent, 100
+ * means a rise of 10000 percent". An earlier table printed the raw value with a percent
+ * sign, which told a reader the critical rung was a half-per-cent nudge when it is a
+ * fifty per cent move — a hundredfold understatement of what the cost buys. The enum is
+ * four fixed values, so the conversion is exact.
+ */
+const DELTA_LABELS: Readonly<Record<ManipulationCost['delta'], string>> = {
+  0.5: '+50%',
+  1: '+100%',
+  10: '+1,000%',
+  100: '+10,000%',
+};
+
+export function formatManipulationDelta(
+  delta: ManipulationCost['delta'],
+): string {
+  return DELTA_LABELS[delta];
+}

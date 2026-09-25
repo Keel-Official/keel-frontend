@@ -20,11 +20,21 @@ import { cn } from '@/lib/keel/utils';
 
 export interface FlagTimelineProps {
   points: readonly HistoryPoint[];
+  /**
+   * The checks firing at the CURRENT reading. Each is marked "now" on its row, and one
+   * that fired nowhere in the window still gets a row, so this one list answers both
+   * "what fires now" and "since when" without a second list repeating the first.
+   */
+  current?: readonly Flag[];
   className?: string;
 }
 
-export function FlagTimeline({ points, className }: FlagTimelineProps) {
-  const everFired: Flag[] = [];
+export function FlagTimeline({
+  points,
+  current = [],
+  className,
+}: FlagTimelineProps) {
+  const everFired: Flag[] = [...current];
   for (const point of points) {
     for (const flag of point.flags) {
       if (!everFired.includes(flag)) everFired.push(flag);
@@ -41,14 +51,15 @@ export function FlagTimeline({ points, className }: FlagTimelineProps) {
     );
   }
 
-  // Firing on the most readings first: the persistent findings lead.
+  // Firing now first, then on the most readings: the live, persistent findings lead.
   const rows = everFired
     .map((flag) => ({
       flag,
+      now: current.includes(flag),
       firing: points.map((point) => point.flags.includes(flag)),
       count: points.filter((point) => point.flags.includes(flag)).length,
     }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => Number(b.now) - Number(a.now) || b.count - a.count);
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -60,8 +71,13 @@ export function FlagTimeline({ points, className }: FlagTimelineProps) {
           {/* The sentence a reader recognises from the table, with the engine's own
               name for the check under it for anyone matching it against the API. */}
           <span className="min-w-0">
-            <span className="block truncate text-sm text-[var(--keel-ink-strong)]">
-              {flagCopy(row.flag).label}
+            <span className="flex min-w-0 items-center gap-1.5 text-sm text-[var(--keel-ink-strong)]">
+              <span className="truncate">{flagCopy(row.flag).label}</span>
+              {row.now ? (
+                <span className="keel-marker shrink-0 rounded-sm bg-[var(--band-high-surface)] px-1 py-px !text-[var(--band-high-ink)]">
+                  now
+                </span>
+              ) : null}
             </span>
             <code
               className="tabular block truncate text-[0.7rem] text-[var(--keel-muted)]"

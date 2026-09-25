@@ -59,11 +59,35 @@ export const HISTORY_METRICS = {
 
 export type HistoryMetric = keyof typeof HISTORY_METRICS;
 
+/**
+ * The evidence behind an asset result, one tab at a time. Each used to be a section of
+ * its own down a very long page; they are the detail a reader drills into once the
+ * verdict at the top has told them where to look.
+ */
+export const ASSET_DETAILS = {
+  depth: 'Depth',
+  cost: 'Cost to move',
+  collateral: 'Collateral',
+  price: 'Price source',
+  oracle: 'Oracle window',
+  holders: 'Holders',
+  notes: 'Engine notes',
+  ledger: 'Past ledger',
+} as const;
+
+export type AssetDetail = keyof typeof ASSET_DETAILS;
+
 export interface HistoryQuery {
   readonly range: HistoryRangeKey;
   readonly resolution: HistoryResolution;
   readonly source: DataSource;
   readonly metric: HistoryMetric;
+  /**
+   * Which evidence tab is open. Not about the series, but it rides in the same URL.
+   * Null when the reader has not chosen, so the page can pick the tab that matters
+   * most for what is on screen — the engine's notes, for a reconstructed reading.
+   */
+  readonly detail: AssetDetail | null;
 }
 
 /** The whole stored series fits inside seven days today, so that is what opens. */
@@ -72,6 +96,7 @@ export const DEFAULT_HISTORY: HistoryQuery = {
   resolution: 'hour',
   source: 'horizon',
   metric: 'depth',
+  detail: null,
 };
 
 /**
@@ -112,14 +137,24 @@ export function parseHistoryQuery(params: Record<string, Raw>): HistoryQuery {
     metric:
       one(params.metric, Object.keys(HISTORY_METRICS) as HistoryMetric[]) ??
       DEFAULT_HISTORY.metric,
+    detail: one(params.detail, Object.keys(ASSET_DETAILS) as AssetDetail[]),
   };
 }
 
-/** A link with one part of the trend query replaced, keeping the rest. */
+/**
+ * A link with one part of the view replaced, keeping the rest.
+ *
+ * `ledger` carries a past-ledger reading through, so switching an evidence tab while
+ * reading ledger 61340262 stays on ledger 61340262. `hash` is where the link lands.
+ */
 export function historyHref(
   assetId: string,
   query: HistoryQuery,
   patch: Partial<HistoryQuery> = {},
+  {
+    ledger = null,
+    hash = 'history',
+  }: { ledger?: number | null; hash?: string } = {},
 ): string {
   const next = { ...query, ...patch };
   const params = new URLSearchParams();
@@ -128,10 +163,12 @@ export function historyHref(
     params.set('resolution', next.resolution);
   if (next.source !== DEFAULT_HISTORY.source) params.set('source', next.source);
   if (next.metric !== DEFAULT_HISTORY.metric) params.set('metric', next.metric);
+  if (next.detail !== null) params.set('detail', next.detail);
+  if (ledger !== null) params.set('ledger', String(ledger));
 
   const search = params.toString();
   const base = dashboardAssetPath(assetId);
-  return search === '' ? `${base}#history` : `${base}?${search}#history`;
+  return search === '' ? `${base}#${hash}` : `${base}?${search}#${hash}`;
 }
 
 /**

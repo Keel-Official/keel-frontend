@@ -58,15 +58,17 @@ test('a row leads to that asset, and the way back is the monitored set', async (
   await expect(page.getByRole('heading', { level: 1 })).toBeAttached();
 
   // The evidence a reader came for, on the asset's own page rather than beside the
-  // table: the depth ladder, and the series behind it.
+  // table: the verdict, the series behind it, the checks, and the depth ladder open
+  // as the first evidence tab.
   await expect(
-    page.getByRole('heading', {
-      name: /what volume can it absorb before the price moves/i,
-    }),
+    page.getByRole('region', { name: 'The current reading' }),
   ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'History' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Checks' })).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: /which checks were firing/i }),
-  ).toBeVisible();
+    page.getByRole('link', { name: 'Depth', exact: true }),
+  ).toHaveAttribute('aria-current', 'true');
+  await expect(page.getByText('2% from mid').first()).toBeVisible();
 
   await page.getByRole('link', { name: 'Assets', exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
@@ -289,14 +291,13 @@ test('the backtest opens a reconstructed ledger, and the page says it is a lower
   await expect(page.getByText(/rebuilt, not observed/)).toBeVisible();
   await expect(page.getByText('Offers never seen created')).toBeVisible();
   // The stored series is not drawn beside a reading from months earlier.
+  await expect(page.getByRole('heading', { name: 'History' })).toHaveCount(0);
+  // A reconstructed reading opens its evidence on the engine's own notes, which is
+  // where it says what the rebuild could not see.
   await expect(
-    page.getByRole('heading', { name: 'How has this moved over time?' }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole('heading', {
-      name: 'What does the engine say about this reading?',
-    }),
-  ).toBeVisible();
+    page.getByRole('link', { name: /^Engine notes/ }),
+  ).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('#detail ol li').first()).toBeVisible();
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);

@@ -1,13 +1,13 @@
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 
-import { BandCard } from '@/components/dashboard/band-card';
-import { BandChip } from '@/components/dashboard/band-chip';
 import { CollateralCeilingPanel } from '@/components/dashboard/collateral-ceiling';
 import { DepthLadder } from '@/components/dashboard/depth-ladder';
 import { FigureList, type FigureRow } from '@/components/dashboard/figure-list';
 import { ManipulationTable } from '@/components/dashboard/manipulation-table';
 import { Notice } from '@/components/dashboard/notice';
+import { CurrentChecks } from '@/components/dashboard/current-checks';
+import { VerdictStrip } from '@/components/dashboard/verdict-strip';
 import { AppShell, Panel } from '@/components/dashboard/layout/app-shell';
 import {
   isKeelExampleName,
@@ -36,6 +36,7 @@ import {
 import { parseLedger } from '@/lib/keel/url/ledger';
 import { SEQUENTIAL_RAMP } from '@/lib/keel/design/tokens';
 import {
+  ASSET_DETAILS,
   HISTORY_RANGES,
   HISTORY_RESOLUTIONS,
   HISTORY_SOURCES,
@@ -44,6 +45,7 @@ import {
   isStoredRangeSource,
   ledgerWindow,
   parseHistoryQuery,
+  type AssetDetail,
   type HistoryQuery,
 } from '@/lib/keel/assets/history-range';
 import { FlagTimeline } from '@/components/dashboard/flag-timeline';
@@ -220,26 +222,26 @@ function AssetRiskView({
   atLedger: number | null;
   historicalAvailable: boolean | null;
 }) {
-  const quoteCode = risk.quote.code;
-  const ceiling = readCollateralCeiling(risk, quoteCode);
-  const oracle = oracleRows(risk);
-  const identity = <AssetHeader risk={risk} />;
+  const points = history?.points ?? [];
 
+  // Three layers, in the order a reader asks: what is the verdict now, how did it get
+  // here, and what is the evidence. The first is always on screen; the evidence is one
+  // tab at a time, because seven sections of it stacked made a page nobody reached the
+  // end of.
   return (
     <div className="flex flex-col gap-6">
+      <AssetHeader risk={risk} />
+
+      <VerdictStrip risk={risk} />
+
       {atLedger !== null ? (
-        <>
-          {identity}
-          <ReconstructionPanel
-            risk={risk}
-            liveHref={dashboardAssetPath(assetId)}
-          />
-        </>
+        <ReconstructionPanel
+          risk={risk}
+          liveHref={dashboardAssetPath(assetId)}
+        />
       ) : (
         <section id="history" className="min-w-0 scroll-mt-20">
-          <h2 className="sr-only">How has this moved over time?</h2>
           <HistoryView
-            identity={identity}
             assetId={assetId}
             history={history}
             failed={historyFailed}
@@ -250,87 +252,244 @@ function AssetRiskView({
       )}
 
       <Panel
-        title="How much can this asset safely back?"
-        standfirst="The ceiling is the lower of two independent limits. Which one binds is the part a lender acts on, so both are shown."
+        title="Checks"
+        standfirst="What fires now, how long it has been firing across the window above, and what could not run."
       >
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
-          <div>
-            <BandCard band={risk.band} confidence={risk.bandConfidence} />
-            {risk.priceSource === 'none' ? (
-              <p className="mt-3 text-sm text-[var(--band-critical-ink)]">
-                This asset has no executable price at all. The band is a result
-                the engine computed, not an error, and every figure derived from
-                a price is unmeasured below.
-              </p>
-            ) : null}
-          </div>
-
-          <CollateralCeilingPanel ceiling={ceiling} />
-        </div>
-      </Panel>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          title="Where does the price come from?"
-          standfirst="Both price sources are shown, not only the one that won, and the pair that set the band is named."
-        >
-          <FigureList rows={priceRows(risk)} />
-        </Panel>
-
-        <Panel
-          title="What does the engine say about this reading?"
-          standfirst="The engine's own notes on the limits of this computation, verbatim and in the order served."
-        >
-          <EngineWarnings warnings={risk.warnings} />
-        </Panel>
-      </div>
-
-      <Panel
-        title="What volume can it absorb before the price moves?"
-        standfirst="Three rungs at 2, 5 and 10 per cent, in each direction. The buy side matters for oracle manipulation and the sell side for liquidation."
-      >
-        {risk.depth.length === 0 ? (
-          <Notice
-            tone="empty"
-            title="No depth rungs were returned for this asset"
-          />
+        {points.length > 0 ? (
+          <>
+            <FlagTimeline points={points} current={risk.flags} />
+            <CurrentChecks
+              className="mt-5 border-t border-[var(--keel-border)] pt-5"
+              triggered={risk.flags}
+              unevaluated={risk.unevaluatedFlags}
+              showTriggered={false}
+            />
+          </>
         ) : (
-          <DepthLadder depth={risk.depth} quoteCode={quoteCode} />
+          // No window to draw — a past ledger, or a series that did not load — so the
+          // current reading's two lists are the whole answer.
+          <CurrentChecks
+            triggered={risk.flags}
+            unevaluated={risk.unevaluatedFlags}
+          />
         )}
       </Panel>
 
-      <Panel
-        title="What would it cost to move the price?"
-        standfirst="Read cost together with reachability: a figure on an unreachable rung says how far the book goes, not what the move costs."
+      <EvidencePanel
+        risk={risk}
+        assetId={assetId}
+        historyQuery={historyQuery}
+        atLedger={atLedger}
+        historicalAvailable={historicalAvailable}
+      />
+    </div>
+  );
+}
+
+/**
+ * The evidence behind the verdict, one tab at a time.
+ *
+ * Each tab is a link, so an open tab is part of the URL like every other choice on this
+ * page, and a past-ledger reading stays on its ledger while a reader moves between them.
+ */
+function EvidencePanel({
+  risk,
+  assetId,
+  historyQuery,
+  atLedger,
+  historicalAvailable,
+}: {
+  risk: AssetRisk;
+  assetId: string;
+  historyQuery: HistoryQuery;
+  atLedger: number | null;
+  historicalAvailable: boolean | null;
+}) {
+  const quoteCode = risk.quote.code;
+  // The past-ledger tab is offered only when the engine says its historical path is on.
+  // When it is off every ledger would be refused, and a control that can only fail is
+  // noise.
+  const tabs = (Object.keys(ASSET_DETAILS) as AssetDetail[]).filter(
+    (key) => key !== 'ledger' || historicalAvailable === true,
+  );
+  // A reconstructed reading opens on the engine's notes: they are where it says what
+  // the rebuild could not see, and that has to be read before any figure from it.
+  const fallback: AssetDetail = atLedger !== null ? 'notes' : 'depth';
+  const open =
+    historyQuery.detail !== null && tabs.includes(historyQuery.detail)
+      ? historyQuery.detail
+      : fallback;
+
+  return (
+    <section
+      id="detail"
+      aria-labelledby="detail-title"
+      className="keel-panel min-w-0 scroll-mt-20"
+    >
+      <header className="px-4 pt-4 sm:px-5 sm:pt-5">
+        <h2
+          id="detail-title"
+          className="text-base font-semibold tracking-[-0.01em] text-[var(--keel-ink-strong)]"
+        >
+          Evidence
+        </h2>
+        <p className="mt-0.5 text-sm text-[var(--keel-muted)]">
+          The figures behind the verdict, as the engine served them.
+        </p>
+      </header>
+
+      <nav
+        aria-label="Evidence"
+        className="mt-3 overflow-x-auto border-b border-[var(--keel-border)] px-2 sm:px-3"
       >
-        <ManipulationTable
-          combined={risk.manipulationCostCombined}
-          orderbookOnly={risk.manipulationCostOrderbookOnly}
+        <ul className="flex min-w-max">
+          {tabs.map((key) => {
+            const on = key === open;
+            const count =
+              key === 'notes' && risk.warnings.length > 0
+                ? risk.warnings.length
+                : null;
+            return (
+              <li key={key}>
+                <Link
+                  href={historyHref(
+                    assetId,
+                    historyQuery,
+                    { detail: key },
+                    { ledger: atLedger, hash: 'detail' },
+                  )}
+                  scroll={false}
+                  aria-current={on ? 'true' : undefined}
+                  className={cn(
+                    '-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 px-3 text-sm transition-colors',
+                    'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
+                    on
+                      ? 'border-[var(--keel-accent)] font-semibold text-[var(--keel-ink-strong)]'
+                      : 'border-transparent text-[var(--keel-muted)] hover:text-[var(--keel-ink-strong)]',
+                  )}
+                >
+                  {ASSET_DETAILS[key]}
+                  {count === null ? null : (
+                    <span className="tabular rounded-sm bg-[var(--keel-surface-subtle)] px-1.5 text-xs text-[var(--keel-ink-strong)]">
+                      {count}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <div className="p-4 sm:p-5">
+        <EvidenceBody
+          detail={open}
+          risk={risk}
+          assetId={assetId}
+          atLedger={atLedger}
           quoteCode={quoteCode}
         />
+      </div>
+    </section>
+  );
+}
 
-        <p className="mt-3 text-xs text-[var(--keel-muted)]">
-          Reachability on the all-venues ladder is unconditionally true whenever
-          an active pool exists, because a constant product curve has no upper
-          price bound. The order-book-only column is the one that answers
-          whether a target is attainable, and it is the one Keel itself uses.
-        </p>
+function EvidenceBody({
+  detail,
+  risk,
+  assetId,
+  atLedger,
+  quoteCode,
+}: {
+  detail: AssetDetail;
+  risk: AssetRisk;
+  assetId: string;
+  atLedger: number | null;
+  quoteCode: string;
+}) {
+  switch (detail) {
+    case 'depth':
+      return (
+        <>
+          <Lead>
+            Volume each side can absorb before the price moves 2, 5 or 10 per
+            cent. Buy side bears on oracle manipulation, sell side on
+            liquidation.
+          </Lead>
+          {risk.depth.length === 0 ? (
+            <Notice
+              tone="empty"
+              title="No depth rungs were returned for this asset"
+            />
+          ) : (
+            <DepthLadder depth={risk.depth} quoteCode={quoteCode} />
+          )}
+        </>
+      );
 
-        <FigureList
-          className="mt-5 border-t border-[var(--keel-border)] pt-5"
-          rows={reachRows(risk)}
-        />
-      </Panel>
+    case 'cost':
+      return (
+        <>
+          <Lead>
+            Read cost together with reachability: a figure on an unreachable
+            rung says how far the book goes, not what the move costs.
+          </Lead>
+          <ManipulationTable
+            combined={risk.manipulationCostCombined}
+            orderbookOnly={risk.manipulationCostOrderbookOnly}
+            quoteCode={quoteCode}
+          />
+          <p className="mt-3 text-xs text-[var(--keel-muted)]">
+            Reachability on the all-venues ladder is unconditionally true
+            whenever an active pool exists, because a constant product curve has
+            no upper price bound. The order-book-only column is the one that
+            answers whether a target is attainable, and it is the one Keel
+            itself uses.
+          </p>
+          <FigureList
+            className="mt-5 border-t border-[var(--keel-border)] pt-5"
+            rows={reachRows(risk)}
+          />
+        </>
+      );
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel
-          title="What does the oracle window add?"
-          standfirst="An averaging oracle makes an attacker outweigh genuine trading as well as move the book. A market with no genuine volume has no such defence."
-        >
+    case 'collateral':
+      return (
+        <>
+          <Lead>
+            The ceiling is the lower of two independent limits. Which one binds
+            is the part a lender acts on, so both are shown.
+          </Lead>
+          <CollateralCeilingPanel
+            ceiling={readCollateralCeiling(risk, quoteCode)}
+          />
+        </>
+      );
+
+    case 'price':
+      return (
+        <>
+          <Lead>
+            Both price sources, not only the one that won, and the pair that set
+            the band.
+          </Lead>
+          <FigureList rows={priceRows(risk)} />
+        </>
+      );
+
+    case 'oracle': {
+      const oracle = oracleRows(risk);
+      return (
+        <>
+          <Lead>
+            An averaging oracle makes an attacker outweigh genuine trading as
+            well as move the book. A market with no genuine volume has no such
+            defence.
+          </Lead>
           {oracle === null ? (
-            // The contract reserves null for "no executable price". The engine can also
-            // send null beside a price it did compute, so the reason is stated only when
-            // the response itself carries it, and otherwise the absence is just said.
+            // The contract reserves null for "no executable price". The engine can
+            // also send null beside a price it did compute, so the reason is stated
+            // only when the response itself carries it.
             <Notice
               tone="empty"
               title={
@@ -342,27 +501,51 @@ function AssetRiskView({
           ) : (
             <FigureList rows={oracle} />
           )}
-        </Panel>
+        </>
+      );
+    }
 
-        <Panel
-          title="Who holds it, and is it genuinely traded?"
-          standfirst="Concentration and wash trading bound how much of the depth above is real."
-        >
+    case 'holders':
+      return (
+        <>
+          <Lead>
+            Concentration and wash trading bound how much of the depth is real.
+          </Lead>
           <FigureList rows={supplyRows(risk)} />
-        </Panel>
-      </div>
+        </>
+      );
 
-      {/* Offered only when the engine says its historical path is on. When it is off,
-          every ledger would be refused, and a control that can only fail is noise. */}
-      {historicalAvailable === true ? (
-        <Panel
-          title="What did this look like at a past ledger?"
-          standfirst="The engine answers only for ledgers a replay has stored, and says so when it has not. A stored past reading is rebuilt from the operation stream, so it carries its own gaps."
-        >
+    case 'notes':
+      return (
+        <>
+          <Lead>
+            The engine&apos;s own notes on the limits of this computation,
+            verbatim and in the order served.
+          </Lead>
+          <EngineWarnings warnings={risk.warnings} />
+        </>
+      );
+
+    case 'ledger':
+      return (
+        <>
+          <Lead>
+            The engine answers only for ledgers a replay has stored, and says so
+            when it has not. A stored past reading is rebuilt from the operation
+            stream, so it carries its own gaps.
+          </Lead>
           <LedgerPicker assetId={assetId} current={atLedger} />
-        </Panel>
-      ) : null}
-    </div>
+        </>
+      );
+  }
+}
+
+/** The one sentence that opens an evidence tab. */
+function Lead({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-4 max-w-3xl text-sm text-[var(--keel-muted)]">
+      {children}
+    </p>
   );
 }
 
@@ -370,8 +553,9 @@ function AssetRiskView({
  * Which market this page is about, in one line above everything else.
  *
  * The h1 stays the question the page answers; this is the label a reader arriving from
- * a table of sixty-one rows looks for first — the pair, its band, and the issuer that
- * tells two assets with one code apart — with the way back to the set beside it.
+ * a table of sixty-one rows looks for first — the pair, and the issuer that tells two
+ * assets with one code apart — with the way back to the set beside it. The band is in
+ * the verdict directly beneath, so it is not said twice.
  */
 function AssetHeader({ risk }: { risk: AssetRisk }) {
   const issuer = risk.asset.issuer;
@@ -393,7 +577,6 @@ function AssetHeader({ risk }: { risk: AssetRisk }) {
           / {risk.quote.code}
         </span>
       </p>
-      <BandChip band={risk.band} confidence={risk.bandConfidence} />
       <span
         className="tabular text-xs text-[var(--keel-muted)]"
         title={issuer ?? undefined}
@@ -439,14 +622,12 @@ function readMockExample(
  * `trades-implied` is a lower bound, so a line from it is a floor and not a measurement.
  */
 function HistoryView({
-  identity,
   assetId,
   history,
   failed,
   quoteCode,
   historyQuery,
 }: {
-  identity: React.ReactNode;
   assetId: string;
   history: HistoryResponse | null;
   failed: string | null;
@@ -467,10 +648,12 @@ function HistoryView({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* The pair on the left and the view controls on the right, on one line: this
-          is the only thing between the top of the page and the chart. */}
+      {/* A section label on the left and the controls that drive the chart on the
+          right, so it is plain which part of the page the controls change. */}
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        {identity}
+        <h2 className="text-base font-semibold tracking-[-0.01em] text-[var(--keel-ink-strong)]">
+          History
+        </h2>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           {/* Neither window control applies to a stored range: the engine is asked
               which readings it holds, and it answers with all of them. Showing them
@@ -575,13 +758,6 @@ function HistoryView({
               </>
             }
           />
-
-          <Panel
-            title="Which checks were firing"
-            standfirst="Whether a finding has been there all along or started recently. Only checks that fired at least once appear."
-          >
-            <FlagTimeline points={points} />
-          </Panel>
         </>
       )}
     </div>
@@ -648,14 +824,14 @@ function metricDefinitions(
     },
     {
       key: 'cost',
-      label: 'Cost to move 0.5%',
-      title: 'Cost to move the price by half',
-      note: 'One manipulation rung, at the delta the engine treats as critical. A reading it could not produce breaks the line rather than sitting at zero.',
+      label: 'Cost to move +50%',
+      title: 'Cost to move the price 50%',
+      note: 'The stored series carries one manipulation rung, the +50% move. A reading the engine could not produce breaks the line rather than sitting at zero.',
       pick: (p) => p.manipulationCost50Pct,
       series: [
         {
           key: 'manip50',
-          label: 'Manipulation cost, 0.5%',
+          label: 'Cost to move +50%',
           colour: SEQUENTIAL_RAMP[6],
           points: line((p) => p.manipulationCost50Pct),
         },

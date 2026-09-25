@@ -23,7 +23,7 @@ import { cn } from '@/lib/keel/utils';
  * alarm repeated on sixty-one rows.
  */
 
-const ICONS: Record<BAND_ICON, LucideIcon> = {
+export const BAND_ICONS: Record<BAND_ICON, LucideIcon> = {
   'circle-check': CircleCheck,
   'triangle-alert': TriangleAlert,
   'octagon-alert': OctagonAlert,
@@ -40,7 +40,7 @@ export interface BandChipProps {
 
 export function BandChip({ band, confidence, className }: BandChipProps) {
   const token = BAND_TOKENS[band];
-  const Icon = ICONS[token.icon];
+  const Icon = BAND_ICONS[token.icon];
 
   return (
     <span className={cn('inline-flex items-baseline gap-1.5', className)}>

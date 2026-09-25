@@ -5,36 +5,32 @@ import type { HistoryPoint } from '@/lib/keel/api/types';
 import type { HistoryMetric } from '@/lib/keel/assets/history-range';
 import { summariseWindow } from '@/lib/keel/assets/window-summary';
 import type { Gap } from '@/lib/keel/chart/geometry';
-import { classify } from '@/lib/keel/format/value';
 import { cn } from '@/lib/keel/utils';
 
 import { TrendChart, type TrendSeries } from './trend-chart';
-import { Value } from './value';
 
 /**
- * An asset's stored series, as a row of measures over one full-size chart.
+ * An asset's stored series: one full-size chart, and a switch for which measure it draws.
  *
- * The four measures used to sit in a two-by-two grid of small charts, each with its own
- * heading, note, legend and footer. Every one of them was legible and none of them was
- * readable at a glance. This is the analytics pattern instead: each measure is a tab
- * that states its latest served figure and which way it moved, and the one a reader
- * picks gets the whole width. The tabs are links, so the chart in front of a reader is
- * still a URL they can send.
+ * The four measures used to sit in a two-by-two grid of small charts, and then on a row
+ * of tabs that each printed a figure. Those figures were the last reading in the WINDOW,
+ * which on a daily resolution could be a day older than the current reading printed at
+ * the top of the page — two numbers under one name. The current figures now live only
+ * in the verdict above; this panel is about movement, and says so.
  *
- * Nothing here computes a financial value. The figure on a tab is the last reading the
- * engine served for that measure, and the direction is settled by comparing the first
- * and last served strings digit by digit — see `summariseWindow`.
+ * Nothing here computes a financial value. The direction is settled by comparing the
+ * first and last served strings digit by digit — see `summariseWindow`.
  */
 
 export interface MetricDefinition {
   readonly key: HistoryMetric;
-  /** What the tab says. Short: four of these share a row. */
+  /** What the switch says. Short: four of these share a row. */
   readonly label: string;
-  /** The chart's own heading when this tab is chosen. */
+  /** The chart's own heading when this measure is chosen. */
   readonly title: string;
-  /** One sentence on what the measure is, or what it is not. */
+  /** One short sentence on what the measure is, or what it is not. */
   readonly note: string;
-  /** The figure the tab reports. For a chart of several rungs, the one it ranks on. */
+  /** The series the direction is read from. For several rungs, the one it ranks on. */
   readonly pick: (point: HistoryPoint) => string | null | undefined;
   readonly series: readonly TrendSeries[];
   readonly maxFractionDigits?: number;
@@ -67,113 +63,72 @@ export function MetricPanel({
   className,
 }: MetricPanelProps) {
   const chosen = metrics.find((m) => m.key === active) ?? metrics[0];
+  const { direction } = summariseWindow(points, chosen.pick, { gaps });
 
   return (
     <section
       aria-labelledby="metric-title"
-      className={cn('keel-panel min-w-0', className)}
+      className={cn('keel-panel min-w-0 p-4 sm:p-5', className)}
     >
-      <nav
-        aria-label="Measure"
-        className="grid grid-cols-2 gap-1.5 rounded-t-[var(--radius)] border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] p-1.5 lg:grid-cols-4"
-      >
-        {metrics.map((metric) => (
-          <MetricTab
-            key={metric.key}
-            metric={metric}
-            active={metric.key === chosen.key}
-            href={href(metric.key)}
-            points={points}
-            gaps={gaps}
-            unit={unit}
-          />
-        ))}
-      </nav>
+      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0">
+          <h3
+            id="metric-title"
+            className="text-base font-semibold tracking-[-0.01em] text-[var(--keel-ink-strong)]"
+          >
+            {chosen.title}
+          </h3>
+          <p className="mt-0.5 max-w-2xl text-sm text-[var(--keel-muted)]">
+            {chosen.note}
+          </p>
+        </div>
 
-      <div className="p-4 sm:p-5">
-        <h3
-          id="metric-title"
-          className="text-base font-semibold tracking-[-0.01em] text-[var(--keel-ink-strong)]"
-        >
-          {chosen.title}
-        </h3>
-        <p className="mt-0.5 max-w-3xl text-sm text-[var(--keel-muted)]">
-          {chosen.note}
-        </p>
+        <nav aria-label="Measure">
+          <ul className="flex flex-wrap items-center gap-0.5 rounded-md border border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] p-0.5">
+            {metrics.map((metric) => {
+              const on = metric.key === chosen.key;
+              return (
+                <li key={metric.key}>
+                  <Link
+                    href={href(metric.key)}
+                    scroll={false}
+                    aria-current={on ? 'true' : undefined}
+                    className={cn(
+                      'inline-flex min-h-8 items-center rounded-sm px-2.5 text-xs transition-colors',
+                      'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
+                      on
+                        ? 'bg-[var(--keel-surface)] font-bold text-[var(--keel-ink-strong)] shadow-[var(--keel-shadow)]'
+                        : 'font-medium text-[var(--keel-muted)] hover:text-[var(--keel-ink-strong)]',
+                    )}
+                  >
+                    {metric.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      </header>
 
-        <TrendChart
-          className="mt-5"
-          framed={false}
-          unit={unit}
-          gaps={gaps}
-          fromLabel={fromLabel}
-          toLabel={toLabel}
-          maxFractionDigits={chosen.maxFractionDigits}
-          series={chosen.series}
-        />
+      <Direction direction={direction} />
 
-        {footer ? (
-          <div className="mt-4 border-t border-[var(--keel-border)] pt-3 text-xs text-[var(--keel-muted)]">
-            {footer}
-          </div>
-        ) : null}
-      </div>
+      <TrendChart
+        className="mt-4"
+        framed={false}
+        unit={unit}
+        gaps={gaps}
+        fromLabel={fromLabel}
+        toLabel={toLabel}
+        maxFractionDigits={chosen.maxFractionDigits}
+        series={chosen.series}
+      />
+
+      {footer ? (
+        <div className="mt-4 border-t border-[var(--keel-border)] pt-3 text-xs text-[var(--keel-muted)]">
+          {footer}
+        </div>
+      ) : null}
     </section>
-  );
-}
-
-function MetricTab({
-  metric,
-  active,
-  href,
-  points,
-  gaps,
-  unit,
-}: {
-  metric: MetricDefinition;
-  active: boolean;
-  href: string;
-  points: readonly HistoryPoint[];
-  gaps: readonly Gap[];
-  unit: string;
-}) {
-  const summary = summariseWindow(points, metric.pick, { gaps });
-
-  return (
-    <Link
-      href={href}
-      scroll={false}
-      aria-current={active ? 'true' : undefined}
-      className={cn(
-        'flex min-w-0 flex-col gap-1.5 rounded-md border px-3 py-2.5 transition-colors',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
-        active
-          ? 'border-[var(--keel-border)] bg-[var(--keel-surface)] shadow-[var(--keel-shadow)]'
-          : 'border-transparent hover:bg-[var(--keel-surface)]/60',
-      )}
-    >
-      <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-        <span
-          className={cn(
-            'text-xs',
-            active
-              ? 'font-semibold text-[var(--keel-ink-strong)]'
-              : 'text-[var(--keel-muted)]',
-          )}
-        >
-          {metric.label}
-        </span>
-        <Direction direction={summary.direction} />
-      </span>
-      <span className="text-base leading-tight font-bold break-all text-[var(--keel-ink-strong)] sm:text-lg">
-        <Value
-          value={classify(summary.last?.value ?? null, unit)}
-          // The chart's own default, so the tab and the legend under the chart print
-          // the same served figure the same way.
-          maxFractionDigits={metric.maxFractionDigits ?? 2}
-        />
-      </span>
-    </Link>
   );
 }
 
@@ -187,21 +142,30 @@ function MetricTab({
 function Direction({ direction }: { direction: -1 | 0 | 1 | null }) {
   if (direction === null) {
     return (
-      <span className="shrink-0 text-xs text-[var(--unmeasured)] italic">
-        too few readings
-      </span>
+      <p className="mt-3 text-sm text-[var(--unmeasured)] italic">
+        Too few readings in this window to show a direction.
+      </p>
     );
   }
 
   const Icon =
     direction > 0 ? ArrowUpRight : direction < 0 ? ArrowDownRight : ArrowRight;
-  const word = direction > 0 ? 'higher' : direction < 0 ? 'lower' : 'flat';
+  const word = direction > 0 ? 'Higher' : direction < 0 ? 'Lower' : 'Unchanged';
 
   return (
-    <span className="flex shrink-0 items-center gap-0.5 text-xs text-[var(--keel-muted)]">
-      <Icon aria-hidden="true" className="size-3.5" />
-      <span>{word}</span>
-      <span className="sr-only"> than at the start of the window</span>
-    </span>
+    <p className="mt-3 flex items-center gap-1.5 text-sm text-[var(--keel-muted)]">
+      <Icon
+        aria-hidden="true"
+        className="size-4 shrink-0 text-[var(--keel-ink)]"
+      />
+      <span>
+        <span className="font-semibold text-[var(--keel-ink-strong)]">
+          {word}
+        </span>
+        {direction === 0
+          ? ' across the window'
+          : ' at the end of the window than at its start'}
+      </span>
+    </p>
   );
 }
