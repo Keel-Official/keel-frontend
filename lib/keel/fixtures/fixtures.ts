@@ -124,6 +124,7 @@ export const healthy: components["schemas"]["AssetRisk"] = {
     "at": "2026-08-19T04:11:47Z"
   },
   "tradesExcludedPct": "2.1000000",
+  "supportingNotes": null,
   "flags": [],
   "unevaluatedFlags": [],
   "band": "LOW",
@@ -256,6 +257,7 @@ export const poolOnly: components["schemas"]["AssetRisk"] = {
     "at": "2026-08-11T22:04:19Z"
   },
   "tradesExcludedPct": "18.4000000",
+  "supportingNotes": null,
   "flags": [
     "THIN_DEPTH_5PCT",
     "HOLDER_CONCENTRATION_EXTREME",
@@ -335,6 +337,12 @@ export const noPrice: components["schemas"]["AssetRisk"] = {
   },
   "lastGenuineTrade": null,
   "tradesExcludedPct": null,
+  "supportingNotes": {
+    "holders": null,
+    "tradesExcludedPct": "no trade in the 30 day window, so there is no volume to exclude from",
+    "volumeToSupply": null,
+    "lastGenuineTrade": "no genuine trade in the 30 whole day(s) searched"
+  },
   "flags": [
     "NO_EXECUTABLE_PRICE",
     "ZERO_DEPTH_2PCT",
@@ -460,6 +468,7 @@ export const brokenBook: components["schemas"]["AssetRisk"] = {
   "volumeToSupply": null,
   "lastGenuineTrade": null,
   "tradesExcludedPct": null,
+  "supportingNotes": null,
   "flags": [
     "ZERO_DEPTH_2PCT",
     "MANIPULATION_CHEAP",
@@ -610,6 +619,7 @@ export const historical: components["schemas"]["AssetRisk"] = {
     "at": "2026-05-16T08:33:02Z"
   },
   "tradesExcludedPct": "64.2000000",
+  "supportingNotes": null,
   "flags": [
     "MANIPULATION_CHEAP",
     "MANIPULATION_RATIO_LOW",

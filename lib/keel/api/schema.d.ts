@@ -378,6 +378,31 @@ export interface components {
              */
             totalAttackCost?: components["schemas"]["Decimal"] | null;
         };
+        /**
+         * @description One phrase per supporting figure saying why it is null. A key is null
+         *     when its figure is present or no reason was recorded, so a consumer reads
+         *     a note only beside a null figure. The phrases are prose for a reader and
+         *     not an enum: do not branch on their text.
+         *
+         *     They keep apart the absences a bare null collapses. A trustline set too
+         *     large for the holder pull, a pair above the trade threshold, a walk that
+         *     spent its page bound, and a search that covered thirty whole days and
+         *     found no genuine trade are four different answers, and only the last is
+         *     a measurement.
+         */
+        SupportingNotes: {
+            /** @description Why holderTop1Pct, holderTop10Pct and holderHhi are null. They come from one trustline pull and are absent together. */
+            holders: string | null;
+            tradesExcludedPct: string | null;
+            /** @description Why volumeToSupply is null, or, when it is present, why its d30 window is. */
+            volumeToSupply: string | null;
+            /**
+             * @description Why lastGenuineTrade is null. A note that begins "not checked" means
+             *     the search stopped before it could answer, and is not evidence that
+             *     the asset has no genuine trade.
+             */
+            lastGenuineTrade: string | null;
+        };
         VolumeToSupply: {
             d1: components["schemas"]["Decimal"];
             d7: components["schemas"]["Decimal"];
@@ -649,6 +674,14 @@ export interface components {
              *     high value indicates suspected wash trading.
              */
             tradesExcludedPct?: components["schemas"]["Decimal"] | null;
+            /**
+             * @description Why each absent supporting figure above is absent. Added in 1.9.0.
+             *
+             *     Null when there is nothing to explain: every supporting figure is
+             *     present, or the row was stored before the engine recorded reasons, or
+             *     the row is a reconstruction, whose reasons travel in `warnings`.
+             */
+            supportingNotes?: components["schemas"]["SupportingNotes"] | null;
             /** @description The flags that are `triggered`. */
             flags: components["schemas"]["Flag"][];
             /**
