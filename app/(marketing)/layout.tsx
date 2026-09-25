@@ -17,9 +17,10 @@ const mono = localFont({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
-  ),
+  // The deployed origin, fixed. It used to fall back to localhost when
+  // NEXT_PUBLIC_SITE_URL was unset, and a build without it published social cards
+  // whose image URL pointed at the machine that built them.
+  metadataBase: new URL('https://keels.app'),
   title: 'Keel | Liquidity risk intelligence for Stellar',
   description:
     'Know how much a price can actually support. Inspect executable depth, manipulation resistance, and collateral risk for Stellar assets.',

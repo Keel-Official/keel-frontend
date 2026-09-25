@@ -16,7 +16,7 @@ for (const [name, width, height] of [
     page.on('pageerror', (error) => errors.push(error.message));
     await page.goto('/');
     await page.evaluate(() => document.fonts.ready);
-    await expect(page.locator('h1')).toContainText('Know how much');
+    await expect(page.locator('h1')).toContainText('Keel measures the market');
     await expect(page.locator('.hero-product')).toBeVisible();
     expect(
       await page.evaluate(
@@ -100,16 +100,19 @@ test('social image and branded missing page', async ({ page, request }) => {
     .locator('meta[property="og:image"]')
     .getAttribute('content');
   expect(ogUrl).toBeTruthy();
-  const image = await request.get(ogUrl!);
+  // Fetched by path. The host is not asserted here: this suite runs against `next dev`,
+  // and in development Next always writes social image URLs against the local server
+  // whatever `metadataBase` says. A production build writes them under keels.app.
+  const image = await request.get(new URL(ogUrl!).pathname);
   expect(image.status()).toBe(200);
   expect(image.headers()['content-type']).toContain('image/png');
   // Both cards are served, and neither is left pointing at a route that does not exist.
   const twitterUrl = await page
     .locator('meta[name="twitter:image"]')
     .getAttribute('content');
-  expect((await request.get(twitterUrl!)).status()).toBe(200);
+  expect((await request.get(new URL(twitterUrl!).pathname)).status()).toBe(200);
   const missing = await page.goto('/missing-surface');
   expect(missing?.status()).toBe(404);
   await page.getByRole('link', { name: 'Return to Keel' }).click();
-  await expect(page.locator('h1')).toContainText('Know how much');
+  await expect(page.locator('h1')).toContainText('Keel measures the market');
 });

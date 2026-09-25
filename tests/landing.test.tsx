@@ -6,13 +6,14 @@ import { healthy, brokenBook, history, market } from '../lib/keel/fixtures/fixtu
 import { februaryPoints } from '../lib/format/history';
 import { EVIDENCE } from '../lib/evidence';
 import { BlendCasePreview } from '../components/marketing/blend-case-preview';
+import { ProvenanceFooter } from '../components/keel/provenance-footer';
 import { DASHBOARD_BASE } from '../lib/keel/routes';
 import { BACKTEST_REPORT_URL } from '../lib/report';
 
 it('leads with a real result and keeps evidence accessible without live API calls', () => {
   render(<Home />);
   expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-    'Know how much a price can actually support.',
+    'Keel measures the market behind a price.',
   );
   expect(screen.getByText('Result')).toBeVisible();
   // The figures on this page are a recorded sample, and the page still says so
@@ -32,6 +33,73 @@ it('leads with a real result and keeps evidence accessible without live API call
   expect(
     screen.getByText(/No. Keel is read-only. It never signs/),
   ).toBeVisible();
+});
+
+it('names the recording, ledger and methodology beneath every block of sample figures', () => {
+  const { container } = render(<Home />);
+  const footers = Array.from(container.querySelectorAll('.provenance-footer'));
+  const read = (footer: Element) =>
+    Object.fromEntries(
+      Array.from(footer.querySelectorAll('dl > div')).map((row) => [
+        row.querySelector('dt')!.textContent,
+        row.querySelector('dd')!.textContent,
+      ]),
+    );
+
+  // The hero panel, the market preview and the finding each carry their own, taken
+  // from the payload that block renders. The two confidence readings on the page come
+  // from different recordings, and this is where a reader can see it.
+  const expected = [
+    ['#product-preview', healthy, 'asset-healthy'],
+    ['#markets', market.items[0], 'asset-list-mixed'],
+    ['#risk', brokenBook, 'asset-broken-book'],
+  ] as const;
+  for (const [block, payload, fixture] of expected) {
+    const footer = footers.find((item) =>
+      block === '#product-preview'
+        ? item.previousElementSibling?.matches(block)
+        : item.closest(block),
+    );
+    expect(footer, block).toBeDefined();
+    expect(footer).toHaveTextContent('API contract example');
+    expect(read(footer!)).toEqual({
+      Recording: fixture,
+      Ledger: String(payload.ledgerSeq),
+      Methodology:
+        'methodologyVersion' in payload
+          ? payload.methodologyVersion
+          : market.methodologyVersion,
+    });
+  }
+  expect(footers).toHaveLength(expected.length);
+});
+
+it('says "not available" for a missing ledger or methodology, never a zero', () => {
+  const { container } = render(
+    <ProvenanceFooter
+      origin="archived-observations"
+      fixture="recording"
+      ledgerSeq={null}
+      methodologyVersion={undefined}
+    />,
+  );
+  expect(container).toHaveTextContent('Archived trade observations');
+  expect(container).toHaveTextContent('Ledger');
+  expect(container).not.toHaveTextContent(/\b0\b/);
+  expect(screen.getAllByText('Not available')).toHaveLength(2);
+});
+
+it('lists the ledgers of a list response once each, in ascending order', () => {
+  render(
+    <ProvenanceFooter
+      origin="contract-example"
+      fixture="recording"
+      ledgerSeq={[61234570, 61234567, 61234570]}
+      methodologyVersion="1.0.8-draft"
+    />,
+  );
+  expect(screen.getByText('Ledgers')).toBeVisible();
+  expect(screen.getByText('61234567, 61234570')).toBeVisible();
 });
 
 it('every local navigation link resolves to a section, a page, or a real artifact', () => {

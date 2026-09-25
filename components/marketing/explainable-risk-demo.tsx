@@ -2,6 +2,7 @@ import { ChevronRight, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { brokenBook } from '../../lib/keel/fixtures/fixtures';
 import { MetricValue } from '../keel/result';
+import { ProvenanceFooter } from '../keel/provenance-footer';
 import {
   formatAmount,
   manipulationLabel,
@@ -118,6 +119,15 @@ export function ExplainableRiskDemo() {
             </Link>
           </article>
         </div>
+        {/* Not the USTRY row in the market preview above: that one is a different
+            recording of a different issuer against XLM. Naming the recording here is
+            what lets a reader see why the two confidence readings differ. */}
+        <ProvenanceFooter
+          origin="contract-example"
+          fixture="asset-broken-book"
+          ledgerSeq={result.ledgerSeq}
+          methodologyVersion={result.methodologyVersion}
+        />
       </div>
     </section>
   );
