@@ -30,16 +30,18 @@ export default function Home() {
             <span className="hero-backdrop" aria-hidden="true" />
             <div className="hero-frame">
               <div className="hero-copy">
-                <a className="hero-pill" href="#case-study">
-                  February USTRY case study <ChevronRight size={15} />
-                </a>
+                <p className="hero-eyebrow">
+                  Liquidity risk intelligence for Stellar
+                </p>
                 <h1 id="hero-title">
-                  Know how much a price can actually support.
+                  Keel measures the market behind a price.
                 </h1>
                 <p className="hero-description">
-                  Measure how much can trade on Stellar before the price moves,
-                  what it costs to move it, and how much collateral the market
-                  can support.
+                  A price feed tells you what an asset is worth. Keel tells you
+                  how much can trade before that price moves, what it would cost
+                  to move it, and the collateral limit that follows. For lending
+                  protocols, oracle consumers, and risk teams. Read-only, no
+                  wallet.
                 </p>
                 <div className="hero-actions">
                   {/* Points at the live dashboard mounted in this deployment, so the

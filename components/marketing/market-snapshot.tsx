@@ -6,6 +6,7 @@ import { dashboardLinks } from '../../lib/dashboard';
 import { geometryRatio } from '../../lib/format/keel';
 import { flagCopy } from '../../lib/keel/format/glossary';
 import { MetricValue, RiskBadge } from '../keel/result';
+import { ProvenanceFooter } from '../keel/provenance-footer';
 
 type Row = (typeof market.items)[number];
 
@@ -167,6 +168,15 @@ export function MarketSnapshot() {
             </article>
           ))}
         </div>
+        {/* One footer for the three columns: they are rows of one list response, and
+            the methodology is stated once for the list. Each row carries its own
+            ledger, so every ledger the rows were read at is shown. */}
+        <ProvenanceFooter
+          origin="contract-example"
+          fixture="asset-list-mixed"
+          ledgerSeq={market.items.map((row) => row.ledgerSeq)}
+          methodologyVersion={market.methodologyVersion}
+        />
       </div>
     </section>
   );
