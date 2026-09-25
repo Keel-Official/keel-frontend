@@ -918,39 +918,58 @@ function supplyRows(risk: AssetRisk): FigureRow[] {
         ? null
         : lastTrade.at;
 
+  // The engine's own reason for each absent figure. A trustline set too large to
+  // read, a pair above the trade threshold, a walk that ran out of pages and thirty
+  // days with no genuine trade all arrive as the same null, and only the last is a
+  // measurement. Rows stored before the engine recorded reasons carry none, and the
+  // row then says nothing rather than guessing which of the four it was.
+  const notes = risk.supportingNotes ?? null;
+  const why = (figure: unknown, note: string | null | undefined) =>
+    figure === null ? (note ?? undefined) : undefined;
+  const holdersWhy = why(risk.holderTop1Pct, notes?.holders);
+
   return [
     {
       key: 'top1',
       label: 'Largest holder',
       value: classify(risk.holderTop1Pct, '%'),
       maxFractionDigits: 4,
+      note: holdersWhy,
     },
     {
       key: 'top10',
       label: 'Top ten holders',
       value: classify(risk.holderTop10Pct, '%'),
       maxFractionDigits: 4,
+      note: why(risk.holderTop10Pct, notes?.holders),
     },
     {
       key: 'hhi',
       label: 'Concentration index',
       value: classify(risk.holderHhi),
       maxFractionDigits: 2,
-      note: 'Herfindahl–Hirschman, over the holder distribution',
+      note:
+        why(risk.holderHhi, notes?.holders) ??
+        'Herfindahl–Hirschman, over the holder distribution',
     },
     {
       key: 'excluded',
       label: 'Volume excluded as not genuine',
       value: classify(risk.tradesExcludedPct, '%'),
       maxFractionDigits: 4,
-      note: 'Of 30 day volume. A high share indicates suspected wash trading',
+      note:
+        why(risk.tradesExcludedPct, notes?.tradesExcludedPct) ??
+        'Of 30 day volume. A high share indicates suspected wash trading',
     },
     {
       key: 'v30',
       label: 'Volume to supply, 30 day',
       value: classify(volumeToSupply30),
       maxFractionDigits: 6,
-      note: volume ? `1 day ${volume.d1} · 7 day ${volume.d7}` : undefined,
+      note: volume
+        ? (why(volume.d30, notes?.volumeToSupply) ??
+          `1 day ${volume.d1} · 7 day ${volume.d7}`)
+        : why(volume, notes?.volumeToSupply),
     },
     {
       key: 'lastTrade',
@@ -958,7 +977,7 @@ function supplyRows(risk: AssetRisk): FigureRow[] {
       text: lastTradeAt,
       note: lastTrade
         ? `Ledger ${lastTrade.ledgerSeq}`
-        : 'No genuine trade was found in the window',
+        : why(lastTrade, notes?.lastGenuineTrade),
     },
   ];
 }
