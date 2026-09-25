@@ -56,7 +56,7 @@ export function Pagination({
     <div className={cn('flex flex-col gap-2', className)}>
       <nav
         aria-label="Table pages"
-        className="flex items-center justify-between gap-3 rounded-xl border border-[var(--keel-border)] px-3 py-2.5"
+        className="flex items-center justify-between gap-3 rounded-lg border border-[var(--keel-border)] px-3 py-2.5"
       >
         <Step
           href={pageHref(query, page - 1)}

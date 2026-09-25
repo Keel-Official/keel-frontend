@@ -429,14 +429,14 @@ async function CompositionSection({
   if (!depth.data) return null;
 
   return (
-    <section aria-labelledby="focus-title" className="min-w-0">
+    <section aria-labelledby="focus-title" className="keel-panel min-w-0">
       <h2
         id="focus-title"
-        className="text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]"
+        className="rounded-t-[var(--radius)] border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] px-4 py-3 text-base font-bold tracking-[-0.01em] text-[var(--keel-ink-strong)] sm:px-5"
       >
         {`Where ${depth.data.asset.code}'s depth comes from`}
       </h2>
-      <div className="mt-4 rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-4 sm:p-5">
+      <div className="p-4 sm:p-5">
         <DepthComposition
           depth={depth.data.depth}
           quoteCode={depth.data.quote.code}

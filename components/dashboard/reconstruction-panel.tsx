@@ -79,7 +79,7 @@ export function ReconstructionPanel({
     <section
       aria-labelledby="past-reading-heading"
       className={cn(
-        'rounded-xl border border-[var(--keel-border-strong)] bg-[var(--keel-surface-subtle)] p-4 sm:p-5',
+        'rounded-lg border border-[var(--keel-border-strong)] bg-[var(--keel-surface-subtle)] p-4 sm:p-5',
         className,
       )}
     >
@@ -123,7 +123,7 @@ export function ReconstructionPanel({
 
       {rec ? (
         <div className="mt-4 border-t border-[var(--keel-border)] pt-4">
-          <h3 className="text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
+          <h3 className="keel-marker">
             What the reconstruction reports about itself
           </h3>
           <p className="mt-1 text-xs text-[var(--keel-muted)]">

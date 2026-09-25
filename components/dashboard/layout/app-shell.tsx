@@ -67,9 +67,9 @@ export function AppShell({
             className="flex items-center gap-2 rounded-md text-[var(--keel-logo)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
           >
             <KeelMark className="h-7 w-auto" />
-            <span className="text-lg font-semibold tracking-tight">Keel</span>
-            <span className="hidden text-xs text-[var(--keel-muted)] sm:inline">
-              Stellar liquidity risk
+            <span className="text-lg font-semibold tracking-tight">keel</span>
+            <span className="keel-marker hidden border-l border-[var(--keel-border)] pl-2 sm:inline">
+              Liquidity risk
             </span>
           </Link>
 
@@ -88,15 +88,18 @@ export function AppShell({
         </div>
       </header>
 
-      <main
-        id="main"
-        className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6"
-      >
-        {children}
-      </main>
+      {/* The bench is full-bleed; the column inside it is not. */}
+      <div className="keel-bench flex flex-1 flex-col">
+        <main
+          id="main"
+          className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:py-8"
+        >
+          {children}
+        </main>
+      </div>
 
-      <footer className="border-t border-[var(--keel-border)] px-4 py-4">
-        <div className="mx-auto flex w-full max-w-[1400px] flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]">
+      <footer className="border-t border-[var(--keel-border)] bg-[var(--keel-surface)] px-4 py-4">
+        <div className="tabular mx-auto flex w-full max-w-[1400px] flex-wrap gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]">
           <span>
             Read-only. Keel computes every figure; this dashboard renders them.
           </span>
@@ -140,7 +143,7 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-semibold tracking-tight text-[var(--keel-ink-strong)]">
+      <h1 className="text-2xl font-bold tracking-[-0.03em] text-[var(--keel-ink-strong)] sm:text-3xl">
         {title}
       </h1>
       {children ? (
@@ -194,7 +197,7 @@ export function Section({
         className={
           hideHeading
             ? 'sr-only'
-            : 'text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]'
+            : 'text-lg font-bold tracking-[-0.02em] text-[var(--keel-ink-strong)]'
         }
       >
         {title}
@@ -208,6 +211,48 @@ export function Section({
           its own wrapper instead of widening the page. A flex item defaults to
           min-width:auto and will not shrink below its content without this. */}
       <div className="mt-4 min-w-0">{children}</div>
+    </section>
+  );
+}
+
+/**
+ * A section drawn as a card: a small heading and one line under it, then the figures.
+ *
+ * The asset result used to be a column of question-headed sections separated only by
+ * whitespace, which made a long page of equal-weight paragraphs. As cards the sections
+ * have edges, so two short ones can sit side by side and a reader can see where one
+ * answer stops and the next begins. The heading is still the question a reader asks.
+ */
+export function Panel({
+  id,
+  title,
+  standfirst,
+  children,
+  className,
+}: {
+  id?: string;
+  title: string;
+  standfirst?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <section
+      id={id}
+      className={cn('keel-panel flex min-w-0 scroll-mt-20 flex-col', className)}
+    >
+      <header className="px-4 pt-4 sm:px-5 sm:pt-5">
+        <h2 className="text-base font-semibold tracking-[-0.01em] text-[var(--keel-ink-strong)]">
+          {title}
+        </h2>
+        {standfirst ? (
+          <div className="mt-0.5 max-w-3xl text-sm text-[var(--keel-muted)]">
+            {standfirst}
+          </div>
+        ) : null}
+      </header>
+      {/* min-w-0 so a wide child scrolls inside its own wrapper; see Section. */}
+      <div className="min-w-0 flex-1 p-4 sm:p-5">{children}</div>
     </section>
   );
 }

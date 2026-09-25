@@ -34,12 +34,10 @@ export function FindingSummary({
   return (
     <section
       aria-labelledby="finding-summary-title"
-      className="mb-6 grid gap-5 rounded-xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-4 shadow-[0_10px_30px_rgba(16,45,59,0.05)] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5"
+      className="mb-6 grid gap-5 keel-panel p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5"
     >
       <div className="min-w-0">
-        <p className="text-xs font-semibold tracking-[0.16em] text-[var(--keel-accent)] uppercase">
-          Review signal
-        </p>
+        <p className="keel-marker">Review signal</p>
         <h2
           id="finding-summary-title"
           className="mt-1 text-xl font-semibold tracking-tight text-[var(--keel-ink-strong)]"

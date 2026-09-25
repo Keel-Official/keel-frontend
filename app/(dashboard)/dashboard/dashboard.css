@@ -110,18 +110,28 @@
   color-scheme: dark;
 
   /* --- Neutrals and brand ----------------------------------------------- */
-  --keel-bg: #0a1215;
-  --keel-surface: #101c21; /* 13.20:1 for ink */
-  --keel-surface-subtle: #16252b;
-  --keel-ink: #d5e3e7; /* 13.20:1 on --keel-surface */
-  --keel-ink-strong: #f2f8f9; /* 16.17:1 */
-  --keel-muted: #9bb0b8; /* 7.68:1, clears AA for body text */
-  --keel-border: #22333a;
-  --keel-border-strong: #375059;
-  --keel-brand: #1d3a47;
-  --keel-brand-deep: #162c36;
-  --keel-accent: #53c7a5; /* 8.33:1 */
-  --keel-accent-soft: #123028;
+  /* The instrument kit's ink hue, taken dark: a cool blue-black bench rather than
+     the green-black the dashboard shipped with, so both halves of the product share
+     one neutral family. */
+  --keel-bg: #0b1117;
+  --keel-surface: #111a22;
+  --keel-surface-subtle: #17222c;
+  --keel-ink: #d3dde4;
+  --keel-ink-strong: #f0f4f7;
+  --keel-muted: #97a6b2; /* clears AA for body text on surface and subtle */
+  --keel-border: #22303b;
+  --keel-border-strong: #364654;
+  --keel-brand: #1a2c38;
+  --keel-brand-deep: #14232d;
+  --keel-accent: #5cc2bd; /* the kit's teal, lifted for a dark surface */
+  --keel-accent-soft: #0f2c2d;
+  /* Label on a filled accent control. A light accent takes a dark label. */
+  --keel-on-accent: #06100f;
+
+  /* The drafting sheet behind the top of every page, one step quieter than a border. */
+  --keel-grid: #151f28;
+  /* One hairline plus a short diffuse drop; never a hard offset. */
+  --keel-shadow: 0 1px 0 rgb(0 0 0 / 0.25), 0 1px 3px rgb(0 0 0 / 0.35);
 
   /* The mark's amber counter. It is not theme-scoped: the one colour in the
      logo that is fixed, because it clears contrast on both themes' surfaces. */
@@ -137,7 +147,7 @@
    * background that measures 1.44:1 against the page. A wordmark or a nav item set in
    * `--keel-brand` was invisible in dark until this existed.
    */
-  --keel-brand-ink: #9fe3cd; /* 11.42:1 on surface, 7.09:1 on --keel-accent-soft */
+  --keel-brand-ink: #9fdcd7;
 
   /* The logo lockup, and only that. The brand's teal is a light-surface colour, so
      dark takes the brand ink instead rather than a mark nobody can see. */
@@ -241,8 +251,8 @@
    * the risk scale or on the sequential ramp. It gets a neutral plus the hatch below,
    * so it stays distinguishable in greyscale, in print, and in forced-colors mode.
    */
-  --unmeasured: #8ba0a8; /* 6.36:1 */
-  --unmeasured-surface: #1a272d;
+  --unmeasured: #8b9ba7;
+  --unmeasured-surface: #19242e;
 
   /*
    * --- Confidence: orthogonal to band ------------------------------------
@@ -265,25 +275,30 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --keel-bg: #fbfcfc;
+  /* The instrument kit (docs/08-instrument-design-kit.md): near-black blue ink on a
+     cool light bench, hairline rules, and one muted teal that means "interactive". */
+  --keel-bg: #f7f8f9;
   --keel-surface: #ffffff;
-  --keel-surface-subtle: #f1f6f5;
-  --keel-ink: #193440; /* 12.72:1 on --keel-bg */
-  --keel-ink-strong: #102d3b; /* 13.99:1 */
-  --keel-muted: #536a72; /* 5.56:1, clears AA for body text */
-  --keel-border: #dbe5e3;
-  --keel-border-strong: #c3d3d0;
-  --keel-brand: #102e3c;
-  --keel-brand-deep: #0b2430;
-  --keel-accent: #216c5d;
-  --keel-accent-soft: #e7f3ed;
+  --keel-surface-subtle: #eef1f3;
+  --keel-ink: #1f2d38;
+  --keel-ink-strong: #0f1a24;
+  --keel-muted: #56646f; /* a step under the kit's --muted so it clears AA on subtle */
+  --keel-border: #dce1e5;
+  --keel-border-strong: #c6cdd3;
+  --keel-brand: #0f1a24;
+  --keel-brand-deep: #0a121a;
+  --keel-accent: #1f6f73;
+  --keel-accent-soft: #e6f0f0;
+  --keel-on-accent: #ffffff;
   --keel-on-brand: #ffffff;
-  --keel-brand-ink: #102e3c; /* 13.99:1 on surface; the surface hue reads as text here */
-  --keel-logo: #155962; /* 7.83:1 on white; the brand's own teal */
+  --keel-brand-ink: #0f1a24;
+  --keel-logo: #155962; /* the brand's own teal, deeper than the accent */
+  --keel-grid: #e8ecef;
+  --keel-shadow: 0 1px 0 rgb(15 26 36 / 0.02), 0 1px 3px rgb(15 26 36 / 0.05);
 
-  --primary: var(--keel-brand);
+  --primary: var(--keel-accent);
   --primary-foreground: #ffffff;
-  --accent-foreground: var(--keel-brand);
+  --accent-foreground: var(--keel-accent);
   --destructive: #ae3737;
 
   --sidebar-primary: var(--keel-brand);
@@ -329,8 +344,8 @@
   --seq-650: #104281;
   --seq-700: #0d366b;
 
-  --unmeasured: #626f77;
-  --unmeasured-surface: #f1f3f4;
+  --unmeasured: #5e6b75;
+  --unmeasured-surface: #f0f2f4;
 
   --confidence-partial: var(--keel-muted);
   --confidence-full: var(--keel-ink-strong);
@@ -571,6 +586,58 @@
 .keel-tile:focus-visible {
   outline: 2px solid var(--keel-ink-strong);
   outline-offset: -2px;
+}
+
+/*
+ * The instrument kit's three pieces of chrome, shared by every dashboard page so a
+ * panel, a label and the sheet behind them are drawn once rather than per component.
+ * See docs/08-instrument-design-kit.md.
+ */
+@layer components {
+  /* A panel on the bench: one hairline, 8px, and a shadow that is barely there. */
+  .keel-panel {
+    border: 1px solid var(--keel-border);
+    border-radius: var(--radius);
+    background: var(--keel-surface);
+    box-shadow: var(--keel-shadow);
+  }
+
+  /* Section marker: every label that names a figure rather than stating one. */
+  .keel-marker {
+    color: var(--keel-muted);
+    font-family: var(--font-jetbrains), ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  /*
+   * The drafting sheet behind the top of the page: a 60px grid of hairlines that
+   * fades out 480px down, so the figures sit on it without competing with it. Drawn
+   * on a pseudo-element and masked there, because a mask on the element would cut
+   * its children too.
+   */
+  .keel-bench {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .keel-bench::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 auto;
+    height: 30rem;
+    background-image:
+      linear-gradient(var(--keel-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--keel-grid) 1px, transparent 1px);
+    background-size: 60px 60px;
+    background-position: center top;
+    mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+    pointer-events: none;
+  }
 }
 
 @layer base {

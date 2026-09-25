@@ -3,6 +3,7 @@ import { Ban, Check } from 'lucide-react';
 import type { ManipulationCost } from '@/lib/keel/api/types';
 import {
   classifyManipulation,
+  formatManipulationDelta,
   type ManipulationOutcome,
 } from '@/lib/keel/format/cost';
 import { UNMEASURED_TOKEN } from '@/lib/keel/design/tokens';
@@ -99,7 +100,7 @@ export function ManipulationTable({
                   scope="row"
                   className="px-3 py-2 text-left font-medium tabular"
                 >
-                  {formatDelta(rung.delta)}
+                  {formatManipulationDelta(rung.delta)}
                 </th>
                 <td className="px-3 py-2 text-right">
                   <Value value={all.targetPrice} maxFractionDigits={6} />
@@ -153,9 +154,4 @@ function Outcome({ outcome }: { outcome: ManipulationOutcome }) {
   }
 
   return <Value value={outcome.cost} maxFractionDigits={2} />;
-}
-
-/** The delta is a contract enum: 0.5, 1, 10 or 100 per cent. */
-function formatDelta(delta: ManipulationCost['delta']): string {
-  return `${delta}%`;
 }

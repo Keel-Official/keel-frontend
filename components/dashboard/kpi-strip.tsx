@@ -53,7 +53,7 @@ export function KpiStrip({ items, className }: KpiStripProps) {
   return (
     <dl
       className={cn(
-        'grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-[var(--keel-border)] bg-[var(--keel-border)]',
+        'grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-[var(--keel-border)] bg-[var(--keel-border)]',
         'sm:grid-cols-2 lg:grid-cols-[minmax(11rem,1.35fr)_repeat(3,minmax(0,1fr))]',
         className,
       )}
@@ -67,9 +67,7 @@ export function KpiStrip({ items, className }: KpiStripProps) {
               'bg-[var(--keel-surface-subtle)] px-5 py-4',
           )}
         >
-          <dt className="text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
-            {item.label}
-          </dt>
+          <dt className="keel-marker">{item.label}</dt>
           <dd className="mt-1 text-2xl leading-tight break-words text-[var(--keel-ink-strong)]">
             {isValueItem(item) ? (
               <Value

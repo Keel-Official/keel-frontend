@@ -58,6 +58,11 @@ export interface TrendChartProps {
    * alone, so every line keeps its name and its latest served value.
    */
   dense?: boolean;
+  /**
+   * Draws the plot inside its own bordered box. Off when the chart is the only thing in
+   * a panel that already has one, where a second frame is a box inside a box.
+   */
+  framed?: boolean;
   className?: string;
 }
 
@@ -75,6 +80,7 @@ export function TrendChart({
   toLabel,
   maxFractionDigits = 2,
   dense = false,
+  framed = true,
   className,
 }: TrendChartProps) {
   const height = dense ? DENSE_HEIGHT : HEIGHT;
@@ -107,7 +113,10 @@ export function TrendChart({
     <figure className={cn('m-0', className)}>
       <svg
         viewBox={`0 0 ${WIDTH} ${height}`}
-        className="h-auto w-full rounded-md border border-[var(--keel-border)] bg-[var(--keel-surface)]"
+        className={cn(
+          'h-auto w-full bg-[var(--keel-surface)]',
+          framed && 'rounded-md border border-[var(--keel-border)]',
+        )}
         role="img"
         aria-label={`Trend from ${fromLabel} to ${toLabel}. Values are listed beneath the chart.`}
       >

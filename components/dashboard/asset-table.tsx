@@ -154,7 +154,7 @@ export function AssetTable({
         tabIndex={0}
         role="region"
         aria-label={regionLabel}
-        className="relative hidden overflow-x-auto rounded-xl border border-[var(--keel-border)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)] md:block lg:overflow-x-visible"
+        className="keel-panel relative hidden overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)] md:block lg:overflow-x-visible"
       >
         <table
           className="w-full border-collapse text-sm"
@@ -176,7 +176,7 @@ export function AssetTable({
                         : 'none'
                   }
                   className={cn(
-                    'px-3 py-2.5 font-medium text-[var(--keel-muted)]',
+                    'keel-marker px-3 py-2.5 align-bottom',
                     column.numeric ? 'text-right' : 'text-left',
                     column.windowOnly && 'hidden lg:table-cell',
                   )}
@@ -308,7 +308,7 @@ export function AssetTable({
           return (
             <li
               key={id}
-              className="rounded-xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-3"
+              className="keel-panel p-3"
               style={{ borderLeftColor: token.mark, borderLeftWidth: 3 }}
             >
               <div className="flex flex-wrap items-start justify-between gap-2">
