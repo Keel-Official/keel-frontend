@@ -138,7 +138,7 @@ function Term({
 }) {
   return (
     <div className="bg-[var(--keel-surface)] px-4 py-3">
-      <dt className="flex flex-wrap items-center gap-2 text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
+      <dt className="flex flex-wrap items-center gap-2 keel-marker">
         {label}
         {binds ? (
           <span className="rounded-sm bg-[var(--keel-surface-subtle)] px-1.5 py-0.5 text-[10px] font-semibold tracking-normal text-[var(--keel-ink-strong)] normal-case">

@@ -94,17 +94,18 @@ function deuteranope(hex) {
 
 const THEMES = {
   light: {
-    bg: '#fbfcfc',
+    bg: '#f7f8f9',
     surface: '#ffffff',
-    surfaceSubtle: '#f1f6f5',
-    ink: '#193440',
-    inkStrong: '#102d3b',
-    muted: '#536a72',
-    border: '#dbe5e3',
-    borderStrong: '#c3d3d0',
-    accent: '#216c5d',
-    accentSoft: '#e7f3ed',
-    brandInk: '#102e3c',
+    surfaceSubtle: '#eef1f3',
+    ink: '#1f2d38',
+    inkStrong: '#0f1a24',
+    muted: '#56646f',
+    border: '#dce1e5',
+    borderStrong: '#c6cdd3',
+    accent: '#1f6f73',
+    accentSoft: '#e6f0f0',
+    onAccent: '#ffffff',
+    brandInk: '#0f1a24',
     band: {
       LOW: { mark: '#0ca30c', ink: '#24664f', surface: '#e6f3ea' },
       MEDIUM: { mark: '#fab219', ink: '#8a5c14', surface: '#fff2d7' },
@@ -112,21 +113,22 @@ const THEMES = {
       CRITICAL: { mark: '#d03b3b', ink: '#ae3737', surface: '#fdf0ee' },
     },
     venue: { sdex: '#2a78d6', amm: '#eb6834' },
-    unmeasured: { mark: '#626f77', surface: '#f1f3f4' },
-    confidence: { full: '#193440', partial: '#536a72' },
+    unmeasured: { mark: '#5e6b75', surface: '#f0f2f4' },
+    confidence: { full: '#0f1a24', partial: '#56646f' },
   },
   dark: {
-    bg: '#0a1215',
-    surface: '#101c21',
-    surfaceSubtle: '#16252b',
-    ink: '#d5e3e7',
-    inkStrong: '#f2f8f9',
-    muted: '#9bb0b8',
-    border: '#22333a',
-    borderStrong: '#375059',
-    accent: '#53c7a5',
-    accentSoft: '#123028',
-    brandInk: '#9fe3cd',
+    bg: '#0b1117',
+    surface: '#111a22',
+    surfaceSubtle: '#17222c',
+    ink: '#d3dde4',
+    inkStrong: '#f0f4f7',
+    muted: '#97a6b2',
+    border: '#22303b',
+    borderStrong: '#364654',
+    accent: '#5cc2bd',
+    accentSoft: '#0f2c2d',
+    onAccent: '#06100f',
+    brandInk: '#9fdcd7',
     band: {
       LOW: { mark: '#2fb862', ink: '#6bdc9b', surface: '#0f2a20' },
       MEDIUM: { mark: '#efb02a', ink: '#f2c257', surface: '#2e2309' },
@@ -134,8 +136,8 @@ const THEMES = {
       CRITICAL: { mark: '#e5514f', ink: '#ff8b86', surface: '#381718' },
     },
     venue: { sdex: '#68a8f0', amm: '#ff8d51' },
-    unmeasured: { mark: '#8ba0a8', surface: '#1a272d' },
-    confidence: { full: '#f2f8f9', partial: '#9bb0b8' },
+    unmeasured: { mark: '#8b9ba7', surface: '#19242e' },
+    confidence: { full: '#f0f4f7', partial: '#97a6b2' },
   },
 };
 
@@ -227,6 +229,8 @@ for (const [theme, t] of Object.entries(THEMES)) {
     4.5,
   );
   checkContrast(theme, 'accent on surface', t.accent, t.surface, 4.5);
+  // The label on a filled control: the selected band filter, the ledger picker.
+  checkContrast(theme, 'on-accent on accent', t.onAccent, t.accent, 4.5);
   // The wordmark and the active nav item. `--keel-brand` is a SURFACE colour and is
   // unreadable as text in dark, which is why this is a token of its own.
   checkContrast(theme, 'brand-ink on surface', t.brandInk, t.surface, 4.5);

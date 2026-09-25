@@ -21,10 +21,7 @@ export function AssetFilters({ query }: { query: AssetQuery }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
       <div className="flex flex-wrap items-center gap-2">
-        <span
-          className="text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase"
-          id="band-filter-label"
-        >
+        <span className="keel-marker" id="band-filter-label">
           Band
         </span>
         <ul
@@ -68,11 +65,11 @@ function FilterLink({
         href={href}
         aria-current={active ? 'true' : undefined}
         className={cn(
-          'inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 py-2 text-sm transition-colors',
+          'inline-flex min-h-10 items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition-colors',
           'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
           active
-            ? 'border-[var(--keel-brand)] bg-[var(--keel-brand)] text-white'
-            : 'border-[var(--keel-border-strong)] text-[var(--keel-ink)] hover:bg-[var(--keel-surface-subtle)]',
+            ? 'border-[var(--keel-accent)] bg-[var(--keel-accent)] text-[var(--keel-on-accent)]'
+            : 'border-[var(--keel-border-strong)] bg-[var(--keel-surface)] text-[var(--keel-ink)] hover:border-[var(--keel-accent)] hover:text-[var(--keel-accent)]',
         )}
       >
         {dotColor ? (

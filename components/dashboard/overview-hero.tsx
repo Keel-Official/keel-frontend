@@ -116,10 +116,10 @@ export function FocusCardPending({ query }: { query: AssetQuery }) {
   return (
     <section
       aria-busy="true"
-      className="flex min-h-[22rem] min-w-0 flex-col rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-5"
+      className="flex min-h-[22rem] min-w-0 flex-col keel-panel p-5"
     >
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--keel-muted)] uppercase">
+      <header className="-mx-5 -mt-5 rounded-t-[var(--radius)] border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 keel-marker">
           <Term name="depth">Tradable depth</Term>
         </div>
         <RangeTabs query={query} />
@@ -146,7 +146,7 @@ export function FocusCard({
 }) {
   if (risk === null) {
     return (
-      <section className="rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-5">
+      <section className="keel-panel p-5">
         <p className="text-sm text-[var(--keel-muted)]">
           No asset is in view, so there is no series to draw.
         </p>
@@ -168,10 +168,10 @@ export function FocusCard({
   );
 
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-5">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+    <section className="flex min-w-0 flex-col keel-panel p-5">
+      <header className="-mx-5 -mt-5 rounded-t-[var(--radius)] border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] px-5 py-3 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--keel-muted)] uppercase">
+          <div className="flex items-center gap-1.5 keel-marker">
             <Term name="depth">Tradable depth</Term>
           </div>
           <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-sm text-[var(--keel-muted)]">
@@ -230,7 +230,7 @@ export function FocusCard({
             />
 
             <div className="mt-4">
-              <h3 className="flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[var(--keel-muted)] uppercase">
+              <h3 className="flex items-center gap-1.5 keel-marker">
                 <Term name="band">Verdict at each reading</Term>
               </h3>
               <BandTimeline className="mt-2" points={points} />
@@ -265,7 +265,7 @@ function BigFigure({ value }: { value: ReturnType<typeof classify> }) {
 
   return (
     <p
-      className="tabular mt-4 flex flex-wrap items-baseline gap-x-2 leading-none font-semibold text-[var(--keel-ink-strong)]"
+      className="tabular mt-4 flex flex-wrap items-baseline gap-x-2 leading-none font-bold tracking-[-0.02em] text-[var(--keel-ink-strong)]"
       data-exact={value.exact}
       title={
         formatted.truncated ? `${value.exact} ${value.unit ?? ''}` : undefined
@@ -344,7 +344,7 @@ function RangeTabs({ query }: { query: AssetQuery }) {
   return (
     <nav
       aria-label="Trend window"
-      className="flex shrink-0 items-center gap-0.5 rounded-lg border border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] p-0.5"
+      className="flex shrink-0 items-center gap-0.5 rounded-md border border-[var(--keel-border)] bg-[var(--keel-surface)] p-0.5"
     >
       {(Object.keys(HISTORY_RANGES) as (keyof typeof HISTORY_RANGES)[]).map(
         (key) => {
@@ -355,10 +355,10 @@ function RangeTabs({ query }: { query: AssetQuery }) {
               href={rangeHref(query, key)}
               aria-current={active ? 'true' : undefined}
               className={cn(
-                'rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors',
+                'tabular rounded-sm px-2.5 py-1.5 text-xs font-medium transition-colors',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
                 active
-                  ? 'bg-[var(--keel-surface)] text-[var(--keel-ink-strong)] shadow-sm'
+                  ? 'bg-[var(--keel-accent-soft)] font-bold text-[var(--keel-accent)]'
                   : 'text-[var(--keel-muted)] hover:text-[var(--keel-ink)]',
               )}
             >
@@ -399,8 +399,8 @@ function AttentionCard({
   const commonest = commonestFlag(rows);
 
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border border-[var(--keel-border)] bg-[var(--keel-surface)] p-5">
-      <h2 className="text-xs font-semibold tracking-wide text-[var(--keel-muted)] uppercase">
+    <section className="flex min-w-0 flex-col keel-panel p-5">
+      <h2 className="keel-marker -mx-5 -mt-5 rounded-t-[var(--radius)] border-b border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] px-5 py-3">
         Needs attention
       </h2>
 
@@ -604,7 +604,7 @@ function StatRow({
             {label}
           </span>
           <span
-            className="tabular block text-2xl leading-tight font-semibold"
+            className="tabular block text-2xl leading-tight font-bold"
             style={{ color: ink }}
           >
             {value}

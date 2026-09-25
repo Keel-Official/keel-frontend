@@ -30,7 +30,7 @@ export function Provenance({
   return (
     <dl
       className={cn(
-        'flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]',
+        'tabular flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--keel-muted)]',
         className,
       )}
     >

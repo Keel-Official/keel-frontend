@@ -12,7 +12,7 @@ import { classify, isMeasured } from '../format/value';
  * market. Neither is available here and neither is faked: a mean divides decimals and a
  * deviation takes a root, and nothing in this codebase computes a financial value — see
  * the note at the top of `lib/keel/format/compare.ts` and the one in
- * `components/dashboard/chart-card.tsx`.
+ * `components/dashboard/metric-panel.tsx`.
  *
  * What replaces them is stronger for this product anyway. A reader sizing a position
  * does not want the average depth of the last week, they want the WORST reading in it,

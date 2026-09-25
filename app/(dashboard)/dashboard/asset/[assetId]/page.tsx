@@ -1,18 +1,23 @@
 import Link from 'next/link';
+import { ChevronLeft } from 'lucide-react';
 
 import { BandCard } from '@/components/dashboard/band-card';
+import { BandChip } from '@/components/dashboard/band-chip';
 import { CollateralCeilingPanel } from '@/components/dashboard/collateral-ceiling';
 import { DepthLadder } from '@/components/dashboard/depth-ladder';
 import { FigureList, type FigureRow } from '@/components/dashboard/figure-list';
 import { ManipulationTable } from '@/components/dashboard/manipulation-table';
 import { Notice } from '@/components/dashboard/notice';
-import { AppShell, Section } from '@/components/dashboard/layout/app-shell';
+import { AppShell, Panel } from '@/components/dashboard/layout/app-shell';
 import {
   isKeelExampleName,
   mockSelectionAllowed,
   type KeelExampleName,
 } from '@/lib/keel/api/client';
-import { ChartCard } from '@/components/dashboard/chart-card';
+import {
+  MetricPanel,
+  type MetricDefinition,
+} from '@/components/dashboard/metric-panel';
 import { EngineWarnings } from '@/components/dashboard/engine-warnings';
 import { LedgerPicker } from '@/components/dashboard/ledger-picker';
 import {
@@ -22,7 +27,7 @@ import {
 } from '@/components/dashboard/reading-rows';
 import { ReconstructionPanel } from '@/components/dashboard/reconstruction-panel';
 import { fetchDepth, fetchHealth, fetchHistory } from '@/lib/keel/api/server';
-import type { HistoryResponse } from '@/lib/keel/api/types';
+import type { HistoryPoint, HistoryResponse } from '@/lib/keel/api/types';
 import {
   DASHBOARD_BASE,
   dashboardAssetPath,
@@ -44,7 +49,9 @@ import {
 import { FlagTimeline } from '@/components/dashboard/flag-timeline';
 import type { AssetRisk } from '@/lib/keel/api/types';
 import { readCollateralCeiling } from '@/lib/keel/format/collateral';
+import { truncateIssuer } from '@/lib/keel/format/decimal';
 import { classify } from '@/lib/keel/format/value';
+import { cn } from '@/lib/keel/utils';
 
 /**
  * Never prerendered. A build that cannot reach the API would otherwise bake its error
@@ -216,42 +223,37 @@ function AssetRiskView({
   const quoteCode = risk.quote.code;
   const ceiling = readCollateralCeiling(risk, quoteCode);
   const oracle = oracleRows(risk);
+  const identity = <AssetHeader risk={risk} />;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-6">
       {atLedger !== null ? (
-        <ReconstructionPanel
-          risk={risk}
-          liveHref={dashboardAssetPath(assetId)}
-        />
+        <>
+          {identity}
+          <ReconstructionPanel
+            risk={risk}
+            liveHref={dashboardAssetPath(assetId)}
+          />
+        </>
       ) : (
-        <Section id="history" hideHeading title="How has this moved over time?">
+        <section id="history" className="min-w-0 scroll-mt-20">
+          <h2 className="sr-only">How has this moved over time?</h2>
           <HistoryView
+            identity={identity}
             assetId={assetId}
             history={history}
             failed={historyFailed}
             quoteCode={risk.quote.code}
             historyQuery={historyQuery}
           />
-        </Section>
+        </section>
       )}
 
-      {/* Offered only when the engine says its historical path is on. When it is off,
-          every ledger would be refused, and a control that can only fail is noise. */}
-      {historicalAvailable === true ? (
-        <Section
-          title="What did this look like at a past ledger?"
-          standfirst="The engine answers only for ledgers a replay has stored, and says so when it has not. A stored past reading is rebuilt from the operation stream, so it carries its own gaps."
-        >
-          <LedgerPicker assetId={assetId} current={atLedger} />
-        </Section>
-      ) : null}
-
-      <Section
+      <Panel
         title="How much can this asset safely back?"
         standfirst="The ceiling is the lower of two independent limits. Which one binds is the part a lender acts on, so both are shown."
       >
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
           <div>
             <BandCard band={risk.band} confidence={risk.bandConfidence} />
             {risk.priceSource === 'none' ? (
@@ -265,23 +267,25 @@ function AssetRiskView({
 
           <CollateralCeilingPanel ceiling={ceiling} />
         </div>
-      </Section>
+      </Panel>
 
-      <Section
-        title="What does the engine say about this reading?"
-        standfirst="The engine's own notes on the limits of this computation, verbatim and in the order served."
-      >
-        <EngineWarnings warnings={risk.warnings} />
-      </Section>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel
+          title="Where does the price come from?"
+          standfirst="Both price sources are shown, not only the one that won, and the pair that set the band is named."
+        >
+          <FigureList rows={priceRows(risk)} />
+        </Panel>
 
-      <Section
-        title="Where does the price come from?"
-        standfirst="Both price sources are shown, not only the one that won, and the pair that set the band is named."
-      >
-        <FigureList rows={priceRows(risk)} />
-      </Section>
+        <Panel
+          title="What does the engine say about this reading?"
+          standfirst="The engine's own notes on the limits of this computation, verbatim and in the order served."
+        >
+          <EngineWarnings warnings={risk.warnings} />
+        </Panel>
+      </div>
 
-      <Section
+      <Panel
         title="What volume can it absorb before the price moves?"
         standfirst="Three rungs at 2, 5 and 10 per cent, in each direction. The buy side matters for oracle manipulation and the sell side for liquidation."
       >
@@ -293,9 +297,9 @@ function AssetRiskView({
         ) : (
           <DepthLadder depth={risk.depth} quoteCode={quoteCode} />
         )}
-      </Section>
+      </Panel>
 
-      <Section
+      <Panel
         title="What would it cost to move the price?"
         standfirst="Read cost together with reachability: a figure on an unreachable rung says how far the book goes, not what the move costs."
       >
@@ -312,36 +316,90 @@ function AssetRiskView({
           whether a target is attainable, and it is the one Keel itself uses.
         </p>
 
-        <FigureList className="mt-6" rows={reachRows(risk)} />
-      </Section>
+        <FigureList
+          className="mt-5 border-t border-[var(--keel-border)] pt-5"
+          rows={reachRows(risk)}
+        />
+      </Panel>
 
-      <Section
-        title="What does the oracle window add?"
-        standfirst="An averaging oracle makes an attacker outweigh genuine trading as well as move the book. A market with no genuine volume has no such defence."
-      >
-        {oracle === null ? (
-          // The contract reserves null for "no executable price". The engine can also
-          // send null beside a price it did compute, so the reason is stated only when
-          // the response itself carries it, and otherwise the absence is just said.
-          <Notice
-            tone="empty"
-            title={
-              risk.priceSource === 'none'
-                ? 'Not computed: there is no executable price to move'
-                : 'The engine sent no oracle-window figures for this reading'
-            }
-          />
-        ) : (
-          <FigureList rows={oracle} />
-        )}
-      </Section>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Panel
+          title="What does the oracle window add?"
+          standfirst="An averaging oracle makes an attacker outweigh genuine trading as well as move the book. A market with no genuine volume has no such defence."
+        >
+          {oracle === null ? (
+            // The contract reserves null for "no executable price". The engine can also
+            // send null beside a price it did compute, so the reason is stated only when
+            // the response itself carries it, and otherwise the absence is just said.
+            <Notice
+              tone="empty"
+              title={
+                risk.priceSource === 'none'
+                  ? 'Not computed: there is no executable price to move'
+                  : 'The engine sent no oracle-window figures for this reading'
+              }
+            />
+          ) : (
+            <FigureList rows={oracle} />
+          )}
+        </Panel>
 
-      <Section
-        title="Who holds it, and is it genuinely traded?"
-        standfirst="Concentration and wash trading bound how much of the depth above is real."
+        <Panel
+          title="Who holds it, and is it genuinely traded?"
+          standfirst="Concentration and wash trading bound how much of the depth above is real."
+        >
+          <FigureList rows={supplyRows(risk)} />
+        </Panel>
+      </div>
+
+      {/* Offered only when the engine says its historical path is on. When it is off,
+          every ledger would be refused, and a control that can only fail is noise. */}
+      {historicalAvailable === true ? (
+        <Panel
+          title="What did this look like at a past ledger?"
+          standfirst="The engine answers only for ledgers a replay has stored, and says so when it has not. A stored past reading is rebuilt from the operation stream, so it carries its own gaps."
+        >
+          <LedgerPicker assetId={assetId} current={atLedger} />
+        </Panel>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Which market this page is about, in one line above everything else.
+ *
+ * The h1 stays the question the page answers; this is the label a reader arriving from
+ * a table of sixty-one rows looks for first — the pair, its band, and the issuer that
+ * tells two assets with one code apart — with the way back to the set beside it.
+ */
+function AssetHeader({ risk }: { risk: AssetRisk }) {
+  const issuer = risk.asset.issuer;
+
+  return (
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+      <Link
+        href={DASHBOARD_BASE}
+        className="inline-flex min-h-9 items-center gap-1 rounded-sm text-sm text-[var(--keel-muted)] hover:text-[var(--keel-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
       >
-        <FigureList rows={supplyRows(risk)} />
-      </Section>
+        <ChevronLeft aria-hidden="true" className="size-4" />
+        All assets
+      </Link>
+      <span aria-hidden="true" className="h-5 w-px bg-[var(--keel-border)]" />
+      <p className="text-xl leading-none font-bold tracking-[-0.02em] text-[var(--keel-ink-strong)]">
+        {risk.asset.code}
+        <span className="font-normal text-[var(--keel-muted)]">
+          {' '}
+          / {risk.quote.code}
+        </span>
+      </p>
+      <BandChip band={risk.band} confidence={risk.bandConfidence} />
+      <span
+        className="tabular text-xs text-[var(--keel-muted)]"
+        title={issuer ?? undefined}
+      >
+        {issuer ? truncateIssuer(issuer) : 'native'}
+      </span>
     </div>
   );
 }
@@ -368,26 +426,27 @@ function readMockExample(
 /**
  * The stored series, and the controls that drive it.
  *
- * Everything the reader chooses — window, resolution, source — is in the URL, so the
- * exact chart in front of them is a link they can send.
+ * Everything the reader chooses — window, resolution, source, and which measure is
+ * drawn — is in the URL, so the exact chart in front of them is a link they can send.
  *
  * The chart labels itself from the first and last point that CAME BACK, never from the
  * range that was asked for. Coverage is as old as the deployment, so a window of seven
  * days may hold five, and an axis implying more than the data covers reads as broken
  * data rather than as young data.
  *
- * One request is one source. Selecting another reloads every chart together rather than
- * overlaying two, because `horizon` is a direct reading and the rest are
- * reconstructions — and `trades-implied` is a lower bound, so a line from it is a floor
- * and not a measurement.
+ * One request is one source. Selecting another reloads the chart rather than overlaying
+ * two, because `horizon` is a direct reading and the rest are reconstructions — and
+ * `trades-implied` is a lower bound, so a line from it is a floor and not a measurement.
  */
 function HistoryView({
+  identity,
   assetId,
   history,
   failed,
   quoteCode,
   historyQuery,
 }: {
+  identity: React.ReactNode;
   assetId: string;
   history: HistoryResponse | null;
   failed: string | null;
@@ -407,56 +466,60 @@ function HistoryView({
       : null;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* One wrapping row, not three stacked ones. This is the only thing between the
-          top of the page and the charts, so it earns as little height as it can. */}
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
-        {/* Neither control applies to a stored range: the engine is asked which
-            readings it holds, and it answers with all of them. Showing them anyway
-            would offer a reader two choices that change nothing on the screen. */}
-        {storedRange ? null : (
-          <>
-            <Picker
-              label="Window"
-              options={Object.entries(HISTORY_RANGES).map(([key, v]) => ({
-                key,
-                label: v.label,
-              }))}
-              active={historyQuery.range}
-              href={(key) =>
-                historyHref(assetId, historyQuery, {
-                  range: key as HistoryQuery['range'],
-                })
-              }
-            />
-            <Picker
-              label="Resolution"
-              options={Object.entries(HISTORY_RESOLUTIONS).map(
-                ([key, label]) => ({ key, label }),
-              )}
-              active={historyQuery.resolution}
-              href={(key) =>
-                historyHref(assetId, historyQuery, {
-                  resolution: key as HistoryQuery['resolution'],
-                })
-              }
-            />
-          </>
-        )}
-        <Picker
-          label="Source"
-          options={Object.entries(HISTORY_SOURCES).map(([key, v]) => ({
-            key,
-            label: v.label,
-            note: v.note,
-          }))}
-          active={historyQuery.source}
-          href={(key) =>
-            historyHref(assetId, historyQuery, {
-              source: key as HistoryQuery['source'],
-            })
-          }
-        />
+    <div className="flex flex-col gap-4">
+      {/* The pair on the left and the view controls on the right, on one line: this
+          is the only thing between the top of the page and the chart. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        {identity}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {/* Neither window control applies to a stored range: the engine is asked
+              which readings it holds, and it answers with all of them. Showing them
+              anyway would offer two choices that change nothing on the screen. */}
+          {storedRange ? null : (
+            <>
+              <Segmented
+                label="Window"
+                options={Object.entries(HISTORY_RANGES).map(([key, v]) => ({
+                  key,
+                  label: key,
+                  note: v.label,
+                }))}
+                active={historyQuery.range}
+                href={(key) =>
+                  historyHref(assetId, historyQuery, {
+                    range: key as HistoryQuery['range'],
+                  })
+                }
+              />
+              <Segmented
+                label="Resolution"
+                options={Object.entries(HISTORY_RESOLUTIONS).map(
+                  ([key, label]) => ({ key, label }),
+                )}
+                active={historyQuery.resolution}
+                href={(key) =>
+                  historyHref(assetId, historyQuery, {
+                    resolution: key as HistoryQuery['resolution'],
+                  })
+                }
+              />
+            </>
+          )}
+          <Segmented
+            label="Source"
+            options={Object.entries(HISTORY_SOURCES).map(([key, v]) => ({
+              key,
+              label: v.label,
+              note: v.note,
+            }))}
+            active={historyQuery.source}
+            href={(key) =>
+              historyHref(assetId, historyQuery, {
+                source: key as HistoryQuery['source'],
+              })
+            }
+          />
+        </div>
       </div>
 
       {storedRange ? (
@@ -493,147 +556,131 @@ function HistoryView({
         />
       ) : axis === null ? null : (
         <>
-          {/*
-            Four measures, one frame, one date range.
-            Stacked full width these were read one at a time, and the moment worth
-            catching is when two of them move together — depth falling and the
-            collateral ceiling following it. Side by side that comparison is free. The
-            charts are the same `TrendChart` on the same served points; only the height
-            and the repeated axis labels are gone, and the range they all share is
-            stated once, below.
-          */}
-          <div className="rounded-xl border border-[var(--keel-border)] bg-[var(--keel-surface-subtle)] p-3 sm:p-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <ChartCard
-                title="Price"
-                series={[
-                  {
-                    key: 'mid',
-                    label: 'Mid price',
-                    colour: SEQUENTIAL_RAMP[10],
-                    points: points.map((p) => ({
-                      at: p.ledgerSeq,
-                      value: p.midPrice,
-                    })),
-                  },
-                ]}
-                gaps={gaps}
-                unit={quoteCode}
-                {...axis}
-                // A price moves in the digits a money amount rounds away.
-                maxFractionDigits={8}
-              />
+          <MetricPanel
+            metrics={metricDefinitions(points)}
+            active={historyQuery.metric}
+            href={(metric) => historyHref(assetId, historyQuery, { metric })}
+            points={points}
+            gaps={gaps}
+            unit={quoteCode}
+            {...axis}
+            footer={
+              <>
+                {`${points.length} ${points.length === 1 ? 'reading' : 'readings'} from `}
+                <span className="tabular">{history?.dataSource}</span>
+                {gaps.length > 0
+                  ? `, with ${gaps.length} ${gaps.length === 1 ? 'gap' : 'gaps'} drawn as breaks in the line`
+                  : ', with no gaps reported'}
+                . One source per chart.
+              </>
+            }
+          />
 
-              <ChartCard
-                title="Buy-side depth"
-                // Buy side answers oracle manipulation risk. It is never "the depth".
-                note="What an order can absorb before the price moves against a buyer. The rungs are nested, so one scale covers all three."
-                series={[
-                  {
-                    key: 'd2',
-                    label: '2% from mid',
-                    colour: SEQUENTIAL_RAMP[4],
-                    points: points.map((p) => ({
-                      at: p.ledgerSeq,
-                      value: p.depth2PctBuySide,
-                    })),
-                  },
-                  {
-                    key: 'd5',
-                    label: '5% from mid',
-                    colour: SEQUENTIAL_RAMP[8],
-                    points: points.map((p) => ({
-                      at: p.ledgerSeq,
-                      value: p.depth5PctBuySide,
-                    })),
-                  },
-                  {
-                    key: 'd10',
-                    label: '10% from mid',
-                    colour: SEQUENTIAL_RAMP[12],
-                    points: points.map((p) => ({
-                      at: p.ledgerSeq,
-                      value: p.depth10PctBuySide,
-                    })),
-                  },
-                ]}
-                gaps={gaps}
-                unit={quoteCode}
-                {...axis}
-              />
-
-              <ChartCard
-                title="Cost to move the price by half"
-                note="One manipulation rung, at the delta the engine treats as critical. A reading it could not produce breaks the line rather than sitting at zero."
-                series={[
-                  {
-                    key: 'manip50',
-                    label: 'Manipulation cost, 0.5%',
-                    colour: SEQUENTIAL_RAMP[6],
-                    points: points.map((p) => ({
-                      at: p.ledgerSeq,
-                      value: p.manipulationCost50Pct,
-                    })),
-                  },
-                ]}
-                gaps={gaps}
-                unit={quoteCode}
-                {...axis}
-              />
-
-              <ChartCard
-                title="Collateral ceiling"
-                series={[
-                  {
-                    key: 'ceiling',
-                    label: 'Max safe collateral',
-                    colour: SEQUENTIAL_RAMP[9],
-                    points: points.map((p) => ({
-                      at: p.ledgerSeq,
-                      value: p.maxSafeCollateral,
-                    })),
-                  },
-                ]}
-                gaps={gaps}
-                unit={quoteCode}
-                {...axis}
-              />
-            </div>
-
-            {/* Said once for the frame rather than four times inside it. Every card
-                covers exactly this range, and it is read from the points that came
-                back rather than from the window that was asked for. */}
-            <p className="tabular mt-3 text-xs text-[var(--keel-muted)]">
-              {axis.fromLabel} — {axis.toLabel}
-            </p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-[var(--keel-ink-strong)]">
-              Which checks were firing
-            </h3>
-            <p className="mt-1 text-xs text-[var(--keel-muted)]">
-              Whether a finding has been there all along or started recently.
-              Only checks that fired at least once appear.
-            </p>
-            <FlagTimeline className="mt-3" points={points} />
-          </div>
-
-          <p className="text-xs text-[var(--keel-muted)]">
-            {`${points.length} ${points.length === 1 ? 'reading' : 'readings'} from `}
-            <span className="tabular">{history?.dataSource}</span>
-            {gaps.length > 0
-              ? `, with ${gaps.length} ${gaps.length === 1 ? 'gap' : 'gaps'} drawn as breaks in the line`
-              : ', with no gaps reported'}
-            . One source per chart.
-          </p>
+          <Panel
+            title="Which checks were firing"
+            standfirst="Whether a finding has been there all along or started recently. Only checks that fired at least once appear."
+          >
+            <FlagTimeline points={points} />
+          </Panel>
         </>
       )}
     </div>
   );
 }
 
-/** One row of view choices, each a real link so the view stays shareable. */
-function Picker({
+/**
+ * The four measures the chart can draw, from the same served points.
+ *
+ * The tab reports the rung a measure ranks on — five per cent for depth, the critical
+ * delta for cost — and the chart draws every rung that belongs with it.
+ */
+function metricDefinitions(
+  points: readonly HistoryPoint[],
+): MetricDefinition[] {
+  const line = (pick: (p: HistoryPoint) => string | null | undefined) =>
+    points.map((p) => ({ at: p.ledgerSeq, value: pick(p) }));
+
+  return [
+    {
+      key: 'depth',
+      label: 'Depth, 5% buy',
+      title: 'Buy-side depth',
+      // Buy side answers oracle manipulation risk. It is never "the depth".
+      note: 'What an order can absorb before the price moves against a buyer. The rungs are nested, so one scale covers all three.',
+      pick: (p) => p.depth5PctBuySide,
+      series: [
+        {
+          key: 'd2',
+          label: '2% from mid',
+          colour: SEQUENTIAL_RAMP[4],
+          points: line((p) => p.depth2PctBuySide),
+        },
+        {
+          key: 'd5',
+          label: '5% from mid',
+          colour: SEQUENTIAL_RAMP[8],
+          points: line((p) => p.depth5PctBuySide),
+        },
+        {
+          key: 'd10',
+          label: '10% from mid',
+          colour: SEQUENTIAL_RAMP[12],
+          points: line((p) => p.depth10PctBuySide),
+        },
+      ],
+    },
+    {
+      key: 'price',
+      label: 'Mid price',
+      title: 'Price',
+      note: 'The midpoint the engine read at each scan. It says what the market quotes, not what it can absorb.',
+      pick: (p) => p.midPrice,
+      // A price moves in the digits a money amount rounds away.
+      maxFractionDigits: 8,
+      series: [
+        {
+          key: 'mid',
+          label: 'Mid price',
+          colour: SEQUENTIAL_RAMP[10],
+          points: line((p) => p.midPrice),
+        },
+      ],
+    },
+    {
+      key: 'cost',
+      label: 'Cost to move 0.5%',
+      title: 'Cost to move the price by half',
+      note: 'One manipulation rung, at the delta the engine treats as critical. A reading it could not produce breaks the line rather than sitting at zero.',
+      pick: (p) => p.manipulationCost50Pct,
+      series: [
+        {
+          key: 'manip50',
+          label: 'Manipulation cost, 0.5%',
+          colour: SEQUENTIAL_RAMP[6],
+          points: line((p) => p.manipulationCost50Pct),
+        },
+      ],
+    },
+    {
+      key: 'ceiling',
+      label: 'Max safe collateral',
+      title: 'Collateral ceiling',
+      note: 'The most this asset could back at each reading: the lower of the liquidation and manipulation limits.',
+      pick: (p) => p.maxSafeCollateral,
+      series: [
+        {
+          key: 'ceiling',
+          label: 'Max safe collateral',
+          colour: SEQUENTIAL_RAMP[9],
+          points: line((p) => p.maxSafeCollateral),
+        },
+      ],
+    },
+  ];
+}
+
+/** One view choice as a segmented control of real links, so the view stays shareable. */
+function Segmented({
   label,
   options,
   active,
@@ -644,26 +691,37 @@ function Picker({
   active: string;
   href: (key: string) => string;
 }) {
+  const id = `segmented-${label.toLowerCase()}`;
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="w-20 shrink-0 text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
+    <div className="flex items-center gap-2">
+      <span id={id} className="keel-marker">
         {label}
       </span>
-      {options.map((option) => (
-        <Link
-          key={option.key}
-          href={href(option.key)}
-          aria-current={option.key === active ? 'true' : undefined}
-          title={option.note}
-          className={
-            option.key === active
-              ? 'rounded-md border border-[var(--keel-brand)] bg-[var(--keel-brand)] px-2.5 py-1 text-sm text-white'
-              : 'rounded-md border border-[var(--keel-border-strong)] px-2.5 py-1 text-sm text-[var(--keel-ink)] hover:bg-[var(--keel-surface-subtle)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]'
-          }
-        >
-          {option.label}
-        </Link>
-      ))}
+      <ul
+        aria-labelledby={id}
+        className="flex flex-wrap items-center gap-0.5 rounded-md border border-[var(--keel-border)] bg-[var(--keel-surface)] p-0.5"
+      >
+        {options.map((option) => (
+          <li key={option.key}>
+            <Link
+              href={href(option.key)}
+              scroll={false}
+              aria-current={option.key === active ? 'true' : undefined}
+              title={option.note}
+              className={cn(
+                'inline-flex min-h-8 items-center rounded-sm px-2.5 text-xs transition-colors',
+                'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
+                option.key === active
+                  ? 'bg-[var(--keel-accent-soft)] font-bold text-[var(--keel-accent)]'
+                  : 'font-medium text-[var(--keel-muted)] hover:text-[var(--keel-ink-strong)]',
+              )}
+            >
+              {option.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

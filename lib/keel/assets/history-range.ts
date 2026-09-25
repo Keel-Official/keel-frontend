@@ -45,10 +45,25 @@ export const HISTORY_SOURCES = {
   },
 } as const satisfies Record<DataSource, { label: string; note: string }>;
 
+/**
+ * The measure an asset result's chart is drawn for. One chart at a time, chosen from a
+ * row of tabs, so the page carries one full-size chart rather than four small ones;
+ * the choice is in the URL like every other one here.
+ */
+export const HISTORY_METRICS = {
+  depth: 'Buy-side depth',
+  price: 'Price',
+  cost: 'Cost to move',
+  ceiling: 'Collateral ceiling',
+} as const;
+
+export type HistoryMetric = keyof typeof HISTORY_METRICS;
+
 export interface HistoryQuery {
   readonly range: HistoryRangeKey;
   readonly resolution: HistoryResolution;
   readonly source: DataSource;
+  readonly metric: HistoryMetric;
 }
 
 /** The whole stored series fits inside seven days today, so that is what opens. */
@@ -56,6 +71,7 @@ export const DEFAULT_HISTORY: HistoryQuery = {
   range: '7d',
   resolution: 'hour',
   source: 'horizon',
+  metric: 'depth',
 };
 
 /**
@@ -93,6 +109,9 @@ export function parseHistoryQuery(params: Record<string, Raw>): HistoryQuery {
     source:
       one(params.source, Object.keys(HISTORY_SOURCES) as DataSource[]) ??
       DEFAULT_HISTORY.source,
+    metric:
+      one(params.metric, Object.keys(HISTORY_METRICS) as HistoryMetric[]) ??
+      DEFAULT_HISTORY.metric,
   };
 }
 
@@ -108,6 +127,7 @@ export function historyHref(
   if (next.resolution !== DEFAULT_HISTORY.resolution)
     params.set('resolution', next.resolution);
   if (next.source !== DEFAULT_HISTORY.source) params.set('source', next.source);
+  if (next.metric !== DEFAULT_HISTORY.metric) params.set('metric', next.metric);
 
   const search = params.toString();
   const base = dashboardAssetPath(assetId);
@@ -121,7 +141,7 @@ export function historyHref(
  */
 export function ledgerWindow(
   latestLedger: number,
-  query: HistoryQuery,
+  query: Pick<HistoryQuery, 'range' | 'resolution'> & Partial<HistoryQuery>,
 ): { from: number; to: number; resolution: HistoryResolution } {
   const span = HISTORY_RANGES[query.range].ledgers;
   return {

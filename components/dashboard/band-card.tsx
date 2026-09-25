@@ -51,7 +51,7 @@ export function BandCard({ band, confidence, className }: BandCardProps) {
     <section
       aria-label="Risk band"
       className={cn(
-        'rounded-xl border p-4',
+        'rounded-lg border p-4',
         // The hue is the band's own, and it is a severity scale rather than decoration,
         // so it is correct here and would not be on an ordinary card.
         'border-current',

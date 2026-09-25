@@ -62,9 +62,7 @@ export function FigureList({ rows, columns = 2, className }: FigureListProps) {
     >
       {rows.map((row) => (
         <div key={row.key} className="min-w-0">
-          <dt className="text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
-            {row.label}
-          </dt>
+          <dt className="keel-marker">{row.label}</dt>
           <dd className="mt-0.5 text-base break-words text-[var(--keel-ink-strong)]">
             {isValueRow(row) ? (
               <Value

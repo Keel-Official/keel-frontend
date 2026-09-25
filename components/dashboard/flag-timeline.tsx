@@ -1,6 +1,7 @@
 import type { HistoryPoint } from '@/lib/keel/api/types';
 import type { Flag } from '@/lib/keel/format/flags';
 import { BAND_TOKENS, UNMEASURED_TOKEN } from '@/lib/keel/design/tokens';
+import { flagCopy } from '@/lib/keel/format/glossary';
 import { cn } from '@/lib/keel/utils';
 
 /**
@@ -50,21 +51,28 @@ export function FlagTimeline({ points, className }: FlagTimelineProps) {
     .sort((a, b) => b.count - a.count);
 
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div className={cn('flex flex-col gap-3', className)}>
       {rows.map((row) => (
         <div
           key={row.flag}
-          className="grid grid-cols-[minmax(0,14rem)_1fr_auto] items-center gap-3"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[minmax(0,13rem)_1fr_auto]"
         >
-          <code
-            className="tabular truncate text-xs text-[var(--keel-ink)]"
-            title={row.flag}
-          >
-            {row.flag}
-          </code>
+          {/* The sentence a reader recognises from the table, with the engine's own
+              name for the check under it for anyone matching it against the API. */}
+          <span className="min-w-0">
+            <span className="block truncate text-sm text-[var(--keel-ink-strong)]">
+              {flagCopy(row.flag).label}
+            </span>
+            <code
+              className="tabular block truncate text-[0.7rem] text-[var(--keel-muted)]"
+              title={row.flag}
+            >
+              {row.flag}
+            </code>
+          </span>
 
           <div
-            className="flex h-3 overflow-hidden rounded-xs border border-[var(--keel-border)]"
+            className="order-last col-span-2 flex h-2.5 overflow-hidden rounded-full bg-[var(--keel-surface-subtle)] sm:order-none sm:col-span-1"
             role="img"
             aria-label={`${row.flag} fired at ${row.count} of ${points.length} readings`}
           >

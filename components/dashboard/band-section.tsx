@@ -58,7 +58,9 @@ export function BandSection({
       className={cn('min-w-0 scroll-mt-20', className)}
       id={headingId.replace('band-', 'band-section-')}
     >
-      <header className="mb-3 flex flex-col gap-1.5">
+      {/* A hairline across the column opens each band, as a rule separates the
+          sections of the landing page: the bands are four readings, not four cards. */}
+      <header className="mb-4 flex flex-col gap-1.5 border-t border-[var(--keel-border-strong)] pt-4">
         {/* h3: these sit under the section that names the whole monitored set, which
             keeps the page at one h1, h2s for its parts, and h3s for the bands. */}
         <h3
@@ -66,7 +68,7 @@ export function BandSection({
           className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-semibold tracking-tight text-[var(--keel-ink-strong)]"
         >
           <BandChip band={group.band} />
-          <span className="tabular text-sm font-medium text-[var(--keel-muted)]">
+          <span className="keel-marker">
             {count === 1 ? '1 asset' : `${count} assets`}
           </span>
         </h3>
@@ -96,7 +98,7 @@ export function BandSection({
 
       {count === 0 ? (
         <p
-          className="rounded-xl border border-dashed border-[var(--keel-border)] px-4 py-6 text-sm text-[var(--keel-muted)]"
+          className="rounded-lg border border-dashed border-[var(--keel-border-strong)] bg-[var(--keel-surface)] px-4 py-6 text-sm text-[var(--keel-muted)]"
           style={{ borderLeftColor: token.mark, borderLeftWidth: 3 }}
         >
           {copy.empty}

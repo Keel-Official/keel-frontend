@@ -40,11 +40,14 @@ export function SiteNav({ className }: { className?: string }) {
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'rounded-md px-3 py-1.5 text-sm transition-colors',
+                  // Mono and lowercase, as on the landing masthead. The current page is
+                  // marked by weight and an underline in the accent, not by a filled
+                  // pill, so the bar reads as a masthead rather than as a tab strip.
+                  'tabular inline-flex min-h-9 items-center rounded-sm px-2.5 text-[0.8rem] lowercase underline-offset-[0.45rem] transition-colors',
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]',
                   active
-                    ? 'bg-[var(--keel-accent-soft)] font-medium text-[var(--keel-brand-ink)]'
-                    : 'text-[var(--keel-muted)] hover:bg-[var(--keel-surface-subtle)] hover:text-[var(--keel-ink)]',
+                    ? 'font-bold text-[var(--keel-ink-strong)] underline decoration-[var(--keel-accent)] decoration-2'
+                    : 'text-[var(--keel-muted)] hover:text-[var(--keel-ink-strong)]',
                 )}
               >
                 {link.label}

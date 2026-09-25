@@ -30,7 +30,7 @@ export function LedgerPicker({
       action={dashboardAssetPath(assetId)}
       className={cn('flex flex-wrap items-end gap-2', className)}
     >
-      <label className="flex flex-col gap-1 text-xs font-medium tracking-wide text-[var(--keel-muted)] uppercase">
+      <label className="flex flex-col gap-1 keel-marker">
         Read at ledger
         <input
           name="ledger"
@@ -45,7 +45,7 @@ export function LedgerPicker({
       </label>
       <button
         type="submit"
-        className="h-10 rounded-md border border-[var(--keel-brand)] bg-[var(--keel-brand)] px-4 text-sm text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
+        className="h-10 rounded-md border border-[var(--keel-accent)] bg-[var(--keel-accent)] px-4 text-sm text-[var(--keel-on-accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--keel-accent)]"
       >
         Read
       </button>
